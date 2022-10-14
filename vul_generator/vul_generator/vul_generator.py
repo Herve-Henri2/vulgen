@@ -1,21 +1,23 @@
-import os
+from importlib.metadata import entry_points
+import os, subprocess
 import config 
-import platform
 import psutil
-from time import sleep
-import win32gui, win32con
-import json
+import win32gui
 import docker
+import win32com.client
+
+# Documentation link: https://docker-py.readthedocs.io/en/stable/
 
 configuration = config.Load()
 
 # General variables
 operating_system = configuration['operating_system']
 docker_client_path = configuration['docker_desktop']
-#docker_client_path = '"C:/Program Files/Docker/Docker/Docker Desktop.exe"' # This is user specific -> to be changed later
+images = []
 
 def Initialize():
     global docker_client_path
+
     if docker_client_path == "" and operating_system == "Windows":
         docker_client_path = input("Please enter your Docker Desktop.exe file path: ")
         while not os.path.exists(docker_client_path) or "Docker Desktop.exe" not in docker_client_path:
@@ -80,6 +82,16 @@ def DockerServiceRunning():
                         print(ex)
                         return service_running
 
+def image_in(images, wanted_image_name):
+    for image in images:
+        image_name = get_image_name(image.tag)
+        if wanted_image_name in image_name:
+            return True
+    return False
+
+def get_image_name(image_tag):
+    image_tag=str(image_tag)
+    return image_tag.replace("<bound method Image.tag of <Image: '", '').replace("'>>", '')
 
 def LaunchingDockerImage():
     if not DockerServiceRunning():
@@ -89,7 +101,31 @@ def LaunchingDockerImage():
         return
     # print('Docker service up and running!')
     client = docker.from_env()
-    print(client.images.list())
+    global images 
+    images = client.images.list()
+
+    #print("Here are all your available images:")
+    #print(images)
+    if image_in(images, "ubuntu"):
+        print('Starting the ubuntu container as an interactive bash...')
+        #client.containers.run('ubuntu')
+        #client.containers.run('ubuntu', entrypoint="bin/bash", detach=True, tty=True)
+        WshShell = win32com.client.Dispatch("WScript.Shell")
+        WshShell.run("docker run -it --entrypoint /bin/bash ubuntu") 
+    else:
+        choice = input('Looks like you do not have an ubuntu image, do you want to pull it from the Hub? (y/n) : ')
+        while choice != "y" and choice !="n":
+            choice = input('You must enter either y or n: ')
+        if choice == "y":
+            print('Pulling the latest ubuntu image, please wait...')
+            client.images.pull('ubuntu')
+            while not image_in(images, "ubuntu"):
+                images = client.images.list()
+            print('Image pulled!')
+            LaunchingDockerImage()
+        if choice == "n":
+            print('Going back to the main menu\n')
+            main()
 
 
 def HandleUserInput(choice):
@@ -99,15 +135,13 @@ def HandleUserInput(choice):
         choice = input(f"Invalid input, you must enter a number in {valid_inputs}\nYour choice: ")
         HandleUserInput(choice)
     elif choice == '1':
-        print("Ok we'll try")
+        print("Not implemented for now!")
     elif choice == '2':
-        print("Let's try!")
         LaunchingDockerImage()
     elif choice == '3':
         print('Okay bye!')
 
 def main():
-    Initialize()
     choice = input('------------------------------------------------\n'
                    'Welcome to our vulnerable environment generator!\n'
                    '------------------------------------------------\n'
@@ -120,4 +154,5 @@ def main():
     HandleUserInput(choice)
 
 if __name__ == "__main__":
+    Initialize()
     main()
