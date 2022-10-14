@@ -1,12 +1,26 @@
 import os
+import config 
 import platform
 import psutil
 from time import sleep
+import win32gui, win32con
+import json
 import docker
 
+configuration = config.Load()
+
 # General variables
-operating_system = platform.system()
-docker_client_path = '"C:/Program Files/Docker/Docker/Docker Desktop.exe"' # This is user specific -> to be changed later
+operating_system = configuration['operating_system']
+docker_client_path = configuration['docker_desktop']
+#docker_client_path = '"C:/Program Files/Docker/Docker/Docker Desktop.exe"' # This is user specific -> to be changed later
+
+def Initialize():
+    global docker_client_path
+    if docker_client_path == "" and operating_system == "Windows":
+        docker_client_path = input("Please enter your Docker Desktop.exe file path: ")
+        while not os.path.exists(docker_client_path) or "Docker Desktop.exe" not in docker_client_path:
+            docker_client_path = input("Path not valid, please enter your Docker Desktop.exe file path: ")
+        config.Save('docker_desktop', docker_client_path)
 
 def ProcessRunning(processName):
     '''
@@ -20,10 +34,22 @@ def ProcessRunning(processName):
                 return True
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
-    return False;
+    return False
 
+def unallowWindowOpening(window_name, done=False):
+    '''
+    Waits for the specified window to open up to immediately close it.
+    '''
+    while not done:
+        foreground_window = win32gui.GetForegroundWindow()
+        if win32gui.GetWindowText(foreground_window) == window_name:
+            win32gui.ShowWindow(foreground_window, False)
+            done = True
 
 def DockerServiceRunning():
+    '''
+    Checks if docker is running on the local computer, and tries to launch it if not.
+    '''
     service_running = False
 
     if operating_system == "Darwin":
@@ -32,7 +58,7 @@ def DockerServiceRunning():
 
     while not service_running:
         try:
-            client = docker.from_env()
+            docker.from_env()
             service_running = True
             return service_running
         except:
@@ -41,6 +67,7 @@ def DockerServiceRunning():
                     try:
                         print('Starting Docker Desktop, please wait...')
                         os.popen(f'{docker_client_path}')
+                        unallowWindowOpening('Docker Desktop')
                     except Exception as ex:
                         print(ex)
                         return service_running
@@ -54,16 +81,13 @@ def DockerServiceRunning():
                         return service_running
 
 
-def new_func():
-    print('done')
-
-
 def LaunchingDockerImage():
     if not DockerServiceRunning():
         print('Could not manage to use the docker service.')
         if operating_system != "Darwin":
             print('Please check that docker is properly installed on your machine. If you are using the Windows OS, you must install the Docker Desktop app.')
-    print('Docker service up and running!')
+        return
+    # print('Docker service up and running!')
     client = docker.from_env()
     print(client.images.list())
 
@@ -83,6 +107,7 @@ def HandleUserInput(choice):
         print('Okay bye!')
 
 def main():
+    Initialize()
     choice = input('------------------------------------------------\n'
                    'Welcome to our vulnerable environment generator!\n'
                    '------------------------------------------------\n'

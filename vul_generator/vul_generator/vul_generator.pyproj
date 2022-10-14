@@ -21,6 +21,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="config.py" />
     <Compile Include="dump\deprecated.py" />
     <Compile Include="dump\tests.py" />
     <Compile Include="dump\__init__.py" />
