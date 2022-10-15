@@ -1,4 +1,5 @@
 import os
+from pickle import TRUE
 import config 
 import misc
 import docker
@@ -69,28 +70,79 @@ def InitializeDocker():
     docker_client = docker.from_env()
     return True
 
+def get_image_name(image_tag):
+    image_tag=str(image_tag)
+    return image_tag.replace("<bound method Image.tag of <Image: '", '').replace("'>>", '').replace("<Image: '",'').replace("'>", '')
+
 def image_in(images, wanted_image_name):
+    '''
+    Checks whether or not an image list contains a specific image.
+    '''
     for image in images:
         image_name = get_image_name(image.tag)
         if wanted_image_name in image_name:
             return True
     return False
 
-def get_image_name(image_tag):
-    image_tag=str(image_tag)
-    return image_tag.replace("<bound method Image.tag of <Image: '", '').replace("'>>", '').replace("<Image: '",'').replace("'>", '')
+def container_in(containers, wanted_container_image_name):
+    '''
+    Checks whether or not a container list contains a specific container based on the container's image name.
+    '''
+    for container in containers:
+        container_image_name = get_image_name(container.image)
+        if wanted_container_image_name in container_image_name:
+            return True
+    return False
+
+def get_image(images, image_name):
+    '''
+    Searches for an image in an image list based on the image's name.
+
+    Returns: docker.image object
+    '''
+    if not image_in(images, image_name):
+        #print(f"There is no image corresponding to {image_name}")
+        return
+    for index, image in enumerate(images):
+        if image_name in get_image_name(image.tag):
+            return image, index
+
+def get_container(containers, container_image_name):
+    '''
+    Searches for a container object in a container list based on the container's image name.
+
+    Returns: docker.container object
+    '''
+    if not container_in(containers, container_image_name):
+        #print(f"No {container_image_name} container was found")
+        return
+    for index, container in enumerate(containers):
+        if container_image_name in get_image_name(container.image):
+            return container, index
 
 def LaunchingDockerImage():
-    # print('Docker service up and running!')
-    global images 
+
     global docker_client
+    global images 
+    global containers
 
     images = docker_client.images.list()
+    containers = docker_client.containers.list(all=True)
 
-    #print("Here are all your available images:")
-    #print(images)
-    if image_in(images, "ubuntu"):
+    try:
+        ubuntu_container = get_container(containers, "ubuntu")[0]
+    except: 
+        ubuntu_container = None
+
+    if ubuntu_container:
         print('Starting the ubuntu container as an interactive bash...\n')
+        ubuntu_container.start()
+        WshShell = win32com.client.Dispatch("WScript.Shell")
+        WshShell.run(f"docker exec -it {ubuntu_container.id} /bin/bash")
+        main()
+
+    if image_in(images, "ubuntu"):
+        print('Creating ubuntu container and starting an interactive bash...\n')
         #client.containers.run('ubuntu', entrypoint="bin/bash", detach=True, tty=True)
         WshShell = win32com.client.Dispatch("WScript.Shell")
         WshShell.run("docker run -it --entrypoint /bin/bash ubuntu")
@@ -128,7 +180,7 @@ def DisplayContainers():
 
     containers = docker_client.containers.list(all=True)
     for container in containers:
-        print(f'{container.short_id} - {get_image_name(container.image)} - {container.status}')
+        print(f'{container.name} - {container.short_id} - {get_image_name(container.image)} - {container.status}')
     print('\n')
     main()
 
