@@ -15,6 +15,8 @@ def Load():
     Returns the content of the configuration file (dictionnary json format)
     '''
     global configuration
+
+    # If there is no config.json file, we write it
     if not os.path.exists(config_file):
         with open(config_file, 'w') as file:
             file.write(json.dumps(configuration))

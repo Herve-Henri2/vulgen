@@ -1,5 +1,4 @@
 import os
-from pickle import TRUE
 import config 
 import misc
 import docker
@@ -120,7 +119,7 @@ def get_container(containers, container_image_name):
         if container_image_name in get_image_name(container.image):
             return container, index
 
-def LaunchingDockerImage():
+def LaunchUbuntuContainer():
 
     global docker_client
     global images 
@@ -157,7 +156,7 @@ def LaunchingDockerImage():
             while not image_in(images, "ubuntu"):
                 images = docker_client.images.list()
             print('Image pulled!')
-            LaunchingDockerImage()
+            LaunchUbuntuContainer()
         if choice == "n":
             print('Going back to the main menu\n')
             main()
@@ -191,7 +190,7 @@ def HandleUserInput(choice):
         choice = input(f"Invalid input, you must enter a number in {valid_inputs}\nYour choice: ")
         HandleUserInput(choice)
     elif choice == '1':
-        LaunchingDockerImage()
+        LaunchUbuntuContainer()
     elif choice == '2':
         DisplayImages()
     elif choice == '3':

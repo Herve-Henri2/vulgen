@@ -27,7 +27,7 @@ def ProcessRunning(processName):
 
 def DisplayList(enum):
     '''
-    Displays the element of an enumerable (one element per line).
+    Displays the elements of an enumerable (one element per line).
     '''
     for element in enum:
         print(element)
