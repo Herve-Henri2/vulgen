@@ -1,4 +1,3 @@
-from importlib.metadata import entry_points
 import os, subprocess
 import config 
 import psutil
@@ -107,11 +106,11 @@ def LaunchingDockerImage():
     #print("Here are all your available images:")
     #print(images)
     if image_in(images, "ubuntu"):
-        print('Starting the ubuntu container as an interactive bash...')
-        #client.containers.run('ubuntu')
+        print('Starting the ubuntu container as an interactive bash...\n')
         #client.containers.run('ubuntu', entrypoint="bin/bash", detach=True, tty=True)
         WshShell = win32com.client.Dispatch("WScript.Shell")
-        WshShell.run("docker run -it --entrypoint /bin/bash ubuntu") 
+        WshShell.run("docker run -it --entrypoint /bin/bash ubuntu")
+        main()
     else:
         choice = input('Looks like you do not have an ubuntu image, do you want to pull it from the Hub? (y/n) : ')
         while choice != "y" and choice !="n":
@@ -135,20 +134,18 @@ def HandleUserInput(choice):
         choice = input(f"Invalid input, you must enter a number in {valid_inputs}\nYour choice: ")
         HandleUserInput(choice)
     elif choice == '1':
-        print("Not implemented for now!")
-    elif choice == '2':
         LaunchingDockerImage()
-    elif choice == '3':
+    elif choice == '2':
         print('Okay bye!')
+        
 
 def main():
     choice = input('------------------------------------------------\n'
                    'Welcome to our vulnerable environment generator!\n'
                    '------------------------------------------------\n'
                    'What do you wish to do?\n'
-                   '1: Create a DockerFile\n'
-                   '2: Generate Ubuntu docker container\n'
-                   '3: Exit\n'
+                   '1: Generate Ubuntu docker container\n'
+                   '2: Exit\n'
                    '------------------------------------------------\n'
                    'Your choice: ')
     HandleUserInput(choice)
