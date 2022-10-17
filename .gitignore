@@ -1,3 +1,4 @@
 vul_generator/.vs
 vul_generator/vul_generator/__pycache__
+vul_generator/vul_generator/config.json
 .git
