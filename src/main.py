@@ -13,8 +13,6 @@ docker_client = None
 images = [] # All the docker images on the machine
 containers = [] # All the docker containers on the machine
 
-docker_client = docker.from_env()
-
 def DockerServiceRunning():
     '''
     Checks if docker is running on the local computer, and tries to launch it if not.
@@ -46,7 +44,7 @@ def DockerServiceRunning():
                         print(ex)
                         return service_running
             elif operating_system == "Linux":
-                if not misc.ProcessRunning('docker'):
+                if not misc.ProcessRunning('dockerd'):
                     try:
                         print('Starting the docker service, please wait...')
                         os.popen('systemctl start docker')
@@ -68,7 +66,8 @@ def InitializeDocker():
     if not DockerServiceRunning():
         print('Could not manage to use the docker service.')
         if operating_system != "Darwin":
-            print('Please check that docker is properly installed on your machine. If you are using the Windows OS, you must install the Docker Desktop app.')
+            print('Please check that docker is properly installed on your machine. If you are using the Windows OS, you must install the Docker Desktop app.'
+            'You can also try to launch Docker Desktop separately from this program.')
         return False
     # Start the docker client through the API
     docker_client = docker.from_env()
