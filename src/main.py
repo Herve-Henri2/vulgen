@@ -2,6 +2,7 @@ import os
 import config 
 import misc
 import docker
+import subprocess
 
 # Documentation link: https://docker-py.readthedocs.io/en/stable/
 configuration = config.Load()
@@ -186,8 +187,14 @@ def DisplayContainers():
     print('\n')
     main()
 
+def Log4Shell():
+    subprocess.call(
+                "docker run --name CVE-2021-44228 -dp 8080:8080 ghcr.io/christophetd/log4shell-vulnerable-app@sha256:6f88430688108e512f7405ac3c73d47f5c370780b94182854ea2cddc6bd59929",
+                shell=True,
+            )
+
 def HandleUserInput(choice):
-    valid_inputs = ['1', '2', '3', '4']
+    valid_inputs = ['1', '2', '3', '4', '5']
     
     if choice not in valid_inputs:
         choice = input(f"Invalid input, you must enter a number in {valid_inputs}\nYour choice: ")
@@ -199,6 +206,8 @@ def HandleUserInput(choice):
     elif choice == '3':
         DisplayContainers()
     elif choice == '4':
+        Log4Shell()
+    elif choice == '5':
         print('Okay bye!')
         
 
@@ -210,7 +219,8 @@ def main():
                    '1: Generate or start Ubuntu docker container\n'
                    '2: Display Image list\n'
                    '3: Display Container list\n'
-                   '4: Exit\n'
+                   '4: Try Log4shell\n'
+                   '5: Exit\n'
                    '------------------------------------------------\n'
                    'Your choice: ')
     HandleUserInput(choice)
