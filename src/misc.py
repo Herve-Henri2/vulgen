@@ -32,5 +32,6 @@ def DisplayList(enum):
     for element in enum:
         print(element)
 
+
 if __name__ =="__main__":
     pass

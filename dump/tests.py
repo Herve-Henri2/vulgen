@@ -1,8 +1,12 @@
 # File made for testing purposes.
+from pickle import TRUE
 import win32gui, win32con
+import win32com.client
+import os
 import psutil
 import subprocess
 import json
+import platform
 
 def minimize_top_window():
     Minimize = win32gui.GetForegroundWindow()
@@ -51,8 +55,20 @@ def test_json():
     with open (file_name, 'w') as file:
         file.write(json.dumps(_json))
 
+def open_terminal(_os, command=None):
+    if _os == "Windows":
+        if not command:
+            command = "cmd.exe"
+        with open("terminal.bat", "w") as file:
+            file.write("@echo off\n"
+                       "color 09\n"
+                       f"powershell {command}")
+        subprocess.call('terminal.bat', creationflags=subprocess.CREATE_NEW_CONSOLE)
+    elif _os == "Linux":
+        pass
+
 def main():
-    test_json()
+    open_terminal("Windows", "docker exec -it e08ab8acbf9d57a705537be1ead0b86408b3b4ae9f92477052ad8529f05130ff /bin/bash")
 
 if __name__ == "__main__":
     main()

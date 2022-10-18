@@ -1,3 +1,0 @@
-docker
-pypiwin32
-psutil

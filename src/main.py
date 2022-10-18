@@ -2,7 +2,7 @@ import os
 import config 
 import misc
 import docker
-import win32com
+import win32com.client
 
 # Documentation link: https://docker-py.readthedocs.io/en/stable/
 
@@ -136,8 +136,8 @@ def LaunchUbuntuContainer():
     if ubuntu_container:
         print('Starting the ubuntu container as an interactive bash...\n')
         ubuntu_container.start()
-        WshShell = win32com.client.Dispatch("WScript.Shell")
-        WshShell.run(f"docker exec -it {ubuntu_container.id} /bin/bash")
+        #WshShell = win32com.client.Dispatch("WScript.Shell")
+        #WshShell.run(f"docker exec -it {ubuntu_container.id} /bin/bash")
         main()
 
     if image_in(images, "ubuntu"):
