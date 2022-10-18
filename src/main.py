@@ -57,11 +57,19 @@ def InitializeDocker():
     global docker_client_path
     global docker_client
 
+    def DetectDockerDesktopPath():
+        possible_paths = ['C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe', 'C:\\Program Files (x86)\\Docker\\Docker\\Docker Desktop.exe']
+        for path in possible_paths:
+            if os.path.exists(path):
+                return path
+
     # Set the "Docker Desktop.exe" path for the Windows users if it hasn't been set yet
     if docker_client_path == "" and operating_system == "Windows":
-        docker_client_path = input("Please enter your Docker Desktop.exe file path: ")
-        while not os.path.exists(docker_client_path) or "Docker Desktop.exe" not in docker_client_path:
-            docker_client_path = input("Path not valid, please enter your Docker Desktop.exe file path: ")
+        docker_client_path = DetectDockerDesktopPath()
+        if not docker_client_path:
+            docker_client_path = input("Please enter your Docker Desktop.exe file path: ")
+            while not os.path.exists(docker_client_path) or "Docker Desktop.exe" not in docker_client_path:
+                docker_client_path = input("Path not valid, please enter your Docker Desktop.exe file path: ")
         config.Save('docker_desktop', docker_client_path)
     # Check whether we can use the docker service or not
     if not DockerServiceRunning():
