@@ -124,8 +124,18 @@ def get_container(containers, container_image_name):
         if container_image_name in get_image_name(container.image):
             return container, index
 
-def LaunchUbuntuContainer():
+def LaunchContainer(image_name, **kwargs):
+    '''
+    Launches a container and opens up a terminal to interact with it.
+    ---------------
+    Parameters:
 
+    image_name: str
+    The image to start or run
+
+    **kwargs: any
+    The same arguments as the ones for docker run
+    '''
     global docker_client
     global images 
     global containers
@@ -133,34 +143,36 @@ def LaunchUbuntuContainer():
     images = docker_client.images.list()
     containers = docker_client.containers.list(all=True)
 
+    # We first check whether the container exists or not
     try:
-        ubuntu_container = get_container(containers, "ubuntu")[0]
+        container = get_container(containers, image_name)[0]
     except: 
-        ubuntu_container = None
+        container = None
 
-    if ubuntu_container:
-        print('Starting the ubuntu container as an interactive bash...\n')
-        ubuntu_container.start()
-        command = f"docker exec -it {ubuntu_container.id} /bin/bash"
+    # If it exists, just start it then open up an interactive shell
+    if container:
+        print(f'Starting the {image_name} container as an interactive bash.\n')
+        container.start()
+        command = f"docker exec -it {container.id} /bin/sh"
         misc.open_terminal(operating_system, command)      
         main()
-
-    if image_in(images, "ubuntu"):
-        print('Creating ubuntu container and starting an interactive bash...\n')
-        command = "docker run -it --entrypoint /bin/bash ubuntu"
-        misc.open_terminal(operating_system, command)
-        main()
+    # If not, create it from the image, then call this function again
+    elif image_in(images, image_name):
+        print(f'Creating the {image_name} container...')
+        docker_client.containers.create(image_name, **kwargs)
+        LaunchContainer(image_name, **kwargs)
+    # Pull the image if necessary, then call this function again
     else:
-        choice = input('Looks like you do not have an ubuntu image, do you want to pull it from the Hub? (y/n) : ')
+        choice = input(f'Looks like you do not have a(n) {image_name} image, do you want to pull it? (y/n) : ')
         while choice != "y" and choice !="n":
             choice = input('You must enter either y or n: ')
         if choice == "y":
-            print('Pulling the latest ubuntu image, please wait...')
-            docker_client.images.pull('ubuntu')
-            while not image_in(images, "ubuntu"):
+            print(f'Pulling the latest {image_name} image, please wait...')
+            docker_client.images.pull(image_name)
+            while not image_in(images, image_name):
                 images = docker_client.images.list()
             print('Image pulled!')
-            LaunchUbuntuContainer()
+            LaunchContainer(image_name, **kwargs)
         if choice == "n":
             print('Going back to the main menu\n')
             main()
@@ -187,12 +199,6 @@ def DisplayContainers():
     print('\n')
     main()
 
-def Log4Shell():
-    subprocess.call(
-                "docker run --name CVE-2021-44228 -dp 8080:8080 ghcr.io/christophetd/log4shell-vulnerable-app@sha256:6f88430688108e512f7405ac3c73d47f5c370780b94182854ea2cddc6bd59929",
-                shell=True,
-            )
-
 def HandleUserInput(choice):
     valid_inputs = ['1', '2', '3', '4', '5']
     
@@ -200,13 +206,13 @@ def HandleUserInput(choice):
         choice = input(f"Invalid input, you must enter a number in {valid_inputs}\nYour choice: ")
         HandleUserInput(choice)
     elif choice == '1':
-        LaunchUbuntuContainer()
+        LaunchContainer('ubuntu')
     elif choice == '2':
         DisplayImages()
     elif choice == '3':
         DisplayContainers()
     elif choice == '4':
-        Log4Shell()
+        LaunchContainer("ghcr.io/christophetd/log4shell-vulnerable-app", ports={"8080/tcp":8080}, name="CVE-2021-44228")
     elif choice == '5':
         print('Okay bye!')
         
@@ -216,7 +222,7 @@ def main():
                    'Vulnerable environment generator main menu\n'
                    '------------------------------------------------\n'
                    'What do you wish to do?\n'
-                   '1: Generate or start Ubuntu docker container\n'
+                   '1: Generate or start ubuntu container\n'
                    '2: Display Image list\n'
                    '3: Display Container list\n'
                    '4: Try Log4shell\n'
