@@ -2,10 +2,8 @@ import os
 import config 
 import misc
 import docker
-import win32com.client
 
 # Documentation link: https://docker-py.readthedocs.io/en/stable/
-
 configuration = config.Load()
 
 # General variables
@@ -15,22 +13,29 @@ docker_client = None
 images = [] # All the docker images on the machine
 containers = [] # All the docker containers on the machine
 
+docker_client = docker.from_env()
+
 def DockerServiceRunning():
     '''
     Checks if docker is running on the local computer, and tries to launch it if not.
     '''
     service_running = False
+    tries = 0
 
     if operating_system == "Darwin":
         print('This program is not supported on Mac OS.')
         return service_running
 
     while not service_running:
+        tries += 1
         try:
             docker.from_env()
             service_running = True
             return service_running
-        except:
+        except Exception as ex:
+            if tries == 10:
+                print(ex)
+                break
             if operating_system == "Windows":
                 if not misc.ProcessRunning('Docker Desktop'):
                     try:
@@ -44,7 +49,7 @@ def DockerServiceRunning():
                 if not misc.ProcessRunning('docker'):
                     try:
                         print('Starting the docker service, please wait...')
-                        os.popen('sudo systemctl start docker')
+                        os.popen('systemctl start docker')
                     except Exception as ex:
                         print(ex)
                         return service_running
@@ -136,15 +141,14 @@ def LaunchUbuntuContainer():
     if ubuntu_container:
         print('Starting the ubuntu container as an interactive bash...\n')
         ubuntu_container.start()
-        #WshShell = win32com.client.Dispatch("WScript.Shell")
-        #WshShell.run(f"docker exec -it {ubuntu_container.id} /bin/bash")
+        command = f"docker exec -it {ubuntu_container.id} /bin/bash"
+        misc.open_terminal(operating_system, command)      
         main()
 
     if image_in(images, "ubuntu"):
         print('Creating ubuntu container and starting an interactive bash...\n')
-        #client.containers.run('ubuntu', entrypoint="bin/bash", detach=True, tty=True)
-        WshShell = win32com.client.Dispatch("WScript.Shell")
-        WshShell.run("docker run -it --entrypoint /bin/bash ubuntu")
+        command = "docker run -it --entrypoint /bin/bash ubuntu"
+        misc.open_terminal(operating_system, command)
         main()
     else:
         choice = input('Looks like you do not have an ubuntu image, do you want to pull it from the Hub? (y/n) : ')
@@ -215,3 +219,4 @@ def main():
 if __name__ == "__main__":
     if InitializeDocker():
         main()
+

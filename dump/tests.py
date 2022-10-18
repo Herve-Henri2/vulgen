@@ -1,21 +1,24 @@
 # File made for testing purposes.
 from pickle import TRUE
-import win32gui, win32con
-import win32com.client
+#import win32gui, win32con
+#import win32com.client
 import os
 import psutil
 import subprocess
 import json
 import platform
 
+'''
 def minimize_top_window():
     Minimize = win32gui.GetForegroundWindow()
     win32gui.ShowWindow(Minimize, win32con.SW_MINIMIZE)
+'''
 
 def see_all_processes():
     for proc in psutil.process_iter():
         print(proc)
 
+'''
 def see_all_windows():
     def winEnumHandler( hwnd, ctx ):
         if win32gui.IsWindowVisible( hwnd ):
@@ -42,7 +45,7 @@ def find_window_by_name():
         win32gui.ShowWindow(whnd, False)
     else:
         print('not found!')
-
+'''
 def test_json():
     file_name = 'testy.json'
     _json = {}
@@ -66,14 +69,13 @@ def open_terminal(_os, command=None):
         subprocess.call('terminal.bat', creationflags=subprocess.CREATE_NEW_CONSOLE)
     elif _os == "Linux":
         if not command:
-            command = ""
-        with open("terminal.sh", "w") as file:
-            file.write("")
-        subprocess.call('terminal.sh', creationflags=subprocess.CREATE_NEW_CONSOLE)
-        pass
+            command = "exec bash"
+        os.system(f"gnome-terminal -e 'bash -c \"{command}\"'")
+        #os.system("gnome-terminal -e 'bash -c \"sudo apt-get update; exec bash\"'")
 
 def main():
-    open_terminal("Windows", "docker exec -it e08ab8acbf9d57a705537be1ead0b86408b3b4ae9f92477052ad8529f05130ff /bin/bash")
+    #open_terminal("Windows", "docker exec -it e08ab8acbf9d57a705537be1ead0b86408b3b4ae9f92477052ad8529f05130ff /bin/bash")
+    open_terminal('Linux')
 
 if __name__ == "__main__":
     main()
