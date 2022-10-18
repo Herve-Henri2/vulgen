@@ -1,2 +1,5 @@
-src/config.json
+*config.json
+*terminal.bat
+*terminal.sh
+src/__pycache__
 .git

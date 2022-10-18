@@ -65,6 +65,11 @@ def open_terminal(_os, command=None):
                        f"powershell {command}")
         subprocess.call('terminal.bat', creationflags=subprocess.CREATE_NEW_CONSOLE)
     elif _os == "Linux":
+        if not command:
+            command = ""
+        with open("terminal.sh", "w") as file:
+            file.write("")
+        subprocess.call('terminal.sh', creationflags=subprocess.CREATE_NEW_CONSOLE)
         pass
 
 def main():
