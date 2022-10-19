@@ -1,20 +1,6 @@
-import subprocess
 import psutil
 import os
-try:
-    import win32gui
-except ModuleNotFoundError:
-    pass
 
-def unallowWindowOpening(window_name, done=False):
-    '''
-    Waits for the specified window to open up to immediately close it.
-    '''
-    while not done:
-        foreground_window = win32gui.GetForegroundWindow()
-        if win32gui.GetWindowText(foreground_window) == window_name:
-            win32gui.ShowWindow(foreground_window, False)
-            done = True
 
 def ProcessRunning(processName):
     '''
@@ -37,31 +23,21 @@ def DisplayList(enum):
     for element in enum:
         print(element)
 
-def open_terminal(_os, command=None):
+def open_terminal(command=None):
     '''
     Opens up a terminal (or command prompt).
     ---------------
     Parameters:
 
-    _os : str
-    The machine's operating system
-
     command: str
     The command to be executed after the terminal's openingss
     '''
-    if _os == "Windows":
-        if not command:
-            command = "cmd.exe"
-        with open("terminal.bat", "w") as file:
-            file.write("@echo off\n"
-                       "color 09\n"
-                       f"powershell {command}")
-        subprocess.call('terminal.bat', creationflags=subprocess.CREATE_NEW_CONSOLE)
-    elif _os == "Linux":
-        if not command:
-            command = "exec bash"
-        os.system(f"gnome-terminal -e 'bash -c \"{command}\"'")
-        #os.system("gnome-terminal -e 'bash -c \"sudo apt-get update; exec bash\"'")
+    
+    if not command:
+        command = "exec bash"
+    os.system(f"gnome-terminal -e 'bash -c \"{command}\"'")
+    #os.system("gnome-terminal -e 'bash -c \"sudo apt-get update; exec bash\"'")
+
 
 if __name__ =="__main__":
     pass

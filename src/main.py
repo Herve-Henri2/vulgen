@@ -1,18 +1,15 @@
 import os
-import config 
 import misc
 import docker
-import subprocess
+
 
 # Documentation link: https://docker-py.readthedocs.io/en/stable/
-configuration = config.Load()
 
 # General variables
-operating_system = configuration['operating_system']
-docker_client_path = configuration['docker_desktop'] # For Windows OS only
 docker_client = None
 images = [] # All the docker images on the machine
 containers = [] # All the docker containers on the machine
+
 
 def DockerServiceRunning():
     '''
@@ -20,10 +17,6 @@ def DockerServiceRunning():
     '''
     service_running = False
     tries = 0
-
-    if operating_system == "Darwin":
-        print('This program is not supported on Mac OS.')
-        return service_running
 
     while not service_running:
         tries += 1
@@ -35,56 +28,32 @@ def DockerServiceRunning():
             if tries == 10:
                 print(ex)
                 break
-            if operating_system == "Windows":
-                if not misc.ProcessRunning('Docker Desktop'):
-                    try:
-                        print('Starting Docker Desktop, please wait...')
-                        os.popen(f'{docker_client_path}')
-                        misc.unallowWindowOpening('Docker Desktop')
-                    except Exception as ex:
-                        print(ex)
-                        return service_running
-            elif operating_system == "Linux":
-                if not misc.ProcessRunning('dockerd'):
-                    try:
-                        print('Starting the docker service, please wait...')
-                        os.popen('systemctl start docker')
-                    except Exception as ex:
-                        print(ex)
-                        return service_running
+            if not misc.ProcessRunning('dockerd'):
+                try:
+                    print('Starting the docker service, please wait...')
+                    os.popen('systemctl start docker')
+                except Exception as ex:
+                    print(ex)
+                    return service_running
+
 
 def InitializeDocker():
     global docker_client_path
     global docker_client
 
-    def DetectDockerDesktopPath():
-        possible_paths = ['C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe', 'C:\\Program Files (x86)\\Docker\\Docker\\Docker Desktop.exe']
-        for path in possible_paths:
-            if os.path.exists(path):
-                return path
-
-    # Set the "Docker Desktop.exe" path for the Windows users if it hasn't been set yet
-    if docker_client_path == "" and operating_system == "Windows":
-        docker_client_path = DetectDockerDesktopPath()
-        if not docker_client_path:
-            docker_client_path = input("Please enter your Docker Desktop.exe file path: ")
-            while not os.path.exists(docker_client_path) or "Docker Desktop.exe" not in docker_client_path:
-                docker_client_path = input("Path not valid, please enter your Docker Desktop.exe file path: ")
-        config.Save('docker_desktop', docker_client_path)
     # Check whether we can use the docker service or not
     if not DockerServiceRunning():
         print('Could not manage to use the docker service.')
-        if operating_system != "Darwin":
-            print('Please check that docker is properly installed on your machine. If you are using the Windows OS, you must install the Docker Desktop app.'
-            'You can also try to launch Docker Desktop separately from this program.')
         return False
     # Start the docker client through the API
     docker_client = docker.from_env()
     return True
 
+
 def get_image_name(image_tag):
     image_tag=str(image_tag)
     return image_tag.replace("<bound method Image.tag of <Image: '", '').replace("'>>", '').replace("<Image: '",'').replace("'>", '')
+
 
 def image_in(images, wanted_image_name):
     '''
@@ -96,6 +65,7 @@ def image_in(images, wanted_image_name):
             return True
     return False
 
+
 def container_in(containers, wanted_container_image_name):
     '''
     Checks whether or not a container list contains a specific container based on the container's image name.
@@ -105,6 +75,7 @@ def container_in(containers, wanted_container_image_name):
         if wanted_container_image_name in container_image_name:
             return True
     return False
+
 
 def get_image(images, image_name):
     '''
@@ -119,6 +90,7 @@ def get_image(images, image_name):
         if image_name in get_image_name(image.tag):
             return image, index
 
+
 def get_container(containers, container_image_name):
     '''
     Searches for a container object in a container list based on the container's image name.
@@ -131,6 +103,7 @@ def get_container(containers, container_image_name):
     for index, container in enumerate(containers):
         if container_image_name in get_image_name(container.image):
             return container, index
+
 
 def LaunchContainer(image_name, **kwargs):
     '''
@@ -162,8 +135,7 @@ def LaunchContainer(image_name, **kwargs):
         print(f'Starting the {image_name} container as an interactive bash.\n')
         container.start()
         command = f"docker exec -it {container.id} /bin/sh"
-        misc.open_terminal(operating_system, command)      
-        main()
+        misc.open_terminal(command)
     # If not, create it from the image, then call this function again
     elif image_in(images, image_name):
         print(f'Creating the {image_name} container...')
@@ -183,7 +155,7 @@ def LaunchContainer(image_name, **kwargs):
             LaunchContainer(image_name, **kwargs)
         if choice == "n":
             print('Going back to the main menu\n')
-            main()
+
 
 def DisplayImages():
     global images
@@ -194,7 +166,7 @@ def DisplayImages():
     for image in images:
         print(f'{image.short_id.replace("sha256:", "")} - {get_image_name(image.tag)}')
     print('\n')
-    main()
+
 
 def DisplayContainers():
     global containers
@@ -205,7 +177,7 @@ def DisplayContainers():
     for container in containers:
         print(f'{container.name} - {container.short_id} - {get_image_name(container.image)} - {container.status}')
     print('\n')
-    main()
+
 
 def HandleUserInput(choice):
     valid_inputs = ['1', '2', '3', '4', '5']
@@ -226,20 +198,25 @@ def HandleUserInput(choice):
         
 
 def main():
-    choice = input('------------------------------------------------\n'
-                   'Vulnerable environment generator main menu\n'
-                   '------------------------------------------------\n'
-                   'What do you wish to do?\n'
-                   '1: Generate or start ubuntu container\n'
-                   '2: Display Image list\n'
-                   '3: Display Container list\n'
-                   '4: Try Log4shell\n'
-                   '5: Exit\n'
-                   '------------------------------------------------\n'
-                   'Your choice: ')
-    HandleUserInput(choice)
+    InitializeDocker()
+    
+    choice = -1
+    
+    while choice != 5:
+        choice = input('------------------------------------------------\n'
+                    'Vulnerable environment generator main menu\n'
+                    '------------------------------------------------\n'
+                    'What do you wish to do?\n'
+                    '1: Generate or start ubuntu container\n'
+                    '2: Display Image list\n'
+                    '3: Display Container list\n'
+                    '4: Try Log4shell\n'
+                    '5: Exit\n'
+                    '------------------------------------------------\n'
+                    'Your choice: ')
+        HandleUserInput(choice)
+
 
 if __name__ == "__main__":
-    if InitializeDocker():
-        main()
+    main()
 
