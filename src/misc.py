@@ -16,12 +16,18 @@ def ProcessRunning(processName):
             pass
     return False
 
+
 def DisplayList(enum):
     '''
     Displays the elements of an enumerable (one element per line).
     '''
     for element in enum:
         print(element)
+
+
+def error(msg = "Error!"):
+    print(f"\nError : {msg}\n")
+
 
 def open_terminal(command=None):
     '''
@@ -34,9 +40,8 @@ def open_terminal(command=None):
     '''
     
     if not command:
-        command = "exec bash"
-    os.system(f"gnome-terminal -e 'bash -c \"{command}\"'")
-    #os.system("gnome-terminal -e 'bash -c \"sudo apt-get update; exec bash\"'")
+        command = "exec bash -i"
+    os.popen(f"gnome-terminal -- bash -c \"{command}; exec bash -i\"")
 
 
 if __name__ =="__main__":
