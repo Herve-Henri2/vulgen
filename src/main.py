@@ -33,7 +33,6 @@ def DockerServiceRunning():
         except Exception as ex:
             if operating_system == "Windows":
                 if tries == 10:
-                    print('Failed to Launch Docker Desktop')
                     return
                 if not misc.ProcessRunning('Docker Desktop'):
                     try:
@@ -46,7 +45,6 @@ def DockerServiceRunning():
                         return service_running
             elif operating_system == "Linux":
                 if tries == 10:
-                    print('Failed to start the docker daemon')
                     return
                 if not misc.ProcessRunning('dockerd'):
                     try:

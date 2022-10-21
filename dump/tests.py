@@ -1,24 +1,25 @@
 # File made for testing purposes.
-from pickle import TRUE
-#import win32gui, win32con
-#import win32com.client
+try:
+    import win32gui, win32con
+    import win32com.client
+except:
+    pass
 import os
 import psutil
 import subprocess
 import json
-import platform
 
-'''
+
 def minimize_top_window():
     Minimize = win32gui.GetForegroundWindow()
     win32gui.ShowWindow(Minimize, win32con.SW_MINIMIZE)
-'''
+
 
 def see_all_processes():
     for proc in psutil.process_iter():
         print(proc)
 
-'''
+
 def see_all_windows():
     def winEnumHandler( hwnd, ctx ):
         if win32gui.IsWindowVisible( hwnd ):
@@ -45,7 +46,7 @@ def find_window_by_name():
         win32gui.ShowWindow(whnd, False)
     else:
         print('not found!')
-'''
+
 def test_json():
     file_name = 'testy.json'
     _json = {}
