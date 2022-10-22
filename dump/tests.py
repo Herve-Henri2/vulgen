@@ -5,9 +5,13 @@ try:
 except:
     pass
 import os
+import tkinter
 import psutil
 import subprocess
 import json
+import tkinter as tk
+from tkinter import ttk
+from tkinter.messagebox import showinfo
 
 
 def minimize_top_window():
@@ -74,9 +78,38 @@ def open_terminal(_os, command=None):
         os.system(f"gnome-terminal -e 'bash -c \"{command}\"'")
         #os.system("gnome-terminal -e 'bash -c \"sudo apt-get update; exec bash\"'")
 
+
+class App(tk.Tk):
+  def __init__(self):
+    super().__init__()
+
+    width = 950; height = 600
+    screen_width = self.winfo_screenwidth()
+    screen_height = self.winfo_screenheight()
+    x_cordinate = int((screen_width/2) - (width/2))
+    y_cordinate = int((screen_height/2) - (height/2))
+    self.geometry("{}x{}+{}+{}".format(width, height, x_cordinate, y_cordinate))
+    # configure the root window
+    self.title('My Awesome App')
+    # self.minsize(950, 600)
+    self.resizable(width=False, height=False)
+    # self.eval('tk::PlaceWindow . center')
+
+    # label
+    self.label = ttk.Label(self, text='Hello, Tkinter!')
+    self.label.pack()
+
+    # button
+    self.button = ttk.Button(self, text='Click Me')
+    self.button['command'] = self.button_clicked
+    self.button.pack()
+
+  def button_clicked(self):
+    showinfo(title='Information', message='Hello, Tkinter!')
+
 def main():
-    #open_terminal("Windows", "docker exec -it e08ab8acbf9d57a705537be1ead0b86408b3b4ae9f92477052ad8529f05130ff /bin/bash")
-    open_terminal('Linux')
+    app = App()
+    app.mainloop()
 
 if __name__ == "__main__":
     main()

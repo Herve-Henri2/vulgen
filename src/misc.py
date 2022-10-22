@@ -47,7 +47,7 @@ def open_terminal(_os, command=None):
     The machine's operating system
 
     command: str
-    The command to be executed after the terminal's openingss
+    The command to be executed after the terminal's opening
     '''
     if _os == "Windows":
         if not command:
@@ -61,7 +61,6 @@ def open_terminal(_os, command=None):
         if not command:
             command = "exec bash"
         os.system(f"gnome-terminal -e 'bash -c \"{command}\"'")
-        #os.system("gnome-terminal -e 'bash -c \"sudo apt-get update; exec bash\"'")
 
 if __name__ =="__main__":
     pass
