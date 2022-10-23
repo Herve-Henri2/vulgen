@@ -82,6 +82,15 @@ def LaunchUbuntuContainer():
             print('Going back to the main menu\n')
             main()
 
+# With PyQt6
+def center(self):
+
+    qr = self.frameGeometry()
+    cp = self.screen().availableGeometry().center()
+
+    qr.moveCenter(cp)
+    self.move(qr.topLeft())
+
 def main():
     pass
 
