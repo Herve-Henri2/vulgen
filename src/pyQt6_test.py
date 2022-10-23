@@ -5,6 +5,8 @@ from PyQt6 import QtCore
 
 class MainWindow(QWidget):
 
+    # region =====Initializing=====
+
     def __init__(self):
 
         # We first load the graphical parameters from the configuration
@@ -22,7 +24,7 @@ class MainWindow(QWidget):
         width = 950
         height = 600
         col1 = 0; 
-        col2 = 150; col2_row1 = 0; col2_row2 = 20; col2_row3 = 520; col2_row4 = 540
+        col2 = 180; 
         col3 = 850
 
         # We then start initializing our window
@@ -34,23 +36,43 @@ class MainWindow(QWidget):
 
         # Main textbox
         self.textbox = QPlainTextEdit(self)
-        self.textbox.move(col2, col2_row2)
-        self.textbox.resize(700,400)
+        self.textbox.move(col2, 20)
+        self.textbox.resize(600,400)
         self.textbox.setReadOnly(True)
-        self.textbox.setPlainText("Welcome to our vulnerable environement generator!\n"
-                                  "This application uses docker containers to generate environments you can interact with, please make sure you have docker installed on your machine.")
-        #self.textbox.setText("Welcome to our vulnerable environement generator!\n"
-                             #"This application uses Docker Containers to generate environments you can interact with, please make sure you have docker installed on your machine.")
+        self.textbox.setPlainText("Welcome to our vulnerable environment generator!")
         self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
 
         # Main entry
-        #self.entry = QLineEdit(self)  
-        #self.entry.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; border: 1px solid "#FFFFFF"')
+        self.entry = QLineEdit(self)
+        self.entry.move(col2, 450)
+        self.entry.resize(600, 30)
+        self.entry.setPlaceholderText('Replace this text with your input then press enter')  
+        self.entry.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; border: 1px solid "#FFFFFF"')
 
         # Buttons
+        self.enter_button = QPushButton('Enter', self)
+        self.enter_button.move(col2 + 520, 500)
+        self.enter_button.resize(80, 20)
+        self.enter_button.clicked.connect(self.GetUserInput)
+        self.enter_button.setShortcut('Return')
+        self.enter_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
+    # endregion
 
-        
+    # region =====Graphical Methods=====
+
+    def GetUserInput(self):
+        user_input = self.entry.text()
+        return user_input
+
+    def setText(self, text):
+        self.textbox.setPlainText(text)
+
+    def Write(self, text):
+        self.textbox.appendPlainText(text)
+
+    # endregion
+
 
 
 if __name__ == "__main__":
