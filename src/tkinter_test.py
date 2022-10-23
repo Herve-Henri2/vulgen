@@ -1,4 +1,3 @@
-from cgitb import text
 import tkinter as tk
 from tkinter import ttk
 import config

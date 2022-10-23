@@ -2,7 +2,8 @@ import os
 import config 
 import misc
 import docker
-import subprocess
+import sys
+from pyQt6_test import *
 
 # Documentation link: https://docker-py.readthedocs.io/en/stable/
 configuration = config.Load()
@@ -240,8 +241,15 @@ def main():
                    '------------------------------------------------\n'
                    'Your choice: ')
     HandleUserInput(choice)
+    
+def LaunchApp():
+    app = QApplication(sys.argv)
+    ex = MainWindow()
+    ex.show()
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
-    if InitializeDocker():
-        main()
+    #if InitializeDocker():
+        #main()
+    LaunchApp()
 
