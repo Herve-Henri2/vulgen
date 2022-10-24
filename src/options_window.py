@@ -1,4 +1,3 @@
-from email import message
 from PyQt6.QtWidgets import *
 from PyQt6 import QtCore
 import config
@@ -50,7 +49,8 @@ class OptionsWindow(QDialog):
         self.docker_desktop_entry = QLineEdit(self.docker_client_path, self)
         self.docker_desktop_entry.move(50, 40)
         self.docker_desktop_entry.resize(400, 20)
-        self.docker_desktop_entry.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size}; border: 0px')
+        self.docker_desktop_entry.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font};'
+                                                f'font-size: {text_size}; font-style: italic; border: 0px')
         if self.operating_system != "Windows":
             self.docker_desktop_entry.setEnabled(False)
         
@@ -62,29 +62,45 @@ class OptionsWindow(QDialog):
         self.save_button.clicked.connect(self.Save)
         self.save_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
+        self.browse_button = QPushButton('Browse', self)
+        self.browse_button.move(50, 70)
+        self.browse_button.resize(80, 20)
+        self.browse_button.clicked.connect(self.FileDialog)
+        self.browse_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        if self.operating_system != "Windows":
+            self.docker_desktop_entry.setEnabled(False)
+
     # endregion
 
     # region =====Graphical Methods=====
 
     # endregion
 
+    # region =====General Methods=====
+
+    def FileDialog(self):
+        fname = QFileDialog.getOpenFileName(self, "Select the Docker Desktop.exe file", "", 'All Files (*Desktop.exe)')
+
+        if fname:
+            self.docker_desktop_entry.setText(fname[0])
+
     def Save(self):
 
         allowed_to_close = True
 
         # We check that the docker path entered is correct
-        if self.configuration['docker_desktop'] == "" and self.operating_system == "Windows":
-            if not os.path.exists(self.docker_desktop_entry.text()) or "Docker Desktop.exe" not in self.docker_desktop_entry.text():
-                messagebox = QMessageBox(self)
-                messagebox.resize(200, 200)
-                messagebox.setText("The docker")
-                messagebox.setStyleSheet('background-color: white')
-                messagebox.exec()
-                allowed_to_close = False
+        if not os.path.exists(self.docker_desktop_entry.text()) or "Docker Desktop.exe" not in self.docker_desktop_entry.text():
+            messagebox = QMessageBox(self)
+            messagebox.resize(200, 200)
+            messagebox.setWindowTitle("Invalid Docker Desktop path")
+            messagebox.setText('The Docker Desktop path is invalid! \nPlease select the correct path to "Docker Desktop.exe"\t')
+            messagebox.setStyleSheet('background-color: white')
+            messagebox.exec()
+            allowed_to_close = False
         if allowed_to_close:
+            config.Save('docker_desktop', self.docker_desktop_entry)
+            self.parent.update()
             self.close()
-
-    # region =====General Methods=====
 
     #endregion
 

@@ -41,9 +41,8 @@ class MainWindow(QWidget):
         super().__init__()
         self.initUI(background_color, textbox_color, buttons_color, text_color, text_font, text_size, width, height, col1, col2, col3)
 
-        # Initializing Docker
-        if self.InitializeDocker():
-            pass
+        if self.operating_system == "Windows":
+            self.DetectDockerDesktopPath()
 
 
     def initUI(self, background_color, textbox_color, buttons_color, text_color, text_font, text_size, width, height, col1, col2, col3):
@@ -81,6 +80,13 @@ class MainWindow(QWidget):
         self.enter_button.clicked.connect(self.OpenOptions)
         self.enter_button.setShortcut('o')
         self.enter_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+
+        self.about_button = QPushButton('About', self)
+        self.about_button.move(col3, 60)
+        self.about_button.resize(80, 20)
+        self.about_button.clicked.connect(self.ShowAbout)
+        self.about_button.setShortcut('a')
+        self.about_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
     def DockerServiceRunning(self):
         '''
@@ -123,27 +129,25 @@ class MainWindow(QWidget):
                             self.Write(ex)
                             return service_running
 
-    def InitializeDocker(self):
+    def DetectDockerDesktopPath(self):
+        possible_paths = ['C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe', 'C:\\Program Files (x86)\\Docker\\Docker\\Docker Desktop.exe']
+        for path in possible_paths:
+            if os.path.exists(path):
+                self.docker_client_path = path
+                config.Save('docker_desktop', path)
 
-        def DetectDockerDesktopPath():
-            possible_paths = ['C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe', 'C:\\Program Files (x86)\\Docker\\Docker\\Docker Desktop.exe']
-            for path in possible_paths:
-                if os.path.exists(path):
-                    return path
+    def DockerInitSuccess(self):
 
         # Set the "Docker Desktop.exe" path for the Windows users if it hasn't been set yet
         if self.docker_client_path == "" and self.operating_system == "Windows":
-            self.docker_client_path = DetectDockerDesktopPath()
-            if not self.docker_client_path:
-                self.Write('Could not detect Docker Desktop, you need to have it installed to use this application.\n' 
-                           'If you did install it, please open up the options window and enter the path of "Docker Desktop.exe".')
-                # TODO Handle the input
-            config.Save('docker_desktop', self.docker_client_path)
+            self.Write('Could not detect Docker Desktop, you need to have it installed to use this application.\n' 
+                        'If you did install it, please open up the options window and enter the path of "Docker Desktop.exe".')
+            return False
         if not self.DockerServiceRunning():
             self.Write('Could not launch the docker service.')
             return False
         self.docker_client = docker.from_env()
-        return True
+        return True  
 
     # endregion
 
@@ -163,6 +167,11 @@ class MainWindow(QWidget):
         self.options = OptionsWindow(parent=self)
         self.options.exec()
 
+    def ShowAbout(self):
+        about_text = ("Coded by ESILV students, this application aims at training and educating yourself in cybersecurity.\n"
+                      "With the help of docker containers, vulnerable environments are generated for you to launch an attack or exploit a vulnerability.\n"
+                      "The code is open source at github.com/Herve-Henri2/vulgen, under the GPL3 License.")
+        self.setText(about_text)
 
 
     # endregion

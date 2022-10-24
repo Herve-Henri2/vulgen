@@ -50,6 +50,7 @@ def Load():
     if not os.path.exists(config_file):
         with open(config_file, 'w') as file:
             file.write(json.dumps(configuration))
+            return configuration
 
     with open(config_file, 'r') as file:
         config = json.load(file)
