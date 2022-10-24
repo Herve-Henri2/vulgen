@@ -138,7 +138,7 @@ class MainWindow(QWidget):
                 self.Write('Could not detect Docker Desktop, you need to have it installed to use this application.\n' 
                            'If you did install it, please open up the options window and enter the path of "Docker Desktop.exe".')
                 # TODO Handle the input
-                # config.Save('docker_desktop', self.docker_client_path)
+            config.Save('docker_desktop', self.docker_client_path)
         if not self.DockerServiceRunning():
             self.Write('Could not launch the docker service.')
             return False
@@ -153,14 +153,6 @@ class MainWindow(QWidget):
         self.user_input = self.entry.text()
         self.entry.setText(" ")
 
-    def closeEvent(self, event):
-        widgetList = QApplication.topLevelWidgets()
-        numWindows = len(widgetList)
-        if numWindows > 1:
-            event.accept()
-        else:
-            event.ignore()
-
     def setText(self, text):
         self.textbox.setPlainText(text)
 
@@ -168,7 +160,7 @@ class MainWindow(QWidget):
         self.textbox.appendPlainText(text)
 
     def OpenOptions(self):
-        self.options = OptionsWindow()
+        self.options = OptionsWindow(parent=self)
         self.options.exec()
 
 
