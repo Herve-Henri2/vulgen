@@ -3,7 +3,6 @@ import config
 import misc
 import docker
 import sys
-from pyQt6_test import *
 
 # Documentation link: https://docker-py.readthedocs.io/en/stable/
 configuration = config.Load()

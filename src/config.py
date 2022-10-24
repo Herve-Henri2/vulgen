@@ -8,7 +8,7 @@ config_file = "config.json"
 # Config variables
 
 variables_list = ['operating_system', 'docker_desktop', 'main_window_background_color', 'main_window_textbox_color',
-                  'main_window_buttons_color', 'text_color', 'text_font', 'text_size']
+                  'main_window_buttons_color', 'options_window_background_color','text_color', 'text_font', 'text_size']
 
 configuration['operating_system'] = platform.system()
 configuration['docker_desktop'] = ""
@@ -16,6 +16,7 @@ configuration['docker_desktop'] = ""
 configuration['main_window_background_color'] = '#202266'
 configuration['main_window_textbox_color'] = '#3D3F6E'
 configuration['main_window_buttons_color'] = '#5D63A6'
+configuration['options_window_background_color'] = '#282A69'
 configuration['text_color'] = '#FFFFFF'
 configuration['text_font'] = 'Consolas'
 configuration['text_size'] = '12'
