@@ -16,6 +16,19 @@ class MainWindow(QWidget):
     operating_system = configuration['operating_system']
     docker_client_path = configuration['docker_desktop']
     docker_client = None
+    welcome_text = ("Welcome to our vulnerable environment generator!\n"
+                    "To use the application, check out the buttons on the left side.\n\n"
+                    "Here is some useful information you need to know:\n"
+                    "* This application is only supported on Linux and Windows distributions (sorry Mac users!) "
+                    "If you are using it on a windows machine, you need to have Docker Desktop installed. "
+                    "You can check if the application properly detected the executable path in the options window.\n"
+                    "* You can start testing yourself by clicking on the \"Launch Scenario\" button, we provide a detailed "
+                    "description as well as hints to help you beat each challenge. If you are stuck, you can always check for"
+                    "the solution by [undefined for now].\n"
+                    "* The default shortcuts are: \n"
+                    "h -> back to home (this layout)\n"
+                    "o -> open up the options window\n"
+                    "a -> show more details regarding this project's story")
 
     def __init__(self):
 
@@ -49,14 +62,14 @@ class MainWindow(QWidget):
 
         self.setWindowTitle('Vulnerable Environment Generator')
         self.setFixedSize(width, height)
-        self.setStyleSheet(f'background-color: {background_color}')
+        self.setStyleSheet(f'background-color: {background_color};')
 
         # Main textbox
         self.textbox = QPlainTextEdit(self)
         self.textbox.move(col2, 20)
         self.textbox.resize(600,400)
         self.textbox.setReadOnly(True)
-        self.textbox.setPlainText("Welcome to our vulnerable environment generator!")
+        self.textbox.setPlainText(self.welcome_text)
         self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
 
         # Main entry
@@ -87,6 +100,47 @@ class MainWindow(QWidget):
         self.about_button.clicked.connect(self.ShowAbout)
         self.about_button.setShortcut('a')
         self.about_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+
+        self.home_button = QPushButton('Home', self)
+        self.home_button.move(col1 + 20, 20)
+        self.home_button.resize(80, 20)
+        self.home_button.clicked.connect(self.ShowHome)
+        self.home_button.setShortcut('h')
+        self.home_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+
+  
+
+    # endregion
+
+    # region =====Graphical Methods=====
+
+    def GetUserInput(self):
+        self.user_input = self.entry.text()
+        self.entry.setText(" ")
+
+    def setText(self, text):
+        self.textbox.setPlainText(text)
+
+    def Write(self, text):
+        self.textbox.appendPlainText(text)
+
+    def OpenOptions(self):
+        self.options = OptionsWindow(parent=self)
+        self.options.exec()
+
+    def ShowAbout(self):
+        about_text = ("Coded by ESILV students, this application aims at training and educating yourself in cybersecurity.\n"
+                      "With the help of docker containers, vulnerable environments are generated for you to launch an attack or exploit a vulnerability.\n"
+                      "The code is open source at github.com/Herve-Henri2/vulgen, under the GPL3 License.")
+        self.setText(about_text)
+
+    def ShowHome(self):
+        self.setText(self.welcome_text)
+
+
+    # endregion
+
+    # region =====Main Methods=====
 
     def DockerServiceRunning(self):
         '''
@@ -130,6 +184,9 @@ class MainWindow(QWidget):
                             return service_running
 
     def DetectDockerDesktopPath(self):
+        '''
+        Tries to locate the path of the Docker Desktop executable (windows only)
+        '''
         possible_paths = ['C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe', 'C:\\Program Files (x86)\\Docker\\Docker\\Docker Desktop.exe']
         for path in possible_paths:
             if os.path.exists(path):
@@ -147,39 +204,8 @@ class MainWindow(QWidget):
             self.Write('Could not launch the docker service.')
             return False
         self.docker_client = docker.from_env()
-        return True  
-
-    # endregion
-
-    # region =====Graphical Methods=====
-
-    def GetUserInput(self):
-        self.user_input = self.entry.text()
-        self.entry.setText(" ")
-
-    def setText(self, text):
-        self.textbox.setPlainText(text)
-
-    def Write(self, text):
-        self.textbox.appendPlainText(text)
-
-    def OpenOptions(self):
-        self.options = OptionsWindow(parent=self)
-        self.options.exec()
-
-    def ShowAbout(self):
-        about_text = ("Coded by ESILV students, this application aims at training and educating yourself in cybersecurity.\n"
-                      "With the help of docker containers, vulnerable environments are generated for you to launch an attack or exploit a vulnerability.\n"
-                      "The code is open source at github.com/Herve-Henri2/vulgen, under the GPL3 License.")
-        self.setText(about_text)
-
-
-    # endregion
-
-    # region =====Main Methods=====
+        return True            
             
-            
-
     # endregion
 
 if __name__ == "__main__":

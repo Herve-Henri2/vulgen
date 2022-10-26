@@ -107,9 +107,13 @@ class App(tk.Tk):
   def button_clicked(self):
     showinfo(title='Information', message='Hello, Tkinter!')
 
+def test_json_array():
+    empty = []
+    with open("test.json", 'w') as file:
+        json.dump(empty, file)
+
 def main():
-    app = App()
-    app.mainloop()
+    test_json_array()
 
 if __name__ == "__main__":
     main()

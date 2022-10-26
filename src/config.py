@@ -40,7 +40,7 @@ def CheckForMissingFields(func):
 
 # Load and Save the configuration
 @CheckForMissingFields
-def Load():
+def Load() -> dict:
     '''
     Returns the content of the configuration file (dictionnary json format)
     '''
