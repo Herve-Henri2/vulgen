@@ -1,7 +1,7 @@
 import os
 import config 
 import misc
-import docker
+import docker 
 import subprocess
 
 # Documentation link: https://docker-py.readthedocs.io/en/stable/
@@ -26,31 +26,29 @@ def DockerServiceRunning():
         return service_running
 
     while not service_running:
+        tries += 1
         try:
             docker.from_env()
             service_running = True
             return service_running
         except Exception as ex:
+            if tries == 10:
+                print(ex)
+                break
             if operating_system == "Windows":
-                if tries == 10:
-                    return
                 if not misc.ProcessRunning('Docker Desktop'):
                     try:
                         print('Starting Docker Desktop, please wait...')
                         os.popen(f'{docker_client_path}')
                         misc.unallowWindowOpening('Docker Desktop')
-                        tries += 1
                     except Exception as ex:
                         print(ex)
                         return service_running
             elif operating_system == "Linux":
-                if tries == 10:
-                    return
                 if not misc.ProcessRunning('dockerd'):
                     try:
                         print('Starting the docker service, please wait...')
                         os.popen('systemctl start docker')
-                        tries += 1
                     except Exception as ex:
                         print(ex)
                         return service_running
