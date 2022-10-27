@@ -1,5 +1,7 @@
 import sys
 import os
+
+from typer import CallbackParam
 import config
 import docker
 import misc
@@ -48,7 +50,7 @@ class MainWindow(QWidget):
         col3 = 820
 
         # Defining other variables
-        self.user_input = None
+        self.function_running = False
 
         # We then start initializing our window
         super().__init__()
@@ -108,6 +110,17 @@ class MainWindow(QWidget):
         self.home_button.setShortcut('h')
         self.home_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
+        self.show_images_button = QPushButton('Show Images', self)
+        self.show_images_button.move(col1 + 20, 60)
+        self.show_images_button.resize(100, 20)
+        self.show_images_button.clicked.connect(self.ShowImages)
+        self.show_images_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+
+        self.show_containers_button = QPushButton('Show Containers', self)
+        self.show_containers_button.move(col1 + 20, 100)
+        self.show_containers_button.resize(120, 20)
+        self.show_containers_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+
   
 
     # endregion
@@ -118,11 +131,25 @@ class MainWindow(QWidget):
         self.user_input = self.entry.text()
         self.entry.setText(" ")
 
-    def setText(self, text):
+    def setText(self, text : str):
         self.textbox.setPlainText(text)
 
-    def Write(self, text):
+    def Write(self, text : str):
         self.textbox.appendPlainText(text)
+
+    def DisableAllButtons(self, *exceptions : QPushButton):
+        for attribute in self.__dict__:
+            if 'button' in attribute:
+                button = getattr(self, attribute)
+                if button not in exceptions:
+                    button.setEnabled(False)
+
+    def EnableAllButtons(self, *exceptions : QPushButton):
+        for attribute in self.__dict__:
+            if 'button' in attribute:
+                button = getattr(self, attribute)
+                if button not in exceptions:
+                    button.setEnabled(True)           
 
     def OpenOptions(self):
         self.options = OptionsWindow(parent=self)
@@ -161,7 +188,7 @@ class MainWindow(QWidget):
             except Exception as ex:
                 if self.operating_system == "Windows":
                     if tries == 10:
-                        return
+                        return service_running
                     if not misc.ProcessRunning('Docker Desktop'):
                         try:
                             self.Write('Starting Docker Desktop, please wait...')
@@ -173,7 +200,7 @@ class MainWindow(QWidget):
                             return service_running
                 elif self.operating_system == "Linux":
                     if tries == 10:
-                        return
+                        return service_running
                     if not misc.ProcessRunning('dockerd'):
                         try:
                             self.Write('Starting the docker service, please wait...')
@@ -206,6 +233,10 @@ class MainWindow(QWidget):
         self.docker_client = docker.from_env()
         return True            
             
+    def ShowImages(self):
+        if self.DockerInitSuccess():
+            print('nice!')
+    
     # endregion
 
 if __name__ == "__main__":

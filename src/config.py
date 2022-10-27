@@ -1,6 +1,9 @@
 import json
 import os
 import platform
+import time
+
+from requests import JSONDecodeError, delete
 
 configuration = {}
 config_file = "config.json"
@@ -31,10 +34,11 @@ def CheckForMissingFields(func):
     
     def wrapper(*args, **kwargs):
         config_json = func(*args, **kwargs)
-        for variable in variables_list:
-            if variable not in config_json:
-                config_json[variable] = configuration[variable]
-                Save(variable, configuration[variable])
+        if config_json is not None:
+            for variable in variables_list:
+                if variable not in config_json:
+                    config_json[variable] = configuration[variable]
+                    Save(variable, configuration[variable])
         return config_json
     return wrapper
 
@@ -44,17 +48,17 @@ def Load() -> dict:
     '''
     Returns the content of the configuration file (dictionnary json format)
     '''
-    global configuration
-
-    # If there is no config.json file, we write it
-    if not os.path.exists(config_file):
-        with open(config_file, 'w') as file:
-            file.write(json.dumps(configuration))
-            return configuration
-
-    with open(config_file, 'r') as file:
-        config = json.load(file)
-        return config
+    try: 
+        with open(config_file, 'r') as file:
+            config = json.load(file)
+            return config
+    except FileNotFoundError:
+        Reset()
+        return configuration
+    except json.decoder.JSONDecodeError:
+        # TODO add log 
+        Reset()
+        return configuration
 
 def Save(config_name, config_value):
     '''

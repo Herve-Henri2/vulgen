@@ -69,7 +69,6 @@ class OptionsWindow(QDialog):
         self.browse_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         if self.operating_system != "Windows":
             self.docker_desktop_entry.setEnabled(False)
-            self.browse_button.setEnabled(False)
 
     # endregion
 
@@ -82,7 +81,7 @@ class OptionsWindow(QDialog):
     def FileDialog(self):
         fname = QFileDialog.getOpenFileName(self, "Select the Docker Desktop.exe file", "", 'All Files (*Desktop.exe)')
 
-        if fname[0]:
+        if fname:
             self.docker_desktop_entry.setText(fname[0])
 
     def Save(self):
@@ -99,7 +98,7 @@ class OptionsWindow(QDialog):
             messagebox.exec()
             allowed_to_close = False
         if allowed_to_close:
-            config.Save('docker_desktop', self.docker_desktop_entry)
+            config.Save('docker_desktop', self.docker_desktop_entry.text())
             self.close()
 
     #endregion
