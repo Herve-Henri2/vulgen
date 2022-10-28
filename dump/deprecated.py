@@ -91,6 +91,13 @@ def center(self):
     qr.moveCenter(cp)
     self.move(qr.topLeft())
 
+def AsyncTest(self):
+    worker = AsyncTask(self.ShowImages)
+    self.threads.append(worker)
+    self.threads[0].start()
+
+# Check https://www.pythonguis.com/tutorials/multithreading-pyqt-applications-qthreadpool/
+
 def main():
     pass
 

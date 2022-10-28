@@ -1,13 +1,38 @@
 import sys
 import os
-
-from typer import CallbackParam
 import config
 import docker
+import functools
 import misc
 from PyQt6.QtWidgets import *
-from PyQt6 import QtCore
+from PyQt6.QtCore import *
 from options_window import *
+
+class AsyncTask(QThread):
+
+    finished = pyqtSignal()
+    #error = pyqtSignal(tuple)
+    #result = pyqtSignal(object)
+
+    def __init__(self, func, *args, **kwargs):
+        super(AsyncTask, self).__init__()
+
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    @pyqtSlot()
+    def run(self):
+        try:
+            self.func(*self.args, **self.kwargs)
+            #result = self.func(*self.args, **self.kwargs)
+            #if result is not None:
+                #self.result.emit(result)
+        except Exception as ex:
+            print(ex)
+            #self.error.emit(ex.__str__, ex.__traceback__)
+        finally:
+            self.finished.emit()
 
 class MainWindow(QWidget):
 
@@ -50,7 +75,7 @@ class MainWindow(QWidget):
         col3 = 820
 
         # Defining other variables
-        self.function_running = False
+        # Nothing for now
 
         # We then start initializing our window
         super().__init__()
@@ -58,7 +83,6 @@ class MainWindow(QWidget):
 
         if self.operating_system == "Windows":
             self.DetectDockerDesktopPath()
-
 
     def initUI(self, background_color, textbox_color, buttons_color, text_color, text_font, text_size, width, height, col1, col2, col3):
 
@@ -89,12 +113,12 @@ class MainWindow(QWidget):
         self.enter_button.setShortcut('Return')
         self.enter_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
-        self.enter_button = QPushButton('Options', self)
-        self.enter_button.move(col3, 20)
-        self.enter_button.resize(80, 20)
-        self.enter_button.clicked.connect(self.OpenOptions)
-        self.enter_button.setShortcut('o')
-        self.enter_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        self.options_button = QPushButton('Options', self)
+        self.options_button.move(col3, 20)
+        self.options_button.resize(80, 20)
+        self.options_button.clicked.connect(self.OpenOptions)
+        self.options_button.setShortcut('o')
+        self.options_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.about_button = QPushButton('About', self)
         self.about_button.move(col3, 60)
@@ -119,9 +143,8 @@ class MainWindow(QWidget):
         self.show_containers_button = QPushButton('Show Containers', self)
         self.show_containers_button.move(col1 + 20, 100)
         self.show_containers_button.resize(120, 20)
+        self.show_containers_button.clicked.connect(self.ShowContainers)
         self.show_containers_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
-
-  
 
     # endregion
 
@@ -133,6 +156,9 @@ class MainWindow(QWidget):
 
     def setText(self, text : str):
         self.textbox.setPlainText(text)
+
+    def Clear(self):
+        self.textbox.setPlainText("")
 
     def Write(self, text : str):
         self.textbox.appendPlainText(text)
@@ -168,6 +194,63 @@ class MainWindow(QWidget):
     # endregion
 
     # region =====Main Methods=====
+
+    def Asynchronous(func):
+        def wrapper(*args, **kwargs):
+            worker = AsyncTask(func, *args, **kwargs)
+            func.__worker = worker
+            worker.start()
+        return wrapper
+
+    def get_image_name(self, image_tag):
+        image_tag=str(image_tag)
+        return image_tag.replace("<bound method Image.tag of <Image: '", '').replace("'>>", '').replace("<Image: '",'').replace("'>", '')
+
+    def image_in(self, images, wanted_image_name):
+        '''
+        Checks whether or not an image list contains a specific image.
+        '''
+        for image in images:
+            image_name = self.get_image_name(image.tag)
+            if wanted_image_name in image_name:
+                return True
+        return False
+
+    def container_in(self, containers, wanted_container_image_name):
+        '''
+        Checks whether or not a container list contains a specific container based on the container's image name.
+        '''
+        for container in containers:
+            container_image_name = self.get_image_name(container.image)
+            if wanted_container_image_name in container_image_name:
+                return True
+        return False
+
+    def get_image(self, images, image_name):
+        '''
+        Searches for an image in an image list based on the image's name.
+
+        Returns: docker.image object
+        '''
+        if not self.image_in(images, image_name):
+            #print(f"There is no image corresponding to {image_name}")
+            return
+        for index, image in enumerate(images):
+            if image_name in self.get_image_name(image.tag):
+                return image, index
+
+    def get_container(self, containers, container_image_name):
+        '''
+        Searches for a container object in a container list based on the container's image name.
+
+        Returns: docker.container object
+        '''
+        if not self.container_in(containers, container_image_name):
+            #print(f"No {container_image_name} container was found")
+            return
+        for index, container in enumerate(containers):
+            if container_image_name in self.get_image_name(container.image):
+                return container, index
 
     def DockerServiceRunning(self):
         '''
@@ -232,11 +315,29 @@ class MainWindow(QWidget):
             return False
         self.docker_client = docker.from_env()
         return True            
-            
-    def ShowImages(self):
-        if self.DockerInitSuccess():
-            print('nice!')
     
+    @Asynchronous
+    def ShowImages(self, *args, **kwargs):
+        self.Clear()
+        self.DisableAllButtons(self.options_button)
+        if self.DockerInitSuccess():
+            self.Write('Images list:')
+            images = self.docker_client.images.list()
+            for image in images: 
+                self.Write(f'{image.short_id.replace("sha256:", "")} - {self.get_image_name(image.tag)}')
+        self.EnableAllButtons()
+
+    @Asynchronous
+    def ShowContainers(self, *args, **kwargs):
+        self.Clear()
+        self.DisableAllButtons(self.options_button)
+        if self.DockerInitSuccess():
+            self.Write('Containers list:')
+            containers = self.docker_client.containers.list(all=True)
+            for container in containers: 
+                self.Write(f'{container.name} - {container.short_id} - {self.get_image_name(container.image)} - {container.status}')
+        self.EnableAllButtons()
+
     # endregion
 
 if __name__ == "__main__":
