@@ -7,7 +7,7 @@ xenial-python-c/create_img.sh
 docker rm $(docker ps -a -q)
 
 # Retrieve id of old image
-old_img=$(docker images | grep python_test)
+old_img=$(docker images | grep dirty_cow)
 echo -e ${old_img// /'\n'} > tmp1.txt
 
 echo -e $(docker images -q) > tmp2.txt
