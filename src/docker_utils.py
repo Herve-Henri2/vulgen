@@ -158,7 +158,7 @@ def CreateContainer():
             image = FetchImage()
         elif choice.isdigit():
             choice = int(choice) - 1
-            if choice >= 0 and choice < len(containers):
+            if choice >= 0 and choice < len(images):
                 image = images[choice]
             else:
                 error("Your choice is out of range...")
@@ -170,7 +170,7 @@ def CreateContainer():
             choice = None
     
     if image != None:
-        return docker_client.containers.create(image.tags[0])
+        return docker_client.containers.create(image.tags[0], stdin_open=True, tty=True) #stdion_open and tty = True <=> docker create -it
     else:
         error("No valid image could be found...")
 
