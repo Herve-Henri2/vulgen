@@ -1,5 +1,8 @@
 #! /usr/bin/bash
 
+# Create the required image if not already done
+xenial-python/create_img.sh
+
 # Delete all containers
 docker rm $(docker ps -a -q)
 
@@ -19,8 +22,8 @@ rm tmp1.txt tmp2.txt
 docker rmi $id
 
 # Create the new image
-docker image build -t python_test:latest .
+docker image build -t python_test:latest python_test
 
 # Run the new image
 #clear
-docker run -it python_test:latest
+#docker run -it python_test:latest

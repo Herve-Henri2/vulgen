@@ -1,4 +1,4 @@
-FROM ubuntu-python:16.04-3.5
+FROM xenial-python:xenial-3.5
 
 WORKDIR /usr/app/src
 
