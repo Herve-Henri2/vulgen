@@ -1,4 +1,5 @@
 from curses.ascii import isdigit
+from distutils.sysconfig import customize_compiler
 import os
 import docker
 from misc import *
@@ -112,6 +113,48 @@ def DisplayContainers():
     for index,container in enumerate(containers):
         print(f"    {index + 1}: {container.name} - {container.short_id} - {container.image.tags[0]} - {container.status}")
     print('\n')
+
+
+def BuildCustomImage():
+    '''
+    Builds a custom image from the docker_images folder.
+    '''
+    path = os.path.realpath(os.path.dirname(__file__)) + "/../docker_images"  # this script absolute path + path to docker_images from this script
+    custom_images_paths = [sub[0] for sub in list(os.walk(path))[1:]]
+    custom_images = []
+    for img_path in custom_images_paths:
+        custom_images.append(img_path.split('/')[-1])
+    
+    print('Custom images list :')
+    for i in range(len(custom_images)):
+        print(f'    {i + 1}: ' + custom_images[i])
+    print('\n')
+    
+    choice = None
+    image = None    
+    while(choice == None):
+        print("You can build a new custom image by entering its index.")
+        print("Enter 'exit' to return to the menu.\n")
+        choice = input("\n> ").lower()
+        
+        if choice.isdigit():
+            choice = int(choice) - 1
+            if choice >= 0 and choice < len(custom_images):
+                image = custom_images[choice]
+            else:
+                error("Your choice is out of range...")
+                choice = None
+        elif choice == "exit":
+            return
+        else:
+            error("Invalid input...")
+            choice = None
+    
+    if image != None:
+        command = f"cd {path};{image}/create_img.sh"
+        open_terminal(command)
+    else:
+        error("No valid image could be found...")
 
 
 def FetchImage():
