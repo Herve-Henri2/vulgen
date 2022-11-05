@@ -96,7 +96,61 @@ def AsyncTest(self):
     self.threads.append(worker)
     self.threads[0].start()
 
+def ShowImages(self, *args, **kwargs):
+    self.Clear()
+    self.DisableAllButtons(self.options_button)
+    if self.DockerInitSuccess():
+        self.Write('Images list:')
+        images = self.docker_client.images.list()
+        for image in images: 
+            self.Write(f'{image.short_id.replace("sha256:", "")} - {self.get_image_name(image.tag)}')
+    self.EnableAllButtons()
+
+def ShowContainers(self, *args, **kwargs):
+    self.Clear()
+    self.DisableAllButtons(self.options_button)
+    if self.DockerInitSuccess():
+        self.Write('Containers list:')
+        containers = self.docker_client.containers.list(all=True)
+        for container in containers: 
+            self.Write(f'{container.name} - {container.short_id} - {self.get_image_name(container.image)} - {container.status}')
+    self.EnableAllButtons()
+
 # Check https://www.pythonguis.com/tutorials/multithreading-pyqt-applications-qthreadpool/
+
+class AsyncTask(QThread):
+
+    finished = pyqtSignal()
+    #error = pyqtSignal(tuple)
+    #result = pyqtSignal(object)
+
+    def __init__(self, func, *args, **kwargs):
+        super(AsyncTask, self).__init__()
+
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    @pyqtSlot()
+    def run(self):
+        try:
+            self.func(*self.args, **self.kwargs)
+            #result = self.func(*self.args, **self.kwargs)
+            #if result is not None:
+                #self.result.emit(result)
+        except Exception as ex:
+            print(ex)
+            #self.error.emit(ex.__str__, ex.__traceback__)
+        finally:
+            self.finished.emit()
+
+# /!\ Never use that decorator on functions that update the GUI, only on background calculations and processes!
+def Asynchronous(func):
+    def wrapper(*args, **kwargs):
+        worker = AsyncTask(func, *args, **kwargs)
+        func.__worker = worker
+        worker.start()
+    return wrapper
 
 def main():
     pass

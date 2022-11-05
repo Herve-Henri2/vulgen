@@ -18,7 +18,7 @@ class OptionsWindow(QDialog):
 
         # We define a few graphical variables from the configuration
 
-        background_color = self.configuration['options_window_background_color']
+        background_color = self.configuration['child_window_background_color']
         textbox_color = self.configuration['main_window_textbox_color']
         buttons_color = self.configuration['main_window_buttons_color']
         text_color = self.configuration['text_color']

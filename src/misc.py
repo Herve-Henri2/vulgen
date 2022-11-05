@@ -56,7 +56,7 @@ def open_terminal(_os, command=None):
             file.write("@echo off\n"
                        "color 09\n"
                        f"powershell {command}")
-        subprocess.call('terminal.bat', creationflags=subprocess.CREATE_NEW_CONSOLE)
+        subprocess.Popen('terminal.bat', creationflags=subprocess.CREATE_NEW_CONSOLE)
     elif _os == "Linux":
         if not command:
             command = "exec bash"

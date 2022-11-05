@@ -20,7 +20,7 @@ def Load() -> dict:
     if not os.path.exists(scenarios_file):
         with open(scenarios_file, 'w') as file:
             file.write(json.dumps(scenarios))
-            return scenarios
+        CreateDefault()
 
     with open(scenarios_file, 'r') as file:
         _scenarios = json.load(file)
@@ -71,6 +71,32 @@ def Save(Scenario : Scenario):
 
     return scenarios
 
+def CreateDefault():
+    '''
+    Function that writes all the default scenarios into the scenarios file.
+    '''
+    
+    # Scenario 1 : log4shell
+    name = 'log4shell'
+    base = 'ghcr.io/christophetd/log4shell-vulnerable-app'
+    description = ('Also known as CVE-2021-44228, log4shell is a zero-day software vulnerability in Apache Log4j2, a popular Java library used for logging purposes in applications.\n'
+                   'This vulnerability enables a remote attacker to take control of a device on the internet if the device is running certain unpatched versions of Log4j2.\n'
+                   'In December 2021, Apache had to release up to 4 corrective patches to fully close the breach. It is believed that malicious actors likely knew about the vulnerability'
+                   ' and exploited it before experts did, hence why it is considered zero-day.')
+    images = {}
+    images['main'] = {}
+    images['main']['name'] = base
+    images['main']['interaction'] = 'browser'
+    images['main']['ports'] = {"8080/tcp":8080}
+    images['main']['download_link'] = None
+    images['other'] = []
+    cve = 'CVE-2021-44228'
+    type = 'Remote Code Execution'
+    sources = ['https://www.dynatrace.com/news/blog/what-is-log4shell/', 'https://en.wikipedia.org/wiki/Log4Shell', 'https://github.com/christophetd/log4shell-vulnerable-app']
+    scenario = Scenario(name, description, base, images, cve, type, sources)
+    Save(scenario)
+
+
 def Parse(_json : dict) -> Scenario:
     '''
     Instanciates a Scenario object from a json string.
@@ -83,9 +109,11 @@ def Parse(_json : dict) -> Scenario:
     desc = _json['description']
     base = _json['base']
     images = _json['images']
+    cve = _json['CVE']
     type = _json['type']
+    sources = _json['sources']
 
-    scen = Scenario(name, desc, base, images, type)
+    scen = Scenario(name, desc, base, images, cve, type, sources)
     return scen
 
 def LoadScenario(name : str) -> Scenario:
@@ -112,5 +140,7 @@ def test_retrieving_scenario():
 # endregion
 
 if __name__ == "__main__":
-    test_saving_scenarios()
+    #test_saving_scenarios()
     #test_retrieving_scenario()
+    scen = Load()
+    print(json.dumps(scen, indent=3))

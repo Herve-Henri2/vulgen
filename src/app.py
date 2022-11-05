@@ -1,38 +1,16 @@
+from pydoc import doc
 import sys
 import os
 import config
 import docker
-import functools
+import scenarios
 import misc
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from options_window import *
+from scenarios_window import *
 
-class AsyncTask(QThread):
 
-    finished = pyqtSignal()
-    #error = pyqtSignal(tuple)
-    #result = pyqtSignal(object)
-
-    def __init__(self, func, *args, **kwargs):
-        super(AsyncTask, self).__init__()
-
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
-
-    @pyqtSlot()
-    def run(self):
-        try:
-            self.func(*self.args, **self.kwargs)
-            #result = self.func(*self.args, **self.kwargs)
-            #if result is not None:
-                #self.result.emit(result)
-        except Exception as ex:
-            print(ex)
-            #self.error.emit(ex.__str__, ex.__traceback__)
-        finally:
-            self.finished.emit()
 
 class MainWindow(QWidget):
 
@@ -75,14 +53,19 @@ class MainWindow(QWidget):
         col3 = 820
 
         # Defining other variables
-        # Nothing for now
+        self.threads = []
 
         # We then start initializing our window
         super().__init__()
         self.initUI(background_color, textbox_color, buttons_color, text_color, text_font, text_size, width, height, col1, col2, col3)
 
-        if self.operating_system == "Windows":
+        if self.operating_system == "Windows" :
             self.DetectDockerDesktopPath()
+
+        if not self.DockerServiceRunning():
+            self.StartDocker()
+        self.Write(self.welcome_text)
+
 
     def initUI(self, background_color, textbox_color, buttons_color, text_color, text_font, text_size, width, height, col1, col2, col3):
 
@@ -95,7 +78,6 @@ class MainWindow(QWidget):
         self.textbox.move(col2, 20)
         self.textbox.resize(600,400)
         self.textbox.setReadOnly(True)
-        self.textbox.setPlainText(self.welcome_text)
         self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
 
         # Main entry
@@ -146,6 +128,18 @@ class MainWindow(QWidget):
         self.show_containers_button.clicked.connect(self.ShowContainers)
         self.show_containers_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
+        self.scenarios_button = QPushButton('Scenarios', self)
+        self.scenarios_button.move(col1 + 20, 140)
+        self.scenarios_button.resize(120, 20)
+        self.scenarios_button.clicked.connect(self.OpenScenarios)
+        self.scenarios_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+
+        self.scenarios_button = QPushButton('Test', self)
+        self.scenarios_button.move(col1 + 20, 180)
+        self.scenarios_button.resize(120, 20)
+        self.scenarios_button.clicked.connect(self.Test)
+        self.scenarios_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+
     # endregion
 
     # region =====Graphical Methods=====
@@ -175,8 +169,8 @@ class MainWindow(QWidget):
             if 'button' in attribute:
                 button = getattr(self, attribute)
                 if button not in exceptions:
-                    button.setEnabled(True)           
-
+                    button.setEnabled(True)  
+                             
     def OpenOptions(self):
         self.options = OptionsWindow(parent=self)
         self.options.exec()
@@ -190,16 +184,29 @@ class MainWindow(QWidget):
     def ShowHome(self):
         self.setText(self.welcome_text)
 
+    def OpenScenarios(self):
+        self.scenarios_window = ScenariosWindow(parent=self)
+        self.scenarios_window.exec()
+
 
     # endregion
 
     # region =====Main Methods=====
 
-    def Asynchronous(func):
-        def wrapper(*args, **kwargs):
-            worker = AsyncTask(func, *args, **kwargs)
-            func.__worker = worker
-            worker.start()
+    def CheckForDocker(func):
+        '''
+        Decorating function for any method that requires the docker service.
+        '''
+        def wrapper(self, *args, **kwargs):
+            if not self.DockerServiceRunning():
+                self.setText('It looks like docker is not running on your machine, please make sure you have docker installed or Docker Desktop if you are on Windows.\n'
+                'You may need to save the path your Docker Desktop.exe in the options window then restart the application.')
+            else:
+                self.docker_client = docker.from_env()
+                try:
+                    func(self)
+                except TypeError:
+                    func(self, *args, **kwargs)
         return wrapper
 
     def get_image_name(self, image_tag):
@@ -252,47 +259,6 @@ class MainWindow(QWidget):
             if container_image_name in self.get_image_name(container.image):
                 return container, index
 
-    def DockerServiceRunning(self):
-        '''
-        Checks if docker is running on the local computer, and tries to launch it if not.
-        '''
-        service_running = False
-        tries = 0
-
-        if self.operating_system == "Darwin":
-            self.Write('This program is not supported on Mac OS.')
-            return service_running
-
-        while not service_running:
-            try:
-                docker.from_env()
-                service_running = True
-                return service_running
-            except Exception as ex:
-                if self.operating_system == "Windows":
-                    if tries == 10:
-                        return service_running
-                    if not misc.ProcessRunning('Docker Desktop'):
-                        try:
-                            self.Write('Starting Docker Desktop, please wait...')
-                            os.popen(f'{self.docker_client_path}')
-                            misc.unallowWindowOpening('Docker Desktop')
-                            tries += 1
-                        except Exception as ex:
-                            self.Write(ex)
-                            return service_running
-                elif self.operating_system == "Linux":
-                    if tries == 10:
-                        return service_running
-                    if not misc.ProcessRunning('dockerd'):
-                        try:
-                            self.Write('Starting the docker service, please wait...')
-                            os.popen('systemctl start docker')
-                            tries += 1
-                        except Exception as ex:
-                            self.Write(ex)
-                            return service_running
-
     def DetectDockerDesktopPath(self):
         '''
         Tries to locate the path of the Docker Desktop executable (windows only)
@@ -303,40 +269,228 @@ class MainWindow(QWidget):
                 self.docker_client_path = path
                 config.Save('docker_desktop', path)
 
-    def DockerInitSuccess(self):
+    def DockerServiceRunning(self):
+        '''
+        Checks if docker is running on the local computer.
+        '''
+        service_running = False
 
-        # Set the "Docker Desktop.exe" path for the Windows users if it hasn't been set yet
-        if self.docker_client_path == "" and self.operating_system == "Windows":
-            self.Write('Could not detect Docker Desktop, you need to have it installed to use this application.\n' 
-                        'If you did install it, please open up the options window and enter the path of "Docker Desktop.exe".')
-            return False
-        if not self.DockerServiceRunning():
-            self.Write('Could not launch the docker service.')
-            return False
+        if self.operating_system == "Darwin":
+            self.Write('This program is not supported on Mac OS.')
+            return service_running
+
+        try:
+            docker.from_env()
+            service_running = True
+        except:
+            pass
+        finally:
+            return service_running
+
+    def StartDocker(self):
+        if self.operating_system == "Windows":
+            if self.docker_client_path != "":
+                try:
+                    os.popen(f'{self.docker_client_path}')
+                    misc.unallowWindowOpening('Docker Desktop')
+                except Exception as ex:
+                    # TODO log it
+                    print(ex)
+        elif self.operating_system == "Linux":
+            try:
+                os.popen('systemctl start docker')
+            except Exception as ex:
+                print(ex)
+
+    @CheckForDocker
+    def ShowImages(self):
+        images = self.docker_client.images.list()
+        self.setText("Images list: ")
+        for image in images: 
+            self.Write(f'{image.short_id.replace("sha256:", "")} - {self.get_image_name(image.tag)}')
+
+    @CheckForDocker
+    def ShowContainers(self):
+        containers = self.docker_client.containers.list(all=True)
+        self.setText("Containers list: ")
+        for container in containers: 
+            self.Write(f'{container.name} - {container.short_id} - {self.get_image_name(container.image)} - {container.status}')
+
+
+    def LaunchContainer(self, image_name, main=False, **kwargs):
+
+        images = self.docker_client.images.list()
+        containers = self.docker_client.containers.list(all=True)
+
+        # We first check whether the container exists or not
+        try:
+            container = self.get_container(containers, image_name)[0]
+        except: 
+            container = None
+
+        # If it exists, just start it
+        if container:
+            self.Write(f'Launching the container {image_name}')
+            container.start()
+            # Eventually open up a shell or browser if it's the main one?
+            if main:
+                command = f"docker exec -it {container.id} /bin/sh"
+                misc.open_terminal(self.operating_system, command)
+        # If not, create it from the image, then call this function again
+        elif self.image_in(images, image_name):
+            self.Write(f'Creating the {image_name} container...')
+            self.docker_client.containers.create(image_name, **kwargs)
+            self.LaunchContainer(image_name, main, **kwargs)
+        # Pull the image if necessary, then call this function again
+        else:
+            self.Write(f'Pulling the lastest {image_name} image, please wait...')
+            self.docker_client.images.pull(image_name)
+            while not self.image_in(images, image_name):
+                images = self.docker_client.images.list()
+            self.Write('Image pulled!')
+            self.LaunchContainer(image_name, main, **kwargs)
+
+    @CheckForDocker
+    def LaunchScenario(self, scenario):
+        scenario = scenarios.LoadScenario(scenario)
+        self.setText(f'Launching the scenario {scenario.name}...')
+
+        for index, image in enumerate(scenario.images['other']):
+            image_name = image['name']
+            image_ports = image['ports']
+            self.LaunchContainer(image_name, ports=image_ports, name=f'{scenario.name}_{index}')
+
+
+        main_image = scenario.images['main']
+        image_name = main_image['name']
+        image_ports = main_image['ports']
+        self.LaunchContainer(image_name, main=True, ports=image_ports, name=f'{scenario.name}_main')
+
+
+    def Test(self):
+        self.Clear()
+        worker = Worker('log4shell')
+        worker.update_console.connect(self.Write)
+        worker.started.connect(self.DisableAllButtons)
+        worker.finished.connect(self.EnableAllButtons)
+        self.threads.append(worker)
+        self.threads[-1].start()
+        #TODO Delete thread once done
+
+class Worker(QThread):
+
+    update_console = pyqtSignal(str)
+    operating_system = "Windows"
+
+    def __init__(self, scenario):
+        super(Worker, self).__init__()
+        self.scenario = scenario
         self.docker_client = docker.from_env()
-        return True            
-    
-    @Asynchronous
-    def ShowImages(self, *args, **kwargs):
-        self.Clear()
-        self.DisableAllButtons(self.options_button)
-        if self.DockerInitSuccess():
-            self.Write('Images list:')
-            images = self.docker_client.images.list()
-            for image in images: 
-                self.Write(f'{image.short_id.replace("sha256:", "")} - {self.get_image_name(image.tag)}')
-        self.EnableAllButtons()
 
-    @Asynchronous
-    def ShowContainers(self, *args, **kwargs):
-        self.Clear()
-        self.DisableAllButtons(self.options_button)
-        if self.DockerInitSuccess():
-            self.Write('Containers list:')
-            containers = self.docker_client.containers.list(all=True)
-            for container in containers: 
-                self.Write(f'{container.name} - {container.short_id} - {self.get_image_name(container.image)} - {container.status}')
-        self.EnableAllButtons()
+    def run(self):
+        scenario = scenarios.LoadScenario(self.scenario)
+        self.update_console.emit(f'Launching the scenario {scenario.name}...')
+
+        for index, image in enumerate(scenario.images['other']):
+            image_name = image['name']
+            image_ports = image['ports']
+            self.LaunchContainer(image_name, ports=image_ports, name=f'{scenario.name}_{index}')
+
+
+        main_image = scenario.images['main']
+        image_name = main_image['name']
+        image_ports = main_image['ports']
+        self.LaunchContainer(image_name, main=True, ports=image_ports, name=f'{scenario.name}_main')
+        self.finished.emit()
+
+    def LaunchContainer(self, image_name, main=False, **kwargs):
+
+        images = self.docker_client.images.list()
+        containers = self.docker_client.containers.list(all=True)
+
+        # We first check whether the container exists or not
+        try:
+            container = self.get_container(containers, image_name)[0]
+        except: 
+            container = None
+
+        # If it exists, just start it
+        if container:
+            self.update_console.emit(f'Launching the container {image_name}')
+            container.start()
+            # Eventually open up a shell or browser if it's the main one?
+            if main:
+                command = f"docker exec -it {container.id} /bin/sh"
+                misc.open_terminal(self.operating_system, command)
+        # If not, create it from the image, then call this function again
+        elif self.image_in(images, image_name):
+            self.update_console.emit(f'Creating the {image_name} container...')
+            self.docker_client.containers.create(image_name, **kwargs)
+            self.LaunchContainer(image_name, main, **kwargs)
+        # Pull the image if necessary, then call this function again
+        else:
+            self.update_console.emit(f'Pulling the lastest {image_name} image, please wait...')
+            self.docker_client.images.pull(image_name)
+            while not self.image_in(images, image_name):
+                images = self.docker_client.images.list()
+            self.update_console.emit('Image pulled!')
+            self.LaunchContainer(image_name, main, **kwargs)
+
+    def get_image_name(self, image_tag):
+        image_tag=str(image_tag)
+        return image_tag.replace("<bound method Image.tag of <Image: '", '').replace("'>>", '').replace("<Image: '",'').replace("'>", '')
+
+    def image_in(self, images, wanted_image_name):
+        '''
+        Checks whether or not an image list contains a specific image.
+        '''
+        for image in images:
+            image_name = self.get_image_name(image.tag)
+            if wanted_image_name in image_name:
+                return True
+        return False
+
+    def container_in(self, containers, wanted_container_image_name):
+        '''
+        Checks whether or not a container list contains a specific container based on the container's image name.
+        '''
+        for container in containers:
+            container_image_name = self.get_image_name(container.image)
+            if wanted_container_image_name in container_image_name:
+                return True
+        return False
+
+    def get_image(self, images, image_name):
+        '''
+        Searches for an image in an image list based on the image's name.
+
+        Returns: docker.image object
+        '''
+        if not self.image_in(images, image_name):
+            #print(f"There is no image corresponding to {image_name}")
+            return
+        for index, image in enumerate(images):
+            if image_name in self.get_image_name(image.tag):
+                return image, index
+
+    def get_container(self, containers, container_image_name):
+        '''
+        Searches for a container object in a container list based on the container's image name.
+
+        Returns: docker.container object
+        '''
+        if not self.container_in(containers, container_image_name):
+            #print(f"No {container_image_name} container was found")
+            return
+        for index, container in enumerate(containers):
+            if container_image_name in self.get_image_name(container.image):
+                return container, index
+
+
+
+
+
+        
 
     # endregion
 
