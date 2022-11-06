@@ -1,20 +1,19 @@
 import json
-import os
 import platform
-import time
-
-from requests import JSONDecodeError, delete
+import logging
 
 configuration = {}
 config_file = "config.json"
 
-# Config variables
+#  region =====Config variables=====
 
-variables_list = ['operating_system', 'docker_desktop', 'main_window_background_color', 'main_window_textbox_color',
+variables_list = ['operating_system', 'docker_desktop', 'log_file', 'log_format', 'main_window_background_color', 'main_window_textbox_color',
                   'main_window_buttons_color', 'child_window_background_color','text_color', 'text_font', 'text_size']
 
 configuration['operating_system'] = platform.system()
 configuration['docker_desktop'] = ""
+configuration['log_file'] = 'app.log'
+configuration['log_format'] = "%(asctime)s | %(levelname)s - %(message)s"
 # Default graphical variables
 configuration['main_window_background_color'] = '#202266'
 configuration['main_window_textbox_color'] = '#3D3F6E'
@@ -23,8 +22,14 @@ configuration['child_window_background_color'] = '#282A69'
 configuration['text_color'] = '#FFFFFF'
 configuration['text_font'] = 'Consolas'
 configuration['text_size'] = '12'
+#logger
 
-# Config methods
+logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
+logger = logging.getLogger()
+
+# endregion
+
+# region =====Config methods=====
 
 def CheckForMissingFields(func):
     '''
@@ -52,15 +57,16 @@ def Load() -> dict:
         with open(config_file, 'r') as file:
             config = json.load(file)
             return config
-    except FileNotFoundError:
+    except FileNotFoundError as ex:
+        logger.error(ex)
         Reset()
         return configuration
-    except json.decoder.JSONDecodeError:
-        # TODO add log 
+    except json.decoder.JSONDecodeError as ex: 
+        logger.error(ex)
         Reset()
         return configuration
 
-def Save(config_name, config_value):
+def Save(config_name : str, config_value):
     '''
     Saves a specific parameter into the configuration.
     ---------------
@@ -81,9 +87,9 @@ def Reset():
     '''
     Wipes the current configuration file to write a new default one.
     '''
+    logger.info('Creating a new default configuration file')
     with open(config_file, 'w') as file:
             file.write(json.dumps(configuration))
 
-
-
+# endregion
             

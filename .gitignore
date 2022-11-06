@@ -4,3 +4,4 @@
 *terminal.sh
 src/__pycache__
 .git
+*.log

@@ -1,4 +1,5 @@
 import docker_functions as df
+import logging
 import sys
 import os
 import config
@@ -10,15 +11,15 @@ from PyQt6.QtCore import *
 from options_window import *
 from scenarios_window import *
 
-
+configuration = config.Load()
+operating_system = configuration['operating_system']
+logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
+logger = logging.getLogger()
 
 class MainWindow(QWidget):
 
     # region =====Initializing=====
-
-    # We first load the configuration and define class variables
-    configuration = config.Load()
-    operating_system = configuration['operating_system']
+     
     docker_client_path = configuration['docker_desktop']
     docker_client = None
     welcome_text = ("Welcome to our vulnerable environment generator!\n"
@@ -38,12 +39,12 @@ class MainWindow(QWidget):
     def __init__(self):
 
         # We define a few graphical variables from the configuration
-        background_color = self.configuration['main_window_background_color']
-        textbox_color = self.configuration['main_window_textbox_color']
-        buttons_color = self.configuration['main_window_buttons_color']
-        text_color = self.configuration['text_color']
-        text_font = self.configuration['text_font']
-        text_size = self.configuration['text_size']
+        background_color = configuration['main_window_background_color']
+        textbox_color = configuration['main_window_textbox_color']
+        buttons_color = configuration['main_window_buttons_color']
+        text_color = configuration['text_color']
+        text_font = configuration['text_font']
+        text_size = configuration['text_size']
 
         # Defining our layout variables
         width = 950
@@ -59,7 +60,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.initUI(background_color, textbox_color, buttons_color, text_color, text_font, text_size, width, height, col1, col2, col3)
 
-        if self.operating_system == "Windows" :
+        if operating_system == "Windows" :
             self.DetectDockerDesktopPath()
 
         if not self.DockerServiceRunning():
@@ -225,7 +226,7 @@ class MainWindow(QWidget):
         '''
         service_running = False
 
-        if self.operating_system == "Darwin":
+        if operating_system == "Darwin":
             self.Write('This program is not supported on Mac OS.')
             return service_running
 
@@ -238,19 +239,20 @@ class MainWindow(QWidget):
             return service_running
 
     def StartDocker(self):
-        if self.operating_system == "Windows":
+        if operating_system == "Windows":
             if self.docker_client_path != "":
                 try:
+                    logger.info('Starting Docker Desktop')
                     os.popen(f'{self.docker_client_path}')
                     misc.unallowWindowOpening('Docker Desktop')
                 except Exception as ex:
-                    # TODO log it
-                    print(ex)
-        elif self.operating_system == "Linux":
+                    logger.error(ex)
+        elif operating_system == "Linux":
             try:
+                logger.info('Starting docker')
                 os.popen('systemctl start docker')
             except Exception as ex:
-                print(ex)
+                logger.error(ex)
 
     @CheckForDocker
     def ShowImages(self):
@@ -280,12 +282,11 @@ class MainWindow(QWidget):
 
     
     def Test(self):
-        pass
+        pass  
 
 class ScenarioLauncher(QThread):
 
     update_console = pyqtSignal(str)
-    operating_system = "Windows"
 
     def __init__(self, scenario_name):
         super(ScenarioLauncher, self).__init__()
@@ -327,7 +328,7 @@ class ScenarioLauncher(QThread):
             # Eventually open up a shell or browser if it's the main one?
             if main:
                 command = f"docker exec -it {container.id} /bin/sh"
-                misc.open_terminal(self.operating_system, command)
+                misc.open_terminal(operating_system, command)
         # If not, create it from the image, then call this function again
         elif df.image_in(images, image_name):
             self.update_console.emit(f'Creating the {image_name} container...')

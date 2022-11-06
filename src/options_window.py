@@ -4,12 +4,12 @@ import config
 import sys
 import os
 
+configuration = config.Load()
+operating_system = configuration['operating_system']
+
 class OptionsWindow(QDialog):
 
     # region =====Initializing=====
-
-    configuration = config.Load()
-    operating_system = configuration['operating_system']
     docker_client_path = configuration['docker_desktop']
 
     def __init__(self, parent=None):
@@ -18,12 +18,12 @@ class OptionsWindow(QDialog):
 
         # We define a few graphical variables from the configuration
 
-        background_color = self.configuration['child_window_background_color']
-        textbox_color = self.configuration['main_window_textbox_color']
-        buttons_color = self.configuration['main_window_buttons_color']
-        text_color = self.configuration['text_color']
-        text_font = self.configuration['text_font']
-        text_size = self.configuration['text_size']
+        background_color = configuration['child_window_background_color']
+        textbox_color = configuration['main_window_textbox_color']
+        buttons_color = configuration['main_window_buttons_color']
+        text_color = configuration['text_color']
+        text_font = configuration['text_font']
+        text_size = configuration['text_size']
 
         # Defining our layout variables
         width = 500
@@ -51,7 +51,7 @@ class OptionsWindow(QDialog):
         self.docker_desktop_entry.resize(400, 20)
         self.docker_desktop_entry.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font};'
                                                 f'font-size: {text_size}; font-style: italic; border: 0px')
-        if self.operating_system != "Windows":
+        if operating_system != "Windows":
             self.docker_desktop_entry.setEnabled(False)
         
 
@@ -67,7 +67,7 @@ class OptionsWindow(QDialog):
         self.browse_button.resize(80, 20)
         self.browse_button.clicked.connect(self.FileDialog)
         self.browse_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
-        if self.operating_system != "Windows":
+        if operating_system != "Windows":
             self.docker_desktop_entry.setEnabled(False)
 
     # endregion
