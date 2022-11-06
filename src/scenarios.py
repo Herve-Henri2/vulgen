@@ -1,3 +1,4 @@
+from dis import Instruction
 import os
 import json
 from scenario import Scenario
@@ -83,6 +84,7 @@ def CreateDefault():
                    'This vulnerability enables a remote attacker to take control of a device on the internet if the device is running certain unpatched versions of Log4j2.\n'
                    'In December 2021, Apache had to release up to 4 corrective patches to fully close the breach. It is believed that malicious actors likely knew about the vulnerability'
                    ' and exploited it before experts did, hence why it is considered zero-day.')
+    instructions = ('You need to do this and that, blablabla.')
     images = {}
     images['main'] = {}
     images['main']['name'] = base
@@ -93,7 +95,7 @@ def CreateDefault():
     cve = 'CVE-2021-44228'
     type = 'Remote Code Execution'
     sources = ['https://www.dynatrace.com/news/blog/what-is-log4shell/', 'https://en.wikipedia.org/wiki/Log4Shell', 'https://github.com/christophetd/log4shell-vulnerable-app']
-    scenario = Scenario(name, description, base, images, cve, type, sources)
+    scenario = Scenario(name, description, instructions, base, images, cve, type, sources)
     Save(scenario)
 
 
@@ -107,13 +109,14 @@ def Parse(_json : dict) -> Scenario:
     '''
     name = _json['name']
     desc = _json['description']
+    inst = _json['instructions']
     base = _json['base']
     images = _json['images']
     cve = _json['CVE']
     type = _json['type']
     sources = _json['sources']
 
-    scen = Scenario(name, desc, base, images, cve, type, sources)
+    scen = Scenario(name, desc, inst, base, images, cve, type, sources)
     return scen
 
 def LoadScenario(name : str) -> Scenario:

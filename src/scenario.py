@@ -2,9 +2,10 @@ import json
 
 class Scenario:
     
-    def __init__(self, name, description, base, images, CVE, type, sources):
+    def __init__(self, name, description, instructions, base, images, CVE, type, sources):
         self.name = name
         self.description = description
+        self.instructions = instructions
         self.base = base
         self.images = images
         self.cve = CVE
@@ -15,6 +16,7 @@ class Scenario:
         scenario = {}
         scenario['name'] = self.name
         scenario['description'] = self.description
+        scenario['instructions'] = self.instructions
         scenario['base'] = self.base
         scenario['images'] = self.images
         scenario['CVE'] = self.cve
