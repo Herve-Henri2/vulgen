@@ -4,12 +4,13 @@ import sys
 import os
 import config
 import docker
-import scenarios
 import misc
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
 from options_window import *
 from scenarios_window import *
+from active_env_window import *
+from scenarios import *
 
 configuration = config.Load()
 operating_system = configuration['operating_system']
@@ -41,7 +42,7 @@ class MainWindow(QWidget):
         # We define a few graphical variables from the configuration
         background_color = configuration['main_window_background_color']
         textbox_color = configuration['main_window_textbox_color']
-        buttons_color = configuration['main_window_buttons_color']
+        buttons_color = configuration['buttons_color']
         text_color = configuration['text_color']
         text_font = configuration['text_font']
         text_size = configuration['text_size']
@@ -55,6 +56,7 @@ class MainWindow(QWidget):
 
         # Defining other variables
         self.threads = []
+        self.scenario_ui_components = []
 
         # We then start initializing our window
         super().__init__()
@@ -135,15 +137,65 @@ class MainWindow(QWidget):
         self.scenarios_button.clicked.connect(self.OpenScenarios)
         self.scenarios_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
-        self.scenarios_button = QPushButton('Test', self)
-        self.scenarios_button.move(col1 + 20, 180)
-        self.scenarios_button.resize(120, 20)
-        self.scenarios_button.clicked.connect(self.Test)
-        self.scenarios_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        self.test_button = QPushButton('Test', self)
+        self.test_button.move(col1 + 20, 200)
+        self.test_button.resize(120, 20)
+        self.test_button.clicked.connect(self.Test)
+        self.test_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        self.test_button.hide()
+
+        # Scenario UI
+        self.scenario_label = QLabel('Active scenario', self)
+        self.scenario_label.move(col1 + 40, 240)
+        self.scenario_label.resize(80, 20)
+        self.scenario_label.setStyleSheet(f'color: {text_color}')
+        self.scenario_ui_components.append(self.scenario_label)
+
+        self.scenario_textbox = QLineEdit(self)
+        self.scenario_textbox.move(col1 + 20, 260)
+        self.scenario_textbox.resize(120, 20)
+        self.scenario_textbox.setReadOnly(True)
+        self.scenario_textbox.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-style: italic; border: 1px solid "#FFFFFF"')
+        self.scenario_ui_components.append(self.scenario_textbox)
+
+        self.scenario_instructions_button = QPushButton('Instructions', self)
+        self.scenario_instructions_button.move(col1 + 20, 300)
+        self.scenario_instructions_button.resize(120, 20)
+        self.scenario_instructions_button.clicked.connect(self.ShowInstructions)
+        self.scenario_instructions_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        self.scenario_ui_components.append(self.scenario_instructions_button)
+
+        self.scenario_containers_button = QPushButton('Containers', self)
+        self.scenario_containers_button.move(col1 + 20, 340)
+        self.scenario_containers_button.resize(120, 20)
+        self.scenario_containers_button.clicked.connect(self.ShowScenarioContainers)
+        self.scenario_containers_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        self.scenario_ui_components.append(self.scenario_containers_button)
+
+        self.exit_scenario_button = QPushButton('Exit', self)
+        self.exit_scenario_button.move(col1 + 20, 380)
+        self.exit_scenario_button.resize(120, 20)
+        self.exit_scenario_button.clicked.connect(self.ExitScenario)
+        self.exit_scenario_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        self.scenario_ui_components.append(self.exit_scenario_button)
+
+        self.HideScenarioUI()
 
     # endregion
 
     # region =====Graphical Methods=====
+
+    def HideScenarioUI(self):
+        for component in self.scenario_ui_components:
+            component.hide()
+
+    def ShowScenarioUI(self):
+        for component in self.scenario_ui_components:
+            component.show()
+            if isinstance(component, QPushButton):
+                self.EnableButton(component)
+        if (running_scenario:=self.GetRunningScenario()) is not None:
+            self.scenario_textbox.setText(running_scenario.name)
 
     def GetUserInput(self):
         self.user_input = self.entry.text()
@@ -158,19 +210,35 @@ class MainWindow(QWidget):
     def Write(self, text : str):
         self.textbox.appendPlainText(text)
 
+    def DisableButton(self, button : QPushButton):
+        buttons_color = configuration['disabled_buttons_color']
+        text_color = configuration['disabled_text_color']
+        text_font = configuration['text_font']
+
+        button.setEnabled(False)
+        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font};')
+
+    def EnableButton(self, button : QPushButton):
+        buttons_color = configuration['buttons_color']
+        text_color = configuration['text_color']
+        text_font = configuration['text_font']
+
+        button.setEnabled(True)
+        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+
     def DisableAllButtons(self, *exceptions : QPushButton):
         for attribute in self.__dict__:
             if 'button' in attribute:
                 button = getattr(self, attribute)
                 if button not in exceptions:
-                    button.setEnabled(False)
+                    self.DisableButton(button)
 
     def EnableAllButtons(self, *exceptions : QPushButton):
         for attribute in self.__dict__:
             if 'button' in attribute:
                 button = getattr(self, attribute)
                 if button not in exceptions:
-                    button.setEnabled(True)  
+                    self.EnableButton(button)
                              
     def OpenOptions(self):
         self.options = OptionsWindow(parent=self)
@@ -189,11 +257,51 @@ class MainWindow(QWidget):
         self.scenarios_window = ScenariosWindow(parent=self)
         self.scenarios_window.exec()
 
+    def Test(self):
+        self.Clear()
+        for container in self.GetRunningScenarioContainers():
+            self.Write(container.name)
+
+    def ShowInstructions(self):
+        running_scenario = self.GetRunningScenario()
+        self.setText(running_scenario.instructions)
+    
+    def ShowScenarioContainers(self):
+        self.active_env_containers = ActiveEnvWindow(parent=self)
+        self.active_env_containers.exec()
+        
 
     # endregion
 
     # region =====Main Methods=====
 
+    def ScenarioRunning(self):
+        '''
+        Searches for a ScenarioThread object in the main window threads.
+        '''
+        for thread in self.threads:
+            if isinstance(thread, ScenarioThread):
+                return thread
+
+    def GetRunningScenario(self):
+        '''
+        Returns the current scenario running.
+        '''
+        if (scenario_thread := self.ScenarioRunning()) is not None:
+            return LoadScenario(scenario_thread.scenario_name)
+
+    def GetRunningScenarioContainers(self):
+        '''
+        Returns a list of all the containers for the current running scenario.
+        '''
+        container_list = []
+        if (scenario := self.GetRunningScenario()) is not None:
+            containers = self.docker_client.containers.list()
+            for container in containers:
+                if scenario.name in container.name:
+                    container_list.append(container)
+        return container_list
+ 
     def CheckForDocker(func):
         '''
         Decorating function for any method that requires the docker service.
@@ -267,35 +375,57 @@ class MainWindow(QWidget):
         self.setText("Containers list: ")
         for container in containers: 
             self.Write(f'{container.name} - {container.short_id} - {df.get_image_name(container.image)} - {container.status}')
-        # self.Write(str(len(self.threads)))
 
     @CheckForDocker
-    def LaunchScenario(self, scenario):
+    def LaunchScenario(self, scenario : str):
+        '''
+        Launches the environment linked to a specified scenario.
+        '''
+        logger.info(f'Launching the {scenario} environment.')
         self.Clear()
-        worker = ScenarioLauncher(scenario)
+        worker = ScenarioThread(scenario)
         worker.update_console.connect(self.Write)
         worker.started.connect(self.DisableAllButtons)
-        worker.finished.connect(self.EnableAllButtons)
+        worker.started.connect(self.ShowScenarioUI)
         self.threads.append(worker)
         self.threads[-1].start()
         # TODO manage threads
 
-    
-    def Test(self):
-        pass  
+    def ExitScenario(self):
+        '''
+        Shuts down the actively running environment.
+        '''
+        scenario = self.GetRunningScenario()
+        self.setText(f'Terminated the {scenario.name} environment.')
+        logger.info(f'Terminated the {scenario.name} environment.')
+        
+        # We stop the containers
+        containers = self.docker_client.containers.list()
+        for container in containers:
+            if scenario.name in container.name:
+                container.stop()
+        # We destroy the thread
+        scenario_thread = self.ScenarioRunning()
+        self.threads.remove(scenario_thread)
+        # We enable all buttons
+        self.EnableAllButtons()
+        # We hide the scenario UI
+        self.HideScenarioUI()
+        
 
-class ScenarioLauncher(QThread):
+class ScenarioThread(QThread):
 
     update_console = pyqtSignal(str)
 
     def __init__(self, scenario_name):
-        super(ScenarioLauncher, self).__init__()
+        super(ScenarioThread, self).__init__()
         self.scenario_name = scenario_name
         self.docker_client = docker.from_env()
 
     def run(self):
-        scenario = scenarios.LoadScenario(self.scenario_name)
-        self.update_console.emit(f'Launching the scenario {scenario.name}...')
+        scenario = LoadScenario(self.scenario_name)
+        self.update_console.emit(f'Launched the {scenario.name} scenario.')
+        logger.info(f'Launched the {scenario.name} environment.')
 
         for index, image in enumerate(scenario.images['other']):
             image_name = image['name']
@@ -307,7 +437,9 @@ class ScenarioLauncher(QThread):
         image_name = main_image['name']
         image_ports = main_image['ports']
         self.LaunchContainer(image_name, main=True, ports=image_ports, name=f'{scenario.name}_main')
-        self.update_console.emit('------------------------------------------------------------\n' + scenario.instructions)
+        self.update_console.emit('------------------------------------------------------------------------------------\n'
+                                 '* Click on the Instructions button to get a better scope of what needs to be done.\n'
+                                 '* You can interact with all the environment containers by clicking on the Containers button.')
         self.finished.emit()
 
     def LaunchContainer(self, image_name, main=False, **kwargs):
@@ -323,15 +455,9 @@ class ScenarioLauncher(QThread):
 
         # If it exists, just start it
         if container:
-            self.update_console.emit(f'Launching the container {image_name}')
             container.start()
-            # Eventually open up a shell or browser if it's the main one?
-            if main:
-                command = f"docker exec -it {container.id} /bin/sh"
-                misc.open_terminal(operating_system, command)
         # If not, create it from the image, then call this function again
         elif df.image_in(images, image_name):
-            self.update_console.emit(f'Creating the {image_name} container...')
             self.docker_client.containers.create(image_name, **kwargs)
             self.LaunchContainer(image_name, main, **kwargs)
         # Pull the image if necessary, then call this function again

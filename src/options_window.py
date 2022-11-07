@@ -20,7 +20,7 @@ class OptionsWindow(QDialog):
 
         background_color = configuration['child_window_background_color']
         textbox_color = configuration['main_window_textbox_color']
-        buttons_color = configuration['main_window_buttons_color']
+        buttons_color = configuration['buttons_color']
         text_color = configuration['text_color']
         text_font = configuration['text_font']
         text_size = configuration['text_size']

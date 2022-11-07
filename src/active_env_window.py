@@ -1,20 +1,21 @@
-from PyQt6.QtWidgets import *
 import config
 import sys
-import scenarios
+import misc
+import logging
+from PyQt6.QtWidgets import *
 
 configuration = config.Load()
-scenarios_db = scenarios.Load()
+operating_system = configuration['operating_system']
+logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
+logger = logging.getLogger()
 
-class ScenariosWindow(QDialog):
-
-    scenarios = scenarios_db['scenarios']
+class ActiveEnvWindow(QDialog):
 
     # region =====Initializing=====
 
     def __init__(self, parent=None):
 
-        self.parent = parent
+        self.parent=parent
 
         # We define a few graphical variables from the configuration
 
@@ -26,56 +27,40 @@ class ScenariosWindow(QDialog):
         text_size = configuration['text_size']
 
         # Defining our layout variables
-        width = 700
-        height = 500
+        width = 500
+        height = 300
 
         super().__init__(parent)
         self.initUI(background_color, textbox_color, width, height, buttons_color, text_color, text_font, text_size)
 
-
     def initUI(self, background_color, textbox_color, width, height, buttons_color, text_color, text_font, text_size):
-
-        self.setWindowTitle('Scenarios')
+        self.setWindowTitle('Environment Containers')
         self.setFixedSize(width, height)
         self.setStyleSheet(f'background-color: {background_color}')
 
-        # Side ListView
+        # Main ListView
         self.list_view = QListWidget(self)
         self.list_view.move(40, 20)
-        self.list_view.resize(200, 400)
-        self.list_view.itemClicked.connect(self.showDetails)
+        self.list_view.resize(400, 200)
+        self.list_view.itemClicked.connect(self.AllowShell)
         self.list_view.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
 
-        # Side TextBox
-        self.textbox = QPlainTextEdit(self)
-        self.textbox.move(240, 20)
-        self.textbox.resize(420, 400)
-        self.textbox.setReadOnly(True)
-        self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
-
         # Buttons
-        self.launch_button = QPushButton('Launch Scenario', self)
-        self.launch_button.move(540, 440)
-        self.launch_button.resize(120, 20)
-        self.launch_button.clicked.connect(self.LaunchScenario)
-        self.launch_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
-        self.DisableButton(self.launch_button)
+        self.open_shell_button = QPushButton('Open Shell', self)
+        self.open_shell_button.move(40, 240)
+        self.open_shell_button.resize(120, 20)
+        self.open_shell_button.clicked.connect(self.OpenShell)
+        self.open_shell_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        self.DisableButton(self.open_shell_button)
 
-        for scenario in self.scenarios:
-            self.list_view.addItem(scenario['name'])
+        if self.parent is not None:
+            self.containers = self.parent.GetRunningScenarioContainers()
+            for container in self.containers:
+                self.list_view.addItem(container.name)
 
     # endregion
 
     # region =====Graphical Methods=====
-
-    def setText(self, text : str):
-        self.textbox.setPlainText(text)
-
-    def showDetails(self):
-        for scenario in self.scenarios:
-            if scenario['name'] == self.list_view.currentItem().text():
-                self.setText(scenario['description'])
-        self.EnableButton(self.launch_button)
 
     def DisableButton(self, button : QPushButton):
         buttons_color = configuration['disabled_buttons_color']
@@ -93,21 +78,21 @@ class ScenariosWindow(QDialog):
         button.setEnabled(True)
         button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
+    def AllowShell(self):
+        self.EnableButton(self.open_shell_button)
+
+    def OpenShell(self):
+        container_name = self.list_view.currentItem().text()
+        for container in self.containers:
+            if container.name == container_name:
+                logger.info(f'Opening up a terminal for the {container.name} container.')
+                command = f"docker exec -it {container.id} /bin/sh"
+                misc.open_terminal(operating_system, command)
 
     # endregion
-
-    # region =====Main Methods=====
-
-    def LaunchScenario(self):
-        scenario = self.list_view.currentItem().text()
-        self.parent.LaunchScenario(scenario)
-        self.close()
-
-    # endregion
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    ex = ScenariosWindow()
+    ex = ActiveEnvWindow()
     ex.show()
     sys.exit(app.exec())
