@@ -386,7 +386,7 @@ class MainWindow(QWidget):
         worker = ScenarioThread(scenario)
         worker.update_console.connect(self.Write)
         worker.started.connect(self.DisableAllButtons)
-        worker.started.connect(self.ShowScenarioUI)
+        worker.finished.connect(self.ShowScenarioUI)
         self.threads.append(worker)
         self.threads[-1].start()
         # TODO manage threads
