@@ -17,6 +17,8 @@ operating_system = configuration['operating_system']
 logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
 logger = logging.getLogger()
 
+# TODO Delete all scenario containers after an update
+
 class MainWindow(QWidget):
 
     # region =====Initializing=====

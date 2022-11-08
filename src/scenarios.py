@@ -89,7 +89,7 @@ def CreateDefault():
     images['main'] = {}
     images['main']['name'] = base
     images['main']['interaction'] = 'browser'
-    images['main']['ports'] = {"8080/tcp":8080}
+    images['main']['ports'] = {"8080/tcp":8080} # Container port: Host port
     images['main']['download_link'] = None
     images['other'] = []
     cve = 'CVE-2021-44228'

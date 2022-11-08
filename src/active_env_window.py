@@ -56,7 +56,7 @@ class ActiveEnvWindow(QDialog):
         if self.parent is not None:
             self.containers = self.parent.GetRunningScenarioContainers()
             for container in self.containers:
-                self.list_view.addItem(container.name)
+                self.list_view.addItem(f'{container.name} - {container.ports}')
 
     # endregion
 
@@ -82,9 +82,9 @@ class ActiveEnvWindow(QDialog):
         self.EnableButton(self.open_shell_button)
 
     def OpenShell(self):
-        container_name = self.list_view.currentItem().text()
+        container_info = self.list_view.currentItem().text().split('-')[0]
         for container in self.containers:
-            if container.name == container_name:
+            if container.name in container_info:
                 logger.info(f'Opening up a terminal for the {container.name} container.')
                 command = f"docker exec -it {container.id} /bin/sh"
                 misc.open_terminal(operating_system, command)
