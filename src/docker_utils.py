@@ -119,11 +119,10 @@ def BuildCustomImage():
     '''
     Builds a custom image from the docker_images folder.
     '''
-    path = os.path.realpath(os.path.dirname(__file__)) + "/../docker_images"  # this script absolute path + path to docker_images from this script
-    custom_images_paths = [sub[0] for sub in list(os.walk(path))[1:]]
-    custom_images = []
-    for img_path in custom_images_paths:
-        custom_images.append(img_path.split('/')[-1])
+    to_exclude = ('README.md', 'base_images')
+    
+    path = os.path.realpath(os.path.dirname(__file__)) + "/../docker_images"  # src folder absolute path + path to docker_images from src folder
+    custom_images = [folder for folder in os.listdir(path) if folder not in to_exclude]
     
     print('Custom images list :')
     for i in range(len(custom_images)):

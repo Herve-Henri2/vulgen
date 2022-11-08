@@ -1,7 +1,7 @@
 #! /usr/bin/bash
 
 # Create the required image if not already done
-xenial-python-c/create_img.sh
+base_images/xenial-python-c/create_img.sh
 
 # Delete all containers
 docker rm $(docker ps -a -q)

@@ -41,7 +41,7 @@ def open_terminal(command=None):
     
     if not command:
         command = "exec bash -i"
-    os.popen(f"gnome-terminal -- bash -c \"{command}; exec bash -i\"")
+    os.popen(f"gnome-terminal -- bash -c \"{command};exit; exec bash -i\"")
 
 
 if __name__ =="__main__":
