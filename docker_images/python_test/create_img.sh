@@ -1,13 +1,16 @@
 #! /usr/bin/bash
 
+# Retrieve this script directory
+DIR_NAME=$(dirname ${BASH_SOURCE:-$0})
+
 # Create the required image if not already done
-base_images/xenial-python/create_img.sh
+$DIR_NAME/../base_images/xenial-python/create_img.sh
 
 # Delete all containers
 docker rm $(docker ps -a -q)
 
 # Retrieve id of old image
-old_img=$(docker images | grep python_test)
+old_img=$(docker images | grep $DIR_NAME)
 echo -e ${old_img// /'\n'} > tmp1.txt
 
 echo -e $(docker images -q) > tmp2.txt
@@ -22,8 +25,4 @@ rm tmp1.txt tmp2.txt
 docker rmi $id
 
 # Create the new image
-docker image build -t python_test:latest python_test
-
-# Run the new image
-#clear
-#docker run -it python_test:latest
+docker image build -t $DIR_NAME:latest $DIR_NAME
