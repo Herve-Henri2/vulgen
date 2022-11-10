@@ -3,6 +3,7 @@ import config
 import sys
 import docker
 import docker_utils as dutils
+from images_window import *
 
 configuration = config.Load()
 
@@ -55,8 +56,27 @@ class ContainersWindow(QDialog):
         self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
 
         # Buttons
+        self.refresh_button = QPushButton('R.', self)
+        self.refresh_button.move(10, 20)
+        self.refresh_button.resize(20, 20)
+        self.refresh_button.clicked.connect(self.updateTable)
+        self.refresh_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        
+        self.start_button = QPushButton('Start container', self)
+        self.start_button.move(50, 425)
+        self.start_button.resize(120, 20)
+        self.start_button.clicked.connect(self.StartContainer)
+        self.start_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        self.DisableButton(self.start_button)
+        
+        self.create_button = QPushButton('Create container', self)
+        self.create_button.move(50, 450)
+        self.create_button.resize(120, 20)
+        self.create_button.clicked.connect(self.CreateContainer)
+        self.create_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        
         self.remove_button = QPushButton('Remove', self)
-        self.remove_button.move(50, 430)
+        self.remove_button.move(50, 475)
         self.remove_button.resize(120, 20)
         self.remove_button.clicked.connect(self.RemoveContainer)
         self.remove_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
@@ -75,6 +95,7 @@ class ContainersWindow(QDialog):
         self.textbox.setPlainText(text)
 
     def ContainerClicked(self):
+        self.EnableButton(self.start_button)
         self.EnableButton(self.remove_button)
 
     def DisableButton(self, button : QPushButton):
@@ -111,16 +132,26 @@ class ContainersWindow(QDialog):
     # endregion
 
     # region =====Main Methods=====
+    
+    def StartContainer(self):
+        selection = self.table_view.selectedItems()
+        id = selection[0].text()
+        command = f"docker start -i {id}"
+        misc.open_terminal(command =command)
 
     def RemoveContainer(self):
         selection = self.table_view.selectedItems()
+        id = selection[0].text()
         try:
-            id = selection[0].text()
             self.docker_client.containers.get(id).remove()
             self.setText("Container successfully removed !")
         except Exception as ex:
             self.setText(str(ex))
         self.updateTable()
+    
+    def CreateContainer(self):
+        self.images_window = ImagesWindow(parent=self, containerMode=True)
+        self.images_window.exec()
 
     # endregion
 
