@@ -99,9 +99,9 @@ class CustomImagesWindow(QDialog):
 
     def BuildImage(self):
         selection = self.list_view.currentItem().text()
-        path = os.path.realpath(os.path.dirname(__file__)) + "/../docker_images"  # src folder absolute path + path to docker_images from src folder
-        command = f"cd {path};{selection}/create_img.sh"
-        misc.open_terminal(command = command)
+        path = os.path.realpath(os.path.dirname(__file__)) + "\\..\\docker_images"  # src folder absolute path + path to docker_images from src folder
+        command = f"cd {path}\\{selection}\\create_img.sh"
+        misc.open_terminal(configuration['operating_system'], command = command)
         self.close()
         
             
