@@ -43,7 +43,7 @@ def error(msg = "Error!"):
     print(f"\nError : {msg}\n")
 
 
-def open_terminal(_os, command=None):
+def open_terminal(_os="Linux", command=None):
     '''
     Opens up a terminal (or command prompt).
     ---------------
@@ -67,7 +67,7 @@ def open_terminal(_os, command=None):
     elif _os == "Linux":
         if not command:
             command = "exec bash -i"
-            os.popen(f"gnome-terminal -- bash -c \"{command};exit; exec bash -i\"")    
+        os.popen(f"gnome-terminal -- bash -c \"{command};exit; exec bash -i\"")    
 
 
 if __name__ =="__main__":

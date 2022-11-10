@@ -85,45 +85,20 @@ def GetContainers():
     return cont_dict
 
 
-def BuildCustomImage():
+def GetCustomImages():
     '''
-    Builds a custom image from the docker_images folder.
+    Retrieve all custom images names from the docker_images folder.
     '''
     to_exclude = ('README.md', 'base_images')
     
     path = os.path.realpath(os.path.dirname(__file__)) + "/../docker_images"  # src folder absolute path + path to docker_images from src folder
     custom_images = [folder for folder in os.listdir(path) if folder not in to_exclude]
     
-    print('Custom images list :')
+    img_list = []
     for i in range(len(custom_images)):
-        print(f'    {i + 1}: ' + custom_images[i])
-    print('\n')
-    
-    choice = None
-    image = None    
-    while(choice == None):
-        print("You can build a new custom image by entering its index.")
-        print("Enter 'exit' to return to the menu.\n")
-        choice = input("\n> ").lower()
+        img_list.append(custom_images[i])
         
-        if choice.isdigit():
-            choice = int(choice) - 1
-            if choice >= 0 and choice < len(custom_images):
-                image = custom_images[choice]
-            else:
-                error("Your choice is out of range...")
-                choice = None
-        elif choice == "exit":
-            return
-        else:
-            error("Invalid input...")
-            choice = None
-    
-    if image != None:
-        command = f"cd {path};{image}/create_img.sh"
-        open_terminal(command)
-    else:
-        error("No valid image could be found...")
+    return img_list
 
 
 def FetchImage():

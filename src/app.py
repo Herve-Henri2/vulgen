@@ -1,4 +1,4 @@
-import docker_functions as df
+import docker_utils as dutils
 import logging
 import sys
 import os
@@ -10,6 +10,8 @@ from PyQt6.QtCore import *
 from options_window import *
 from scenarios_window import *
 from active_env_window import *
+from images_window import *
+from containers_window import *
 from scenarios import *
 
 configuration = config.Load()
@@ -121,17 +123,17 @@ class MainWindow(QWidget):
         self.home_button.setShortcut('h')
         self.home_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
-        self.show_images_button = QPushButton('Show Images', self)
-        self.show_images_button.move(col1 + 20, 60)
-        self.show_images_button.resize(100, 20)
-        self.show_images_button.clicked.connect(self.ShowImages)
-        self.show_images_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        self.manage_images_button = QPushButton('Manage Images', self)
+        self.manage_images_button.move(col1 + 20, 60)
+        self.manage_images_button.resize(100, 20)
+        self.manage_images_button.clicked.connect(self.ManageImages)
+        self.manage_images_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
-        self.show_containers_button = QPushButton('Show Containers', self)
-        self.show_containers_button.move(col1 + 20, 100)
-        self.show_containers_button.resize(120, 20)
-        self.show_containers_button.clicked.connect(self.ShowContainers)
-        self.show_containers_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        self.manage_containers_button = QPushButton('Manage Containers', self)
+        self.manage_containers_button.move(col1 + 20, 100)
+        self.manage_containers_button.resize(120, 20)
+        self.manage_containers_button.clicked.connect(self.ManageContainers)
+        self.manage_containers_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.scenarios_button = QPushButton('Scenarios', self)
         self.scenarios_button.move(col1 + 20, 140)
@@ -303,6 +305,24 @@ class MainWindow(QWidget):
                 if scenario.name in container.name:
                     container_list.append(container)
         return container_list
+    
+    def DockerServiceRunning(self):
+        '''
+        Checks if docker is running on the local computer.
+        '''
+        service_running = False
+
+        if operating_system == "Darwin":
+            self.Write('This program is not supported on Mac OS.')
+            return service_running
+
+        try:
+            docker.from_env()
+            service_running = True
+        except:
+            pass
+        finally:
+            return service_running
  
     def CheckForDocker(func):
         '''
@@ -330,24 +350,6 @@ class MainWindow(QWidget):
                 self.docker_client_path = path
                 config.Save('docker_desktop', path)
 
-    def DockerServiceRunning(self):
-        '''
-        Checks if docker is running on the local computer.
-        '''
-        service_running = False
-
-        if operating_system == "Darwin":
-            self.Write('This program is not supported on Mac OS.')
-            return service_running
-
-        try:
-            docker.from_env()
-            service_running = True
-        except:
-            pass
-        finally:
-            return service_running
-
     def StartDocker(self):
         if operating_system == "Windows":
             if self.docker_client_path != "":
@@ -365,18 +367,14 @@ class MainWindow(QWidget):
                 logger.error(ex)
 
     @CheckForDocker
-    def ShowImages(self):
-        images = self.docker_client.images.list()
-        self.setText("Images list: ")
-        for image in images: 
-            self.Write(f'{image.short_id.replace("sha256:", "")} - {df.get_image_name(image.tag)}')
+    def ManageImages(self):
+        self.images_window = ImagesWindow(parent=self)
+        self.images_window.exec()
 
     @CheckForDocker
-    def ShowContainers(self):
-        containers = self.docker_client.containers.list(all=True)
-        self.setText("Containers list: ")
-        for container in containers: 
-            self.Write(f'{container.name} - {container.short_id} - {df.get_image_name(container.image)} - {container.status}')
+    def ManageContainers(self):
+        self.containers_window = ContainersWindow(parent=self)
+        self.containers_window.exec()
 
     @CheckForDocker
     def LaunchScenario(self, scenario : str):
@@ -451,7 +449,7 @@ class ScenarioThread(QThread):
 
         # We first check whether the container exists or not
         try:
-            container = df.get_container(containers, image_name)[0]
+            container = dutils.get_container(containers, image_name)[0]
         except: 
             container = None
 
@@ -459,14 +457,14 @@ class ScenarioThread(QThread):
         if container:
             container.start()
         # If not, create it from the image, then call this function again
-        elif df.image_in(images, image_name):
+        elif dutils.image_in(images, image_name):
             self.docker_client.containers.create(image_name, **kwargs)
             self.LaunchContainer(image_name, main, **kwargs)
         # Pull the image if necessary, then call this function again
         else:
             self.update_console.emit(f'Pulling the lastest {image_name} image, please wait...')
             self.docker_client.images.pull(image_name)
-            while not df.image_in(images, image_name):
+            while not dutils.image_in(images, image_name):
                 images = self.docker_client.images.list()
             self.update_console.emit('Image pulled!')
             self.LaunchContainer(image_name, main, **kwargs)
