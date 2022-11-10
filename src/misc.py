@@ -30,6 +30,7 @@ def ProcessRunning(processName):
             pass
     return False
 
+
 def DisplayList(enum):
     '''
     Displays the elements of an enumerable (one element per line).
@@ -37,18 +38,24 @@ def DisplayList(enum):
     for element in enum:
         print(element)
 
+
+def error(msg = "Error!"):
+    print(f"\nError : {msg}\n")
+
+
 def open_terminal(_os, command=None):
     '''
     Opens up a terminal (or command prompt).
     ---------------
     Parameters:
-
+    
     _os : str
     The machine's operating system
 
     command: str
-    The command to be executed after the terminal's opening
+    The command to be executed after the terminal's openingss
     '''
+    
     if _os == "Windows":
         if not command:
             command = "cmd.exe"
@@ -59,8 +66,9 @@ def open_terminal(_os, command=None):
         subprocess.Popen('terminal.bat', creationflags=subprocess.CREATE_NEW_CONSOLE)
     elif _os == "Linux":
         if not command:
-            command = "exec bash"
-        os.system(f"gnome-terminal -e 'bash -c \"{command}\"'")
+            command = "exec bash -i"
+            os.popen(f"gnome-terminal -- bash -c \"{command};exit; exec bash -i\"")    
+
 
 if __name__ =="__main__":
     pass
