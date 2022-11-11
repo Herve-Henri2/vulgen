@@ -33,13 +33,14 @@ class MainWindow(QWidget):
                     "* This application is only supported on Linux and Windows distributions (sorry Mac users!) "
                     "If you are using it on a windows machine, you need to have Docker Desktop installed. "
                     "You can check if the application properly detected the executable path in the options window.\n"
-                    "* You can start testing yourself by clicking on the \"Launch Scenario\" button, we provide a detailed "
+                    "* You can start testing yourself by clicking on the \"Scenarios\" button, we provide a detailed "
                     "description as well as hints to help you beat each challenge. If you are stuck, you can always check for"
-                    "the solution by [undefined for now].\n"
+                    " the solution by clicking on the \"Instructions\" button once you have launched the scenario.\n"
                     "* The default shortcuts are: \n"
                     "h -> back to home (this layout)\n"
                     "o -> open up the options window\n"
-                    "a -> show more details regarding this project's story")
+                    "a -> show more details regarding this project's story\n"
+                    "s -> open the Scenarios window")
 
     def __init__(self):
 
@@ -139,6 +140,7 @@ class MainWindow(QWidget):
         self.scenarios_button.move(col1 + 20, 140)
         self.scenarios_button.resize(140, 20)
         self.scenarios_button.clicked.connect(self.OpenScenarios)
+        self.scenarios_button.setShortcut('s')
         self.scenarios_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.test_button = QPushButton('Test', self)

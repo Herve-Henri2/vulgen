@@ -74,7 +74,10 @@ class ScenariosWindow(QDialog):
     def showDetails(self):
         for scenario in self.scenarios:
             if scenario['name'] == self.list_view.currentItem().text():
-                self.setText(scenario['description'])
+                self.setText(scenario['description']
+                            +f"\n-----------------------------\nGoal: {scenario['goal']}"
+                            +f"\n-----------------------------\nType: {scenario['type']}"
+                            +f"\n-----------------------------\nCVE: {scenario['CVE']}")
         self.EnableButton(self.launch_button)
 
     def DisableButton(self, button : QPushButton):

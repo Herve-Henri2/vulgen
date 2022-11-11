@@ -1,11 +1,14 @@
 from PyQt6.QtWidgets import *
 import config
+import logging
 import sys
 import docker
 import docker_utils as dutils
 from custom_images_window import *
 
 configuration = config.Load()
+logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
+logger = logging.getLogger()
 
 class ImagesWindow(QDialog):
 
@@ -148,6 +151,7 @@ class ImagesWindow(QDialog):
         try:
             self.docker_client.images.remove(id)
             self.setText("Image successfully removed!")
+            logger.info(f"Deleted the image {selection[1].text() + ':' + selection[2].text()}")
         except Exception as ex:
             self.setText(str(ex))
         self.updateTable()
@@ -161,6 +165,7 @@ class ImagesWindow(QDialog):
         img = selection[1].text() + ':' + selection[2].text()
         try:
             self.docker_client.containers.create(img, stdin_open=True, tty=True) #stdion_open and tty = True <=> docker create -it
+            logger.info(f"Created a container for {img}")    
             self.parent.setText("Container successfully created!")
             self.parent.updateTable()
             self.close()

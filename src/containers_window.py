@@ -1,11 +1,14 @@
 from PyQt6.QtWidgets import *
 import config
+import logging
 import sys
 import docker
 import docker_utils as dutils
 from images_window import *
 
 configuration = config.Load()
+logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
+logger = logging.getLogger()
 
 class ContainersWindow(QDialog):
 
@@ -153,10 +156,8 @@ class ContainersWindow(QDialog):
         containers = self.docker_client.containers.list(all=True)
         selection = self.table_view.selectedItems()
         id = selection[0].text()
-
-        for container in containers:
-            if id in container.id:
-                container.start()
+        self.docker_client.containers.get(id).start()
+        logger.info(f'Started the container {self.docker_client.containers.get(id).name}')
         self.updateTable()
         selection = self.table_view.selectedItems()
         if status := selection[3].text() == 'running':
@@ -170,10 +171,8 @@ class ContainersWindow(QDialog):
         containers = self.docker_client.containers.list(all=True)
         selection = self.table_view.selectedItems()
         id = selection[0].text()
-
-        for container in containers:
-            if id in container.id:
-                container.stop()
+        self.docker_client.containers.get(id).stop()
+        logger.info(f'Stopped the container {self.docker_client.containers.get(id).name}')
         self.updateTable()
         selection = self.table_view.selectedItems()
         if status := selection[3].text() == 'exited':
@@ -190,6 +189,7 @@ class ContainersWindow(QDialog):
         try:
             self.docker_client.containers.get(id).remove()
             self.setText("Container successfully removed!")
+            logger.info(f'Removed the container {self.docker_client.containers.get(id).name}')
         except Exception as ex:
             self.setText(str(ex))
         self.updateTable()
