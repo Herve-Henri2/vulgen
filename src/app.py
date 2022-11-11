@@ -118,26 +118,26 @@ class MainWindow(QWidget):
 
         self.home_button = QPushButton('Home', self)
         self.home_button.move(col1 + 20, 20)
-        self.home_button.resize(80, 20)
+        self.home_button.resize(140, 20)
         self.home_button.clicked.connect(self.ShowHome)
         self.home_button.setShortcut('h')
         self.home_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.manage_images_button = QPushButton('Manage Images', self)
         self.manage_images_button.move(col1 + 20, 60)
-        self.manage_images_button.resize(100, 20)
+        self.manage_images_button.resize(140, 20)
         self.manage_images_button.clicked.connect(self.ManageImages)
         self.manage_images_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.manage_containers_button = QPushButton('Manage Containers', self)
         self.manage_containers_button.move(col1 + 20, 100)
-        self.manage_containers_button.resize(120, 20)
+        self.manage_containers_button.resize(140, 20)
         self.manage_containers_button.clicked.connect(self.ManageContainers)
         self.manage_containers_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.scenarios_button = QPushButton('Scenarios', self)
         self.scenarios_button.move(col1 + 20, 140)
-        self.scenarios_button.resize(120, 20)
+        self.scenarios_button.resize(140, 20)
         self.scenarios_button.clicked.connect(self.OpenScenarios)
         self.scenarios_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 

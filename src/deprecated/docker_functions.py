@@ -49,3 +49,9 @@ def get_container(containers, container_image_name):
     for index, container in enumerate(containers):
         if container_image_name in get_image_name(container.image):
             return container, index
+
+def StartContainer(self):
+    selection = self.table_view.selectedItems()
+    id = selection[0].text()
+    command = f"docker start -i {id}"
+    misc.open_terminal(configuration['operating_system'], command=command)

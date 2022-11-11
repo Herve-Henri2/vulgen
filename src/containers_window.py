@@ -42,16 +42,18 @@ class ContainersWindow(QDialog):
         # TableView
         self.table_view = QTableWidget(self)
         self.table_view.move(40, 20)
-        self.table_view.resize(620, 400)
+        self.table_view.resize(620, 300)
         self.table_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table_view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table_view.itemClicked.connect(self.ContainerClicked)
         self.table_view.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
-        
+        self.table_view.horizontalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
+        self.table_view.verticalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
+
         # TextBox
         self.textbox = QPlainTextEdit(self)
-        self.textbox.move(180, 430)
-        self.textbox.resize(480, 60)
+        self.textbox.move(180, 330)
+        self.textbox.resize(480, 110)
         self.textbox.setReadOnly(True)
         self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
 
@@ -63,20 +65,27 @@ class ContainersWindow(QDialog):
         self.refresh_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         
         self.start_button = QPushButton('Start container', self)
-        self.start_button.move(50, 425)
+        self.start_button.move(50, 330)
         self.start_button.resize(120, 20)
         self.start_button.clicked.connect(self.StartContainer)
         self.start_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         self.DisableButton(self.start_button)
+
+        self.stop_button = QPushButton('Stop container', self)
+        self.stop_button.move(50, 360)
+        self.stop_button.resize(120, 20)
+        self.stop_button.clicked.connect(self.StopContainer)
+        self.stop_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+        self.DisableButton(self.stop_button)
         
         self.create_button = QPushButton('Create container', self)
-        self.create_button.move(50, 450)
+        self.create_button.move(50, 390)
         self.create_button.resize(120, 20)
         self.create_button.clicked.connect(self.CreateContainer)
         self.create_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         
         self.remove_button = QPushButton('Remove', self)
-        self.remove_button.move(50, 475)
+        self.remove_button.move(50, 420)
         self.remove_button.resize(120, 20)
         self.remove_button.clicked.connect(self.RemoveContainer)
         self.remove_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
@@ -95,7 +104,12 @@ class ContainersWindow(QDialog):
         self.textbox.setPlainText(text)
 
     def ContainerClicked(self):
-        self.EnableButton(self.start_button)
+        selection = self.table_view.selectedItems()
+        status = selection[3].text()
+        if status == 'running':
+            self.EnableButton(self.stop_button)
+        else:
+            self.EnableButton(self.start_button)
         self.EnableButton(self.remove_button)
 
     def DisableButton(self, button : QPushButton):
@@ -115,7 +129,6 @@ class ContainersWindow(QDialog):
         button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         
     def updateTable(self):
-        dutils.docker_client = self.docker_client
         cont_dict = dutils.GetContainers()
         
         self.table_view.setColumnCount(len(cont_dict.keys()))
@@ -132,19 +145,51 @@ class ContainersWindow(QDialog):
     # endregion
 
     # region =====Main Methods=====
-    
+
     def StartContainer(self):
+        '''
+        Starts the selected container.
+        '''
+        containers = self.docker_client.containers.list(all=True)
         selection = self.table_view.selectedItems()
         id = selection[0].text()
-        command = f"docker start -i {id}"
-        misc.open_terminal(command =command)
+
+        for container in containers:
+            if id in container.id:
+                container.start()
+        self.updateTable()
+        selection = self.table_view.selectedItems()
+        if status := selection[3].text() == 'running':
+            self.DisableButton(self.start_button)
+            self.EnableButton(self.stop_button)
+
+    def StopContainer(self):
+        '''
+        Stops the selected container.
+        '''
+        containers = self.docker_client.containers.list(all=True)
+        selection = self.table_view.selectedItems()
+        id = selection[0].text()
+
+        for container in containers:
+            if id in container.id:
+                container.stop()
+        self.updateTable()
+        selection = self.table_view.selectedItems()
+        if status := selection[3].text() == 'exited':
+            self.DisableButton(self.stop_button)
+            self.EnableButton(self.start_button)
+
 
     def RemoveContainer(self):
+        '''
+        Deletes the selected container.
+        '''
         selection = self.table_view.selectedItems()
         id = selection[0].text()
         try:
             self.docker_client.containers.get(id).remove()
-            self.setText("Container successfully removed !")
+            self.setText("Container successfully removed!")
         except Exception as ex:
             self.setText(str(ex))
         self.updateTable()

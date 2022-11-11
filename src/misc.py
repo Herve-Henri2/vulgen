@@ -43,32 +43,43 @@ def error(msg = "Error!"):
     print(f"\nError : {msg}\n")
 
 
-def open_terminal(_os="Linux", command=None):
+def open_terminal(_os="Linux", command=None, insta_exit=True):
     '''
     Opens up a terminal (or command prompt).
     ---------------
     Parameters:
     
-    _os : str
+    _os : str ->
     The machine's operating system
 
-    command: str
-    The command to be executed after the terminal's openingss
+    command: str ->
+    The command to be executed after the terminal's opening
+
+    insta_exit: boolean ->
+    If set to True, the terminal will instantly close once the command has been completed.
     '''
     
     if _os == "Windows":
-        if not command:
+        if command is None:
             command = "cmd.exe"
         with open("terminal.bat", "w") as file:
-            file.write("@echo off\n"
-                       "color 09\n"
-                       f"powershell {command}")
+            if insta_exit:
+                file.write("@echo off\n"
+                        "color 09\n"
+                        f"powershell {command}\n")
+            else:
+                file.write("@echo off\n"
+                        "color 09\n"
+                        f"powershell -NoExit {command}\n")
         subprocess.Popen('terminal.bat', creationflags=subprocess.CREATE_NEW_CONSOLE)
     elif _os == "Linux":
-        if not command:
+        if command is None:
             command = "exec bash -i"
-        os.popen(f"gnome-terminal -- bash -c \"{command};exit; exec bash -i\"")    
+        if insta_exit:
+            os.popen(f"gnome-terminal -- bash -c \"{command};exit;\"")
+        else:
+            os.popen(f"gnome-terminal -- bash -c \"{command}\"")
 
 
 if __name__ =="__main__":
-    pass
+    open_terminal("Windows")

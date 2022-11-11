@@ -43,34 +43,38 @@ class ImagesWindow(QDialog):
         # TableView
         self.table_view = QTableWidget(self)
         self.table_view.move(40, 20)
-        self.table_view.resize(620, 400)
+        self.table_view.resize(620, 300)
         self.table_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table_view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table_view.itemClicked.connect(self.ImageClicked)
         self.table_view.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
-        
-        # TextBox
-        self.textbox = QPlainTextEdit(self)
-        self.textbox.move(180, 430)
-        self.textbox.resize(480, 60)
-        self.textbox.setReadOnly(True)
-        self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
+        self.table_view.horizontalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
+        self.table_view.verticalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
         
         if not self.containerMode:
+            # TextBox
+            self.textbox = QPlainTextEdit(self)
+            self.textbox.move(200, 330)
+            self.textbox.resize(460, 100)
+            self.textbox.setReadOnly(True)
+            self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
+
             # Buttons            
             self.build_button = QPushButton('Build custom image', self)
-            self.build_button.move(50, 430)
-            self.build_button.resize(120, 20)
+            self.build_button.move(40, 330)
+            self.build_button.resize(140, 20)
             self.build_button.clicked.connect(self.BuildCustomImage)
             self.build_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
             
             self.remove_button = QPushButton('Remove', self)
-            self.remove_button.move(50, 460)
+            self.remove_button.move(50, 360)
             self.remove_button.resize(120, 20)
             self.remove_button.clicked.connect(self.RemoveImage)
             self.remove_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
             self.DisableButton(self.remove_button)
         else:
+            self.table_view.resize(620, 400)
+
             # Button
             self.create_button = QPushButton('Create container', self)
             self.create_button.move(50, 430)
@@ -121,7 +125,6 @@ class ImagesWindow(QDialog):
         button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
     
     def updateTable(self):        
-        dutils.docker_client = self.docker_client
         img_dict = dutils.GetImages()
         
         self.table_view.setColumnCount(len(img_dict.keys()))
@@ -144,7 +147,7 @@ class ImagesWindow(QDialog):
         id = selection[0].text()
         try:
             self.docker_client.images.remove(id)
-            self.setText("Image successfully removed !")
+            self.setText("Image successfully removed!")
         except Exception as ex:
             self.setText(str(ex))
         self.updateTable()
@@ -158,11 +161,11 @@ class ImagesWindow(QDialog):
         img = selection[1].text() + ':' + selection[2].text()
         try:
             self.docker_client.containers.create(img, stdin_open=True, tty=True) #stdion_open and tty = True <=> docker create -it
-            self.setText("Container successfully created !")
+            self.parent.setText("Container successfully created!")
             self.parent.updateTable()
             self.close()
         except Exception as ex:
-            self.setText(str(ex))
+            self.parent.setText(str(ex))
             
 
     # endregion

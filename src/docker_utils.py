@@ -6,11 +6,6 @@ from misc import *
 
 # Documentation link: https://docker-py.readthedocs.io/en/stable/
 
-# General variables
-docker_client = None
-images = [] # All the docker images on the machine
-containers = [] # All the docker containers on the machine
-
 
 def image_in(images, wanted_image_name):
     '''
@@ -53,9 +48,9 @@ def get_container(containers, container_image_name):
     #print(f"No {container_image_name} container was found")
 
 
-def GetImages():
-    global images
-    global docker_client
+def GetImages(docker_client=None):
+    if docker_client is None:
+        docker_client = docker.from_env()
 
     images = docker_client.images.list()
     
@@ -69,9 +64,9 @@ def GetImages():
     return img_dict
         
 
-def GetContainers():
-    global containers
-    global docker_client
+def GetContainers(docker_client=None):
+    if docker_client is None:
+        docker_client = docker.from_env()
     
     containers = docker_client.containers.list(all=True)
     
@@ -87,7 +82,7 @@ def GetContainers():
 
 def GetCustomImages():
     '''
-    Retrieve all custom images names from the docker_images folder.
+    Retrieves all custom images names from the docker_images folder.
     '''
     to_exclude = ('README.md', 'base_images')
     
