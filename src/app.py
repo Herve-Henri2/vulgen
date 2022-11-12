@@ -30,12 +30,13 @@ class MainWindow(QWidget):
     welcome_text = ("Welcome to our vulnerable environment generator!\n"
                     "To use the application, check out the buttons on the left side.\n\n"
                     "Here is some useful information you need to know:\n"
+                    "----------------------------------------------------------------------\n"
                     "* This application is only supported on Linux and Windows distributions (sorry Mac users!) "
                     "If you are using it on a windows machine, you need to have Docker Desktop installed. "
-                    "You can check if the application properly detected the executable path in the options window.\n"
+                    "You can check if the application properly detected the executable path in the options window.\n\n"
                     "* You can start testing yourself by clicking on the \"Scenarios\" button, we provide a detailed "
                     "description as well as hints to help you beat each challenge. If you are stuck, you can always check for"
-                    " the solution by clicking on the \"Instructions\" button once you have launched the scenario.\n"
+                    " the solution by clicking on the \"Instructions\" button once you have launched the scenario.\n\n"
                     "* The default shortcuts are: \n"
                     "h -> back to home (this layout)\n"
                     "o -> open up the options window\n"
@@ -45,12 +46,14 @@ class MainWindow(QWidget):
     def __init__(self):
 
         # We define a few graphical variables from the configuration
-        background_color = configuration['main_window_background_color']
-        textbox_color = configuration['main_window_textbox_color']
-        buttons_color = configuration['buttons_color']
-        text_color = configuration['text_color']
-        text_font = configuration['text_font']
-        text_size = configuration['text_size']
+        self.theme = config.GetTheme(configuration)
+        background_color = self.theme['main_window_background_color']
+        textbox_color = self.theme['main_window_textbox_color']
+        buttons_color = self.theme['buttons_color']
+        border_color = self.theme['border_color']
+        text_color = self.theme['text_color']
+        text_font = self.theme['text_font']
+        text_size = self.theme['text_size']
 
         # Defining our layout variables
         width = 950
@@ -65,17 +68,20 @@ class MainWindow(QWidget):
 
         # We then start initializing our window
         super().__init__()
-        self.initUI(background_color, textbox_color, buttons_color, text_color, text_font, text_size, width, height, col1, col2, col3)
+        self.initUI(background_color, textbox_color, buttons_color, border_color, text_color, text_font, text_size, width, height, col1, col2, col3)
 
-        if operating_system == "Windows" :
-            self.DetectDockerDesktopPath()
+        if operating_system == "Windows":
+            if not configuration['docker_desktop'] or configuration['docker_desktop'] == "":
+                self.DetectDockerDesktopPath()
+            else:
+                self.docker_client_path = configuration['docker_desktop']
 
         if not self.DockerServiceRunning():
             self.StartDocker()
         self.Write(self.welcome_text)
 
 
-    def initUI(self, background_color, textbox_color, buttons_color, text_color, text_font, text_size, width, height, col1, col2, col3):
+    def initUI(self, background_color, textbox_color, buttons_color, border_color, text_color, text_font, text_size, width, height, col1, col2, col3):
 
         self.setWindowTitle('Vulnerable Environment Generator')
         self.setFixedSize(width, height)
@@ -86,14 +92,14 @@ class MainWindow(QWidget):
         self.textbox.move(col2, 20)
         self.textbox.resize(600,400)
         self.textbox.setReadOnly(True)
-        self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
+        self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}'")
 
         # Main entry
         self.entry = QLineEdit(self)
         self.entry.move(col2, 450)
         self.entry.resize(600, 30)
         self.entry.setPlaceholderText('Replace this text with your input then press enter')  
-        self.entry.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; border: 1px solid "#FFFFFF"')
+        self.entry.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; border: 1px solid "{border_color}"')
 
         # Buttons
         self.enter_button = QPushButton('Enter', self)
@@ -161,7 +167,7 @@ class MainWindow(QWidget):
         self.scenario_textbox.move(col1 + 20, 260)
         self.scenario_textbox.resize(120, 20)
         self.scenario_textbox.setReadOnly(True)
-        self.scenario_textbox.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-style: italic; border: 1px solid "#FFFFFF"')
+        self.scenario_textbox.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-style: italic; border: 1px solid "{border_color}"')
         self.scenario_ui_components.append(self.scenario_textbox)
 
         self.scenario_instructions_button = QPushButton('Instructions', self)
@@ -217,17 +223,17 @@ class MainWindow(QWidget):
         self.textbox.appendPlainText(text)
 
     def DisableButton(self, button : QPushButton):
-        buttons_color = configuration['disabled_buttons_color']
-        text_color = configuration['disabled_text_color']
-        text_font = configuration['text_font']
+        buttons_color = self.theme['disabled_buttons_color']
+        text_color = self.theme['disabled_text_color']
+        text_font = self.theme['text_font']
 
         button.setEnabled(False)
         button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font};')
 
     def EnableButton(self, button : QPushButton):
-        buttons_color = configuration['buttons_color']
-        text_color = configuration['text_color']
-        text_font = configuration['text_font']
+        buttons_color = self.theme['buttons_color']
+        text_color = self.theme['text_color']
+        text_font = self.theme['text_font']
 
         button.setEnabled(True)
         button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
@@ -475,6 +481,7 @@ class ScenarioThread(QThread):
     # endregion
 
 if __name__ == "__main__":
+
     app = QApplication(sys.argv)
     ex = MainWindow()
     ex.show()

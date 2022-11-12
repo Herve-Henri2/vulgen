@@ -17,22 +17,23 @@ class OptionsWindow(QDialog):
         self.parent = parent
 
         # We define a few graphical variables from the configuration
-
-        background_color = configuration['child_window_background_color']
-        textbox_color = configuration['main_window_textbox_color']
-        buttons_color = configuration['buttons_color']
-        text_color = configuration['text_color']
-        text_font = configuration['text_font']
-        text_size = configuration['text_size']
+        self.theme = config.GetTheme(configuration)
+        background_color = self.theme['child_window_background_color']
+        textbox_color = self.theme['main_window_textbox_color']
+        buttons_color = self.theme['buttons_color']
+        border_color = self.theme['border_color']
+        text_color = self.theme['text_color']
+        text_font = self.theme['text_font']
+        text_size = self.theme['text_size']
 
         # Defining our layout variables
         width = 500
         height = 300
 
         super().__init__(parent)
-        self.initUI(background_color, textbox_color, width, height, buttons_color, text_color, text_font, text_size)
+        self.initUI(background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size)
 
-    def initUI(self, background_color, textbox_color, width, height, buttons_color, text_color, text_font, text_size):
+    def initUI(self, background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size):
 
         self.setWindowTitle('Options')
         self.setFixedSize(width, height)
@@ -70,10 +71,29 @@ class OptionsWindow(QDialog):
         if operating_system != "Windows":
             self.docker_desktop_entry.setEnabled(False)
 
+        # Theme Combobox + Label
+
+        self.themes_label = QLabel('Theme', self)
+        self.themes_label.move(50, 100)
+        self.themes_label.resize(80, 20)
+        self.themes_label.setStyleSheet(f'color: {text_color}; font-family: {text_font}')
+
+        self.themes = QComboBox(self)
+        self.themes.move(50, 120)
+        for theme in configuration['themes']:
+            self.themes.addItem(theme['name'])
+        self.themes.setCurrentText(configuration['themes'][configuration['current_theme_index']]['name'])
+        # self.themes.activated.connect(self.setTheme)
+        self.themes.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size}")
+
+
     # endregion
 
     # region =====Graphical Methods=====
 
+    def setTheme(self, index):
+        config.Save('current_theme_index', index)
+        
     # endregion
 
     # region =====General Methods=====
@@ -99,6 +119,7 @@ class OptionsWindow(QDialog):
             allowed_to_close = False
         if allowed_to_close:
             config.Save('docker_desktop', self.docker_desktop_entry.text())
+            config.Save('current_theme_index', self.themes.currentIndex())
             self.close()
 
     #endregion

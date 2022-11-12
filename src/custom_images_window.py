@@ -18,23 +18,24 @@ class CustomImagesWindow(QDialog):
         self.docker_client = docker.from_env()
 
         # We define a few graphical variables from the configuration
-
-        background_color = configuration['child_window_background_color']
-        textbox_color = configuration['main_window_textbox_color']
-        buttons_color = configuration['buttons_color']
-        text_color = configuration['text_color']
-        text_font = configuration['text_font']
-        text_size = configuration['text_size']
+        self.theme = config.GetTheme(configuration)
+        background_color = self.theme['child_window_background_color']
+        textbox_color = self.theme['main_window_textbox_color']
+        buttons_color = self.theme['buttons_color']
+        border_color = self.theme['border_color']
+        text_color = self.theme['text_color']
+        text_font = self.theme['text_font']
+        text_size = self.theme['text_size']
 
         # Defining our layout variables
         width = 700
         height = 500
 
         super().__init__(parent)
-        self.initUI(background_color, textbox_color, width, height, buttons_color, text_color, text_font, text_size)
+        self.initUI(background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size)
 
 
-    def initUI(self, background_color, textbox_color, width, height, buttons_color, text_color, text_font, text_size):
+    def initUI(self, background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size):
 
         self.setWindowTitle('Custom Images')
         self.setFixedSize(width, height)
@@ -46,7 +47,7 @@ class CustomImagesWindow(QDialog):
         self.list_view.resize(620, 400)
         self.list_view.itemClicked.connect(self.ImageClicked)
         self.list_view.itemDoubleClicked.connect(self.BuildImage)
-        self.list_view.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
+        self.list_view.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
 
         # Buttons
         self.build_button = QPushButton('Build Image', self)
@@ -71,17 +72,17 @@ class CustomImagesWindow(QDialog):
         self.EnableButton(self.build_button)
 
     def DisableButton(self, button : QPushButton):
-        buttons_color = configuration['disabled_buttons_color']
-        text_color = configuration['disabled_text_color']
-        text_font = configuration['text_font']
+        buttons_color = self.theme['disabled_buttons_color']
+        text_color = self.theme['disabled_text_color']
+        text_font = self.theme['text_font']
 
         button.setEnabled(False)
         button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font};')
 
     def EnableButton(self, button : QPushButton):
-        buttons_color = configuration['buttons_color']
-        text_color = configuration['text_color']
-        text_font = configuration['text_font']
+        buttons_color = self.theme['buttons_color']
+        text_color = self.theme['text_color']
+        text_font = self.theme['text_font']
 
         button.setEnabled(True)
         button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')

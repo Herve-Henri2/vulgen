@@ -7,23 +7,59 @@ config_file = "config.json"
 
 #  region =====Config variables=====
 
-variables_list = ['operating_system', 'docker_desktop', 'log_file', 'log_format', 'main_window_background_color', 'main_window_textbox_color',
-                  'buttons_color', 'disabled_buttons_color', 'child_window_background_color','text_color', 'disabled_text_color', 'text_font', 'text_size']
+variables_list = ['operating_system', 'docker_desktop', 'log_file', 'log_format', 'current_theme_index', 'themes']
 
 configuration['operating_system'] = platform.system()
 configuration['docker_desktop'] = ""
 configuration['log_file'] = 'app.log'
 configuration['log_format'] = "%(asctime)s | %(levelname)s - %(message)s"
-# Default graphical variables
-configuration['main_window_background_color'] = '#202266'
-configuration['main_window_textbox_color'] = '#3D3F6E'
-configuration['buttons_color'] = '#5D63A6'
-configuration['disabled_buttons_color'] = "#7175A8"
-configuration['child_window_background_color'] = '#282A69'
-configuration['text_color'] = '#FFFFFF'
-configuration['disabled_text_color'] = '#ADADAD'
-configuration['text_font'] = 'Consolas'
-configuration['text_size'] = '12'
+# UI Themes
+configuration['current_theme_index'] = 0 # Default theme
+configuration['themes'] = []
+theme1, theme2, theme3 = {}, {}, {}
+
+# Default Theme
+theme1['name'] = 'Default'
+theme1['main_window_background_color'] = '#202266'
+theme1['main_window_textbox_color'] = '#3D3F6E'
+theme1['buttons_color'] = '#5D63A6'
+theme1['disabled_buttons_color'] = '#7175A8'
+theme1['child_window_background_color'] = '#282A69'
+theme1['border_color'] = "#FFFFFF"
+theme1['text_color'] = '#FFFFFF'
+theme1['disabled_text_color'] = '#ADADAD'
+theme1['text_font'] = 'Walbaum Display'
+theme1['text_size'] = '12'
+configuration['themes'].append(theme1)
+
+# Dracula Theme
+theme2['name'] = 'Dracula'
+theme2['main_window_background_color'] = '#171515'
+theme2['main_window_textbox_color'] = '#050505'
+theme2['buttons_color'] = '#171010'
+theme2['disabled_buttons_color'] = '#382626'
+theme2['child_window_background_color'] = '#1F1D1D'
+theme2['border_color'] = "#CF0000"
+theme2['text_color'] = '#CF0000'
+theme2['disabled_text_color'] = '#CF4A4A'
+theme2['text_font'] = 'Walbaum Display'
+theme2['text_size'] = '12'
+configuration['themes'].append(theme2)
+
+# Midnight Theme
+theme3['name'] = 'Midnight'
+theme3['main_window_background_color'] = '#000000'
+theme3['main_window_textbox_color'] = '#000000'
+theme3['buttons_color'] = '#040D36'
+theme3['disabled_buttons_color'] = '#2E2F50'
+theme3['child_window_background_color'] = '#01040F'
+theme3['border_color'] = "#3F42D0"
+theme3['text_color'] = '#3F42D0'
+theme3['disabled_text_color'] = '#7779CF'
+theme3['text_font'] = 'Walbaum Display'
+theme3['text_size'] = '12'
+configuration['themes'].append(theme3)
+
 #logger
 
 logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
@@ -67,7 +103,7 @@ def Load() -> dict:
         logger.error(ex)
         Reset()
         return configuration
-
+    
 def Save(config_name : str, config_value):
     '''
     Saves a specific parameter into the configuration.
@@ -80,10 +116,15 @@ def Save(config_name : str, config_value):
     config_value: any
     The value of the given parameter (example: Linux)
     '''
-    # TODO -> handle the config value
+    # TODO -> handle the config_value variable
+    configuration = Load()
     configuration[config_name] = config_value
-    with open(config_file, 'w') as file:
-        file.write(json.dumps(configuration))
+    try:
+        with open(config_file, 'w') as file:
+            file.write(json.dumps(configuration))
+            logger.info(f'Saved {config_value} into {config_name}.')
+    except Exception as ex:
+        logger.error(f'An error occured when attempting to open the file {config_file}: {ex}')
 
 def Reset():
     '''
@@ -93,5 +134,17 @@ def Reset():
     with open(config_file, 'w') as file:
             file.write(json.dumps(configuration))
 
+
+def GetTheme(configuration=None) -> dict:
+    '''
+    Returns the current theme of our application as a dictionnary.
+    '''
+    if configuration is None:
+        configuration = Load()
+    return configuration['themes'][configuration['current_theme_index']]
+
+
 # endregion
             
+if __name__ == "__main__":
+    conf = Load()

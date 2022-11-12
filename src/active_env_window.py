@@ -18,22 +18,23 @@ class ActiveEnvWindow(QDialog):
         self.parent=parent
 
         # We define a few graphical variables from the configuration
-
-        background_color = configuration['child_window_background_color']
-        textbox_color = configuration['main_window_textbox_color']
-        buttons_color = configuration['buttons_color']
-        text_color = configuration['text_color']
-        text_font = configuration['text_font']
-        text_size = configuration['text_size']
+        self.theme = config.GetTheme(configuration)
+        background_color = self.theme['child_window_background_color']
+        textbox_color = self.theme['main_window_textbox_color']
+        buttons_color = self.theme['buttons_color']
+        border_color = self.theme['border_color']
+        text_color = self.theme['text_color']
+        text_font = self.theme['text_font']
+        text_size = self.theme['text_size']
 
         # Defining our layout variables
         width = 500
         height = 300
 
         super().__init__(parent)
-        self.initUI(background_color, textbox_color, width, height, buttons_color, text_color, text_font, text_size)
+        self.initUI(background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size)
 
-    def initUI(self, background_color, textbox_color, width, height, buttons_color, text_color, text_font, text_size):
+    def initUI(self, background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size):
         self.setWindowTitle('Environment Containers')
         self.setFixedSize(width, height)
         self.setStyleSheet(f'background-color: {background_color}')
@@ -43,7 +44,7 @@ class ActiveEnvWindow(QDialog):
         self.list_view.move(40, 20)
         self.list_view.resize(400, 200)
         self.list_view.itemClicked.connect(self.AllowShell)
-        self.list_view.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
+        self.list_view.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
 
         # Buttons
         self.open_shell_button = QPushButton('Open Shell', self)
@@ -63,17 +64,17 @@ class ActiveEnvWindow(QDialog):
     # region =====Graphical Methods=====
 
     def DisableButton(self, button : QPushButton):
-        buttons_color = configuration['disabled_buttons_color']
-        text_color = configuration['disabled_text_color']
-        text_font = configuration['text_font']
+        buttons_color = self.theme['disabled_buttons_color']
+        text_color = self.theme['disabled_text_color']
+        text_font = self.theme['text_font']
 
         button.setEnabled(False)
         button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font};')
 
     def EnableButton(self, button : QPushButton):
-        buttons_color = configuration['buttons_color']
-        text_color = configuration['text_color']
-        text_font = configuration['text_font']
+        buttons_color = self.theme['buttons_color']
+        text_color = self.theme['text_color']
+        text_font = self.theme['text_font']
 
         button.setEnabled(True)
         button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')

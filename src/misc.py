@@ -1,6 +1,7 @@
 import subprocess
 import psutil
 import os
+from PyQt6.QtWidgets import *
 try:
     import win32gui
 except ModuleNotFoundError:

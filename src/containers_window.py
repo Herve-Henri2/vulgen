@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import *
 import config
+import misc
 import logging
 import sys
 import docker
@@ -20,23 +21,24 @@ class ContainersWindow(QDialog):
         self.docker_client = docker.from_env()
 
         # We define a few graphical variables from the configuration
-
-        background_color = configuration['child_window_background_color']
-        textbox_color = configuration['main_window_textbox_color']
-        buttons_color = configuration['buttons_color']
-        text_color = configuration['text_color']
-        text_font = configuration['text_font']
-        text_size = configuration['text_size']
+        self.theme = config.GetTheme(configuration)
+        background_color = self.theme['child_window_background_color']
+        textbox_color = self.theme['main_window_textbox_color']
+        buttons_color = self.theme['buttons_color']
+        border_color = self.theme['border_color']
+        text_color = self.theme['text_color']
+        text_font = self.theme['text_font']
+        text_size = self.theme['text_size']
 
         # Defining our layout variables
         width = 700
         height = 500
 
         super().__init__(parent)
-        self.initUI(background_color, textbox_color, width, height, buttons_color, text_color, text_font, text_size)
+        self.initUI(background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size)
 
 
-    def initUI(self, background_color, textbox_color, width, height, buttons_color, text_color, text_font, text_size):
+    def initUI(self, background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size):
 
         self.setWindowTitle('Containers')
         self.setFixedSize(width, height)
@@ -49,7 +51,7 @@ class ContainersWindow(QDialog):
         self.table_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table_view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table_view.itemClicked.connect(self.ContainerClicked)
-        self.table_view.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
+        self.table_view.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
         self.table_view.horizontalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
         self.table_view.verticalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
 
@@ -58,7 +60,7 @@ class ContainersWindow(QDialog):
         self.textbox.move(180, 330)
         self.textbox.resize(480, 110)
         self.textbox.setReadOnly(True)
-        self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '#FFFFFF';")
+        self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
 
         # Buttons
         self.refresh_button = QPushButton('R.', self)
@@ -106,6 +108,22 @@ class ContainersWindow(QDialog):
     def setText(self, text : str):
         self.textbox.setPlainText(text)
 
+    def DisableButton(self, button : QPushButton):
+        buttons_color = self.theme['disabled_buttons_color']
+        text_color = self.theme['disabled_text_color']
+        text_font = self.theme['text_font']
+
+        button.setEnabled(False)
+        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font};')
+
+    def EnableButton(self, button : QPushButton):
+        buttons_color = self.theme['buttons_color']
+        text_color = self.theme['text_color']
+        text_font = self.theme['text_font']
+
+        button.setEnabled(True)
+        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
+
     def ContainerClicked(self):
         selection = self.table_view.selectedItems()
         status = selection[3].text()
@@ -114,22 +132,6 @@ class ContainersWindow(QDialog):
         else:
             self.EnableButton(self.start_button)
         self.EnableButton(self.remove_button)
-
-    def DisableButton(self, button : QPushButton):
-        buttons_color = configuration['disabled_buttons_color']
-        text_color = configuration['disabled_text_color']
-        text_font = configuration['text_font']
-
-        button.setEnabled(False)
-        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font};')
-
-    def EnableButton(self, button : QPushButton):
-        buttons_color = configuration['buttons_color']
-        text_color = configuration['text_color']
-        text_font = configuration['text_font']
-
-        button.setEnabled(True)
-        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         
     def updateTable(self):
         cont_dict = dutils.GetContainers()
@@ -153,8 +155,9 @@ class ContainersWindow(QDialog):
         '''
         Starts the selected container.
         '''
-        containers = self.docker_client.containers.list(all=True)
         selection = self.table_view.selectedItems()
+        if selection is None or len(selection) == 0:
+            return
         id = selection[0].text()
         self.docker_client.containers.get(id).start()
         logger.info(f'Started the container {self.docker_client.containers.get(id).name}')
@@ -168,8 +171,9 @@ class ContainersWindow(QDialog):
         '''
         Stops the selected container.
         '''
-        containers = self.docker_client.containers.list(all=True)
         selection = self.table_view.selectedItems()
+        if selection is None or len(selection) == 0:
+            return
         id = selection[0].text()
         self.docker_client.containers.get(id).stop()
         logger.info(f'Stopped the container {self.docker_client.containers.get(id).name}')
@@ -185,11 +189,14 @@ class ContainersWindow(QDialog):
         Deletes the selected container.
         '''
         selection = self.table_view.selectedItems()
+        if selection is None or len(selection) == 0:
+            return
         id = selection[0].text()
         try:
+            name = self.docker_client.containers.get(id).name
             self.docker_client.containers.get(id).remove()
             self.setText("Container successfully removed!")
-            logger.info(f'Removed the container {self.docker_client.containers.get(id).name}')
+            logger.info(f'Removed the container {name}')
         except Exception as ex:
             self.setText(str(ex))
         self.updateTable()
