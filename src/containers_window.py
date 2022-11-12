@@ -160,12 +160,13 @@ class ContainersWindow(QDialog):
             return
         id = selection[0].text()
         self.docker_client.containers.get(id).start()
-        logger.info(f'Started the container {self.docker_client.containers.get(id).name}')
         self.updateTable()
         selection = self.table_view.selectedItems()
         if status := selection[3].text() == 'running':
             self.DisableButton(self.start_button)
             self.EnableButton(self.stop_button)
+            logger.info(f'Started the container {selection[1].text()}')
+            self.setText(f'Started the container {selection[1].text()}')
 
     def StopContainer(self):
         '''
@@ -176,12 +177,13 @@ class ContainersWindow(QDialog):
             return
         id = selection[0].text()
         self.docker_client.containers.get(id).stop()
-        logger.info(f'Stopped the container {self.docker_client.containers.get(id).name}')
         self.updateTable()
         selection = self.table_view.selectedItems()
         if status := selection[3].text() == 'exited':
             self.DisableButton(self.stop_button)
             self.EnableButton(self.start_button)
+            logger.info(f'Stopped the container {selection[1].text()}')
+            self.setText(f'Stopped the container {selection[1].text()}')
 
 
     def RemoveContainer(self):

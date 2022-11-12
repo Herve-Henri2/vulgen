@@ -157,6 +157,7 @@ class ImagesWindow(QDialog):
             logger.info(f"Deleted the image {selection[1].text() + ':' + selection[2].text()}")
         except Exception as ex:
             self.setText(str(ex))
+            logger.error(f"Error while attempting to remove the image {selection[1].text() + ':' + selection[2].text()}: {ex}")
         self.updateTable()
     
     def BuildCustomImage(self):

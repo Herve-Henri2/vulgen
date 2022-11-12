@@ -1,12 +1,15 @@
 from PyQt6.QtWidgets import *
 import config
+import logging
 import sys
+import subprocess
 import os
 import docker
-import misc
 import docker_utils as dutils
 
 configuration = config.Load()
+logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
+logger = logging.getLogger()
 
 class CustomImagesWindow(QDialog):
 
@@ -99,11 +102,18 @@ class CustomImagesWindow(QDialog):
     # region =====Main Methods=====
 
     def BuildImage(self):
+        #TODO add Windows compatibility
         selection = self.list_view.currentItem().text()
-        path = os.path.realpath(os.path.dirname(__file__)) + "\\..\\docker_images"  # src folder absolute path + path to docker_images from src folder
-        command = f"cd {path}\\{selection}\\create_img.sh"
-        misc.open_terminal(configuration['operating_system'], command = command)
-        self.close()
+        try:
+            custom_images_path = os.path.realpath(os.path.dirname(__file__)) + "\\..\\docker_images"  # src folder absolute path + path to docker_images from src folder
+            subprocess.Popen(f'{custom_images_path}\\{selection}\\create_img.sh')
+            #command = f"cd {path}\\{selection}\\create_img.sh"
+            #misc.open_terminal(configuration['operating_system'], command=command)
+        except Exception as ex:
+            self.parent.setText(str(ex))
+            logger.error(f'An error occured while trying to build the image {selection}: {ex}')
+        finally:
+            self.close()
         
             
 
