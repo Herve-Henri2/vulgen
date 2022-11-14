@@ -3,11 +3,12 @@ from PyQt6 import QtCore
 import config
 import sys
 import os
+from base_window import *
 
 configuration = config.Load()
 operating_system = configuration['operating_system']
 
-class OptionsWindow(QDialog):
+class OptionsWindow(QDialog, BaseWindow):
 
     # region =====Initializing=====
     docker_client_path = configuration['docker_desktop']
@@ -16,42 +17,27 @@ class OptionsWindow(QDialog):
 
         self.parent = parent
 
-        # We define a few graphical variables from the configuration
-        self.theme = config.GetTheme(configuration)
-        background_color = self.theme['child_window_background_color']
-        textbox_color = self.theme['main_window_textbox_color']
-        buttons_color = self.theme['buttons_color']
-        border_color = self.theme['border_color']
-        text_color = self.theme['text_color']
-        text_font = self.theme['text_font']
-        text_size = self.theme['text_size']
-
         # Defining our layout variables
         width = 500
         height = 300
 
-        super().__init__(parent)
-        self.initUI(background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size)
+        super().__init__()
+        self.initUI(width, height)
 
-    def initUI(self, background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size):
+    def initUI(self, width, height):
 
         self.setWindowTitle('Options')
         self.setFixedSize(width, height)
-        self.setStyleSheet(f'background-color: {background_color}')
-        
 
         # Docker Desktop file path
 
         self.docker_path_label = QLabel('Docker Desktop path (Windows Only)', self)
         self.docker_path_label.move(50, 20)
         self.docker_path_label.resize(400, 20)
-        self.docker_path_label.setStyleSheet(f'color: {text_color}; font-family: {text_font}; font-size: {text_size}')
         
         self.docker_desktop_entry = QLineEdit(self.docker_client_path, self)
         self.docker_desktop_entry.move(50, 40)
         self.docker_desktop_entry.resize(400, 20)
-        self.docker_desktop_entry.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font};'
-                                                f'font-size: {text_size}; font-style: italic; border: 0px')
         if operating_system != "Windows":
             self.docker_desktop_entry.setEnabled(False)
         
@@ -61,13 +47,11 @@ class OptionsWindow(QDialog):
         self.save_button.move(370, 260)
         self.save_button.resize(80, 20)
         self.save_button.clicked.connect(self.Save)
-        self.save_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.browse_button = QPushButton('Browse', self)
         self.browse_button.move(50, 70)
         self.browse_button.resize(80, 20)
         self.browse_button.clicked.connect(self.FileDialog)
-        self.browse_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         if operating_system != "Windows":
             self.docker_desktop_entry.setEnabled(False)
 
@@ -76,7 +60,6 @@ class OptionsWindow(QDialog):
         self.themes_label = QLabel('Theme', self)
         self.themes_label.move(50, 100)
         self.themes_label.resize(80, 20)
-        self.themes_label.setStyleSheet(f'color: {text_color}; font-family: {text_font}')
 
         self.themes = QComboBox(self)
         self.themes.move(50, 120)
@@ -84,7 +67,8 @@ class OptionsWindow(QDialog):
             self.themes.addItem(theme['name'])
         self.themes.setCurrentText(configuration['themes'][configuration['current_theme_index']]['name'])
         # self.themes.activated.connect(self.setTheme)
-        self.themes.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size}")
+
+        self.ImplementTheme()
 
 
     # endregion

@@ -1,5 +1,4 @@
 import docker_utils as dutils
-import logging
 import sys
 import os
 import config
@@ -13,19 +12,14 @@ from active_env_window import *
 from images_window import *
 from containers_window import *
 from scenarios import *
-
-configuration = config.Load()
-operating_system = configuration['operating_system']
-logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
-logger = logging.getLogger()
+from base_window import * 
 
 # TODO Delete all scenario containers after an update
 
-class MainWindow(QWidget):
+class MainWindow(BaseWindow):
 
     # region =====Initializing=====
-     
-    docker_client_path = configuration['docker_desktop']
+
     docker_client = None
     welcome_text = ("Welcome to our vulnerable environment generator!\n"
                     "To use the application, check out the buttons on the left side.\n\n"
@@ -45,16 +39,6 @@ class MainWindow(QWidget):
 
     def __init__(self):
 
-        # We define a few graphical variables from the configuration
-        self.theme = config.GetTheme(configuration)
-        background_color = self.theme['main_window_background_color']
-        textbox_color = self.theme['main_window_textbox_color']
-        buttons_color = self.theme['buttons_color']
-        border_color = self.theme['border_color']
-        text_color = self.theme['text_color']
-        text_font = self.theme['text_font']
-        text_size = self.theme['text_size']
-
         # Defining our layout variables
         width = 950
         height = 600
@@ -68,7 +52,7 @@ class MainWindow(QWidget):
 
         # We then start initializing our window
         super().__init__()
-        self.initUI(background_color, textbox_color, buttons_color, border_color, text_color, text_font, text_size, width, height, col1, col2, col3)
+        self.initUI(width, height, col1, col2, col3)
 
         if operating_system == "Windows":
             if not configuration['docker_desktop'] or configuration['docker_desktop'] == "":
@@ -81,25 +65,22 @@ class MainWindow(QWidget):
         self.Write(self.welcome_text)
 
 
-    def initUI(self, background_color, textbox_color, buttons_color, border_color, text_color, text_font, text_size, width, height, col1, col2, col3):
+    def initUI(self, width, height, col1, col2, col3):
 
         self.setWindowTitle('Vulnerable Environment Generator')
         self.setFixedSize(width, height)
-        self.setStyleSheet(f'background-color: {background_color};')
 
         # Main textbox
         self.textbox = QPlainTextEdit(self)
         self.textbox.move(col2, 20)
         self.textbox.resize(600,400)
         self.textbox.setReadOnly(True)
-        self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}'")
 
         # Main entry
         self.entry = QLineEdit(self)
         self.entry.move(col2, 450)
         self.entry.resize(600, 30)
         self.entry.setPlaceholderText('Replace this text with your input then press enter')  
-        self.entry.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; border: 1px solid "{border_color}"')
 
         # Buttons
         self.enter_button = QPushButton('Enter', self)
@@ -107,91 +88,78 @@ class MainWindow(QWidget):
         self.enter_button.resize(80, 20)
         self.enter_button.clicked.connect(self.GetUserInput)
         self.enter_button.setShortcut('Return')
-        self.enter_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.options_button = QPushButton('Options', self)
         self.options_button.move(col3, 20)
         self.options_button.resize(80, 20)
         self.options_button.clicked.connect(self.OpenOptions)
         self.options_button.setShortcut('o')
-        self.options_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.about_button = QPushButton('About', self)
         self.about_button.move(col3, 60)
         self.about_button.resize(80, 20)
         self.about_button.clicked.connect(self.ShowAbout)
         self.about_button.setShortcut('a')
-        self.about_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.home_button = QPushButton('Home', self)
         self.home_button.move(col1 + 20, 20)
         self.home_button.resize(140, 20)
         self.home_button.clicked.connect(self.ShowHome)
         self.home_button.setShortcut('h')
-        self.home_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.manage_images_button = QPushButton('Manage Images', self)
         self.manage_images_button.move(col1 + 20, 60)
         self.manage_images_button.resize(140, 20)
         self.manage_images_button.clicked.connect(self.ManageImages)
-        self.manage_images_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.manage_containers_button = QPushButton('Manage Containers', self)
         self.manage_containers_button.move(col1 + 20, 100)
         self.manage_containers_button.resize(140, 20)
         self.manage_containers_button.clicked.connect(self.ManageContainers)
-        self.manage_containers_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.scenarios_button = QPushButton('Scenarios', self)
         self.scenarios_button.move(col1 + 20, 140)
         self.scenarios_button.resize(140, 20)
         self.scenarios_button.clicked.connect(self.OpenScenarios)
         self.scenarios_button.setShortcut('s')
-        self.scenarios_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
         self.test_button = QPushButton('Test', self)
         self.test_button.move(col1 + 20, 200)
         self.test_button.resize(120, 20)
         self.test_button.clicked.connect(self.Test)
-        self.test_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         self.test_button.hide()
 
         # Scenario UI
         self.scenario_label = QLabel('Active scenario', self)
         self.scenario_label.move(col1 + 40, 240)
-        self.scenario_label.resize(80, 20)
-        self.scenario_label.setStyleSheet(f'color: {text_color}')
         self.scenario_ui_components.append(self.scenario_label)
 
         self.scenario_textbox = QLineEdit(self)
         self.scenario_textbox.move(col1 + 20, 260)
         self.scenario_textbox.resize(120, 20)
         self.scenario_textbox.setReadOnly(True)
-        self.scenario_textbox.setStyleSheet(f'background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-style: italic; border: 1px solid "{border_color}"')
         self.scenario_ui_components.append(self.scenario_textbox)
 
         self.scenario_instructions_button = QPushButton('Instructions', self)
         self.scenario_instructions_button.move(col1 + 20, 300)
         self.scenario_instructions_button.resize(120, 20)
         self.scenario_instructions_button.clicked.connect(self.ShowInstructions)
-        self.scenario_instructions_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         self.scenario_ui_components.append(self.scenario_instructions_button)
 
         self.scenario_containers_button = QPushButton('Containers', self)
         self.scenario_containers_button.move(col1 + 20, 340)
         self.scenario_containers_button.resize(120, 20)
         self.scenario_containers_button.clicked.connect(self.ShowScenarioContainers)
-        self.scenario_containers_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         self.scenario_ui_components.append(self.scenario_containers_button)
 
         self.exit_scenario_button = QPushButton('Exit', self)
         self.exit_scenario_button.move(col1 + 20, 380)
         self.exit_scenario_button.resize(120, 20)
         self.exit_scenario_button.clicked.connect(self.ExitScenario)
-        self.exit_scenario_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         self.scenario_ui_components.append(self.exit_scenario_button)
 
         self.HideScenarioUI()
+        self.ImplementTheme()
 
     # endregion
 
@@ -212,45 +180,6 @@ class MainWindow(QWidget):
     def GetUserInput(self):
         self.user_input = self.entry.text()
         self.entry.setText(" ")
-
-    def setText(self, text : str):
-        self.textbox.setPlainText(text)
-
-    def Clear(self):
-        self.textbox.setPlainText("")
-
-    def Write(self, text : str):
-        self.textbox.appendPlainText(text)
-
-    def DisableButton(self, button : QPushButton):
-        buttons_color = self.theme['disabled_buttons_color']
-        text_color = self.theme['disabled_text_color']
-        text_font = self.theme['text_font']
-
-        button.setEnabled(False)
-        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font};')
-
-    def EnableButton(self, button : QPushButton):
-        buttons_color = self.theme['buttons_color']
-        text_color = self.theme['text_color']
-        text_font = self.theme['text_font']
-
-        button.setEnabled(True)
-        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
-
-    def DisableAllButtons(self, *exceptions : QPushButton):
-        for attribute in self.__dict__:
-            if 'button' in attribute:
-                button = getattr(self, attribute)
-                if button not in exceptions:
-                    self.DisableButton(button)
-
-    def EnableAllButtons(self, *exceptions : QPushButton):
-        for attribute in self.__dict__:
-            if 'button' in attribute:
-                button = getattr(self, attribute)
-                if button not in exceptions:
-                    self.EnableButton(button)
                              
     def OpenOptions(self):
         self.options = OptionsWindow(parent=self)

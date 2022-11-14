@@ -1,17 +1,11 @@
 from PyQt6.QtWidgets import *
-import config
-import misc
-import logging
 import sys
 import docker
 import docker_utils as dutils
 from images_window import *
+from base_window import *
 
-configuration = config.Load()
-logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
-logger = logging.getLogger()
-
-class ContainersWindow(QDialog):
+class ContainersWindow(QDialog, BaseWindow):
 
     # region =====Initializing=====
 
@@ -20,29 +14,18 @@ class ContainersWindow(QDialog):
         self.parent = parent
         self.docker_client = docker.from_env()
 
-        # We define a few graphical variables from the configuration
-        self.theme = config.GetTheme(configuration)
-        background_color = self.theme['child_window_background_color']
-        textbox_color = self.theme['main_window_textbox_color']
-        buttons_color = self.theme['buttons_color']
-        border_color = self.theme['border_color']
-        text_color = self.theme['text_color']
-        text_font = self.theme['text_font']
-        text_size = self.theme['text_size']
-
         # Defining our layout variables
         width = 700
         height = 500
 
-        super().__init__(parent)
-        self.initUI(background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size)
+        super().__init__()
+        self.initUI(width, height)
 
 
-    def initUI(self, background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size):
+    def initUI(self, width, height):
 
         self.setWindowTitle('Containers')
         self.setFixedSize(width, height)
-        self.setStyleSheet(f'background-color: {background_color}')
 
         # TableView
         self.table_view = QTableWidget(self)
@@ -51,50 +34,41 @@ class ContainersWindow(QDialog):
         self.table_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table_view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table_view.itemClicked.connect(self.ContainerClicked)
-        self.table_view.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
-        self.table_view.horizontalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
-        self.table_view.verticalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
 
         # TextBox
         self.textbox = QPlainTextEdit(self)
         self.textbox.move(180, 330)
         self.textbox.resize(480, 110)
         self.textbox.setReadOnly(True)
-        self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
 
         # Buttons
         self.refresh_button = QPushButton('R.', self)
         self.refresh_button.move(10, 20)
         self.refresh_button.resize(20, 20)
         self.refresh_button.clicked.connect(self.updateTable)
-        self.refresh_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         
         self.start_button = QPushButton('Start container', self)
         self.start_button.move(50, 330)
         self.start_button.resize(120, 20)
         self.start_button.clicked.connect(self.StartContainer)
-        self.start_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
-        self.DisableButton(self.start_button)
+        #self.DisableButton(self.start_button)
 
         self.stop_button = QPushButton('Stop container', self)
         self.stop_button.move(50, 360)
         self.stop_button.resize(120, 20)
         self.stop_button.clicked.connect(self.StopContainer)
-        self.stop_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
-        self.DisableButton(self.stop_button)
+        #self.DisableButton(self.stop_button)
         
         self.create_button = QPushButton('Create container', self)
         self.create_button.move(50, 390)
         self.create_button.resize(120, 20)
         self.create_button.clicked.connect(self.CreateContainer)
-        self.create_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
         
         self.remove_button = QPushButton('Remove', self)
         self.remove_button.move(50, 420)
         self.remove_button.resize(120, 20)
         self.remove_button.clicked.connect(self.RemoveContainer)
-        self.remove_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
-        self.DisableButton(self.remove_button)
+        #self.DisableButton(self.remove_button)
         
         # Fill the table
         self.updateTable()
@@ -104,25 +78,6 @@ class ContainersWindow(QDialog):
     # endregion
 
     # region =====Graphical Methods=====
-
-    def setText(self, text : str):
-        self.textbox.setPlainText(text)
-
-    def DisableButton(self, button : QPushButton):
-        buttons_color = self.theme['disabled_buttons_color']
-        text_color = self.theme['disabled_text_color']
-        text_font = self.theme['text_font']
-
-        button.setEnabled(False)
-        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font};')
-
-    def EnableButton(self, button : QPushButton):
-        buttons_color = self.theme['buttons_color']
-        text_color = self.theme['text_color']
-        text_font = self.theme['text_font']
-
-        button.setEnabled(True)
-        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
     def ContainerClicked(self):
         selection = self.table_view.selectedItems()
