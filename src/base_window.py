@@ -1,8 +1,8 @@
 import config
 import logging
 
-from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
+from PyQt6.QtWidgets import *
 
 class BaseWindow(QWidget):
 
@@ -10,6 +10,7 @@ class BaseWindow(QWidget):
     theme = config.GetTheme(configuration)
     operating_system = configuration['operating_system']
     docker_client_path = configuration['docker_desktop']
+    docker_client = None
 
     logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
     logger = logging.getLogger()
@@ -20,11 +21,11 @@ class BaseWindow(QWidget):
     # region =====Graphical Methods=====
 
     def DisableButton(self, button : QPushButton):
-        buttons_color = self.theme['buttons_color']
-        text_color = self.theme['text_color']
+        buttons_color = self.theme['disabled_buttons_color']
+        text_color = self.theme['disabled_text_color']
         text_font = self.theme['text_font']
 
-        button.setEnabled(True)
+        button.setEnabled(False)
         button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
     def DisableButtons(self, *buttons : QPushButton):
@@ -102,6 +103,7 @@ class BaseWindow(QWidget):
                 element.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
                 element.horizontalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
                 element.verticalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
+
     # endregion
 
 if __name__ == "__main__":

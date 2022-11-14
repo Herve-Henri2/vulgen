@@ -1,16 +1,10 @@
-from PyQt6.QtWidgets import *
-import config
-import logging
 import sys
-import docker
-import docker_utils as dutils
+
+from base_window import *
 from custom_images_window import *
+import docker_utils as dutils
 
-configuration = config.Load()
-logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
-logger = logging.getLogger()
-
-class ImagesWindow(QDialog):
+class ImagesWindow(QDialog, BaseWindow):
 
     # region =====Initializing=====
 
@@ -18,31 +12,19 @@ class ImagesWindow(QDialog):
 
         self.parent = parent
         self.containerMode = containerMode
-        self.docker_client = docker.from_env()
-
-        # We define a few graphical variables from the configuration
-        self.theme = config.GetTheme(configuration)
-        background_color = self.theme['child_window_background_color']
-        textbox_color = self.theme['main_window_textbox_color']
-        buttons_color = self.theme['buttons_color']
-        border_color = self.theme['border_color']
-        text_color = self.theme['text_color']
-        text_font = self.theme['text_font']
-        text_size = self.theme['text_size']
 
         # Defining our layout variables
         width = 700
         height = 500
 
-        super().__init__(parent)
-        self.initUI(background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size)
+        super().__init__()
+        self.initUI(width, height)
 
 
-    def initUI(self, background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size):
+    def initUI(self, width, height):
 
         self.setWindowTitle('Images')
         self.setFixedSize(width, height)
-        self.setStyleSheet(f'background-color: {background_color}')
 
         # TableView
         self.table_view = QTableWidget(self)
@@ -51,9 +33,6 @@ class ImagesWindow(QDialog):
         self.table_view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table_view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table_view.itemClicked.connect(self.ImageClicked)
-        self.table_view.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
-        self.table_view.horizontalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
-        self.table_view.verticalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
         
         if not self.containerMode:
             # TextBox
@@ -61,21 +40,17 @@ class ImagesWindow(QDialog):
             self.textbox.move(200, 330)
             self.textbox.resize(460, 100)
             self.textbox.setReadOnly(True)
-            self.textbox.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
 
             # Buttons            
             self.build_button = QPushButton('Build custom image', self)
             self.build_button.move(40, 330)
             self.build_button.resize(140, 20)
             self.build_button.clicked.connect(self.BuildCustomImage)
-            self.build_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
             
             self.remove_button = QPushButton('Remove', self)
-            self.remove_button.move(50, 360)
-            self.remove_button.resize(120, 20)
+            self.remove_button.move(40, 360)
+            self.remove_button.resize(140, 20)
             self.remove_button.clicked.connect(self.RemoveImage)
-            self.remove_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
-            self.DisableButton(self.remove_button)
         else:
             self.table_view.resize(620, 400)
 
@@ -84,7 +59,6 @@ class ImagesWindow(QDialog):
             self.create_button.move(50, 430)
             self.create_button.resize(120, 20)
             self.create_button.clicked.connect(self.CreateContainer)
-            self.create_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
             self.DisableButton(self.create_button)
         
         
@@ -92,11 +66,15 @@ class ImagesWindow(QDialog):
         self.refresh_button = QPushButton('R.', self)
         self.refresh_button.move(10, 20)
         self.refresh_button.resize(20, 20)
-        self.refresh_button.clicked.connect(self.updateTable)
-        self.refresh_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')            
+        self.refresh_button.clicked.connect(self.updateTable)           
         
         # Fill the table
         self.updateTable()
+
+        # Styling and coloring
+        self.ImplementTheme()
+        if self.remove_button is not None:
+            self.DisableButton(self.remove_button)
             
 
     # endregion
@@ -111,22 +89,6 @@ class ImagesWindow(QDialog):
             self.EnableButton(self.remove_button)
         else:
             self.EnableButton(self.create_button)
-
-    def DisableButton(self, button : QPushButton):
-        buttons_color = self.theme['disabled_buttons_color']
-        text_color = self.theme['disabled_text_color']
-        text_font = self.theme['text_font']
-
-        button.setEnabled(False)
-        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font};')
-
-    def EnableButton(self, button : QPushButton):
-        buttons_color = self.theme['buttons_color']
-        text_color = self.theme['text_color']
-        text_font = self.theme['text_font']
-
-        button.setEnabled(True)
-        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
     
     def updateTable(self):        
         img_dict = dutils.GetImages()
@@ -154,10 +116,10 @@ class ImagesWindow(QDialog):
         try:
             self.docker_client.images.remove(id)
             self.setText("Image successfully removed!")
-            logger.info(f"Deleted the image {selection[1].text() + ':' + selection[2].text()}")
+            self.logger.info(f"Deleted the image {selection[1].text() + ':' + selection[2].text()}")
         except Exception as ex:
             self.setText(str(ex))
-            logger.error(f"Error while attempting to remove the image {selection[1].text() + ':' + selection[2].text()}: {ex}")
+            self.logger.error(f"Error while attempting to remove the image {selection[1].text() + ':' + selection[2].text()}: {ex}")
         self.updateTable()
     
     def BuildCustomImage(self):
@@ -171,14 +133,13 @@ class ImagesWindow(QDialog):
         img = selection[1].text() + ':' + selection[2].text()
         try:
             self.docker_client.containers.create(img, stdin_open=True, tty=True) #stdion_open and tty = True <=> docker create -it
-            logger.info(f"Created a container for {img}")    
+            self.logger.info(f"Created a container for {img}")    
             self.parent.setText("Container successfully created!")
             self.parent.updateTable()
             self.close()
         except Exception as ex:
             self.parent.setText(str(ex))
             
-
     # endregion
 
 

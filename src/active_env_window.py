@@ -1,15 +1,10 @@
-import config
 import sys
+
+from base_window import *
 import misc
-import logging
-from PyQt6.QtWidgets import *
 
-configuration = config.Load()
-operating_system = configuration['operating_system']
-logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
-logger = logging.getLogger()
 
-class ActiveEnvWindow(QDialog):
+class ActiveEnvWindow(QDialog, BaseWindow):
 
     # region =====Initializing=====
 
@@ -17,67 +12,41 @@ class ActiveEnvWindow(QDialog):
 
         self.parent=parent
 
-        # We define a few graphical variables from the configuration
-        self.theme = config.GetTheme(configuration)
-        background_color = self.theme['child_window_background_color']
-        textbox_color = self.theme['main_window_textbox_color']
-        buttons_color = self.theme['buttons_color']
-        border_color = self.theme['border_color']
-        text_color = self.theme['text_color']
-        text_font = self.theme['text_font']
-        text_size = self.theme['text_size']
-
         # Defining our layout variables
         width = 500
         height = 300
 
-        super().__init__(parent)
-        self.initUI(background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size)
+        super().__init__()
+        self.initUI(width, height)
 
-    def initUI(self, background_color, textbox_color, width, height, buttons_color, border_color, text_color, text_font, text_size):
+    def initUI(self, width, height):
         self.setWindowTitle('Environment Containers')
         self.setFixedSize(width, height)
-        self.setStyleSheet(f'background-color: {background_color}')
 
         # Main ListView
         self.list_view = QListWidget(self)
         self.list_view.move(40, 20)
         self.list_view.resize(400, 200)
         self.list_view.itemClicked.connect(self.AllowShell)
-        self.list_view.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
 
         # Buttons
         self.open_shell_button = QPushButton('Open Shell', self)
         self.open_shell_button.move(40, 240)
         self.open_shell_button.resize(120, 20)
         self.open_shell_button.clicked.connect(self.OpenShell)
-        self.open_shell_button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
-        self.DisableButton(self.open_shell_button)
 
         if self.parent is not None:
             self.containers = self.parent.GetRunningScenarioContainers()
             for container in self.containers:
                 self.list_view.addItem(f'{container.name} - {container.ports}')
 
+        # Styling and coloring
+        self.ImplementTheme()
+        self.DisableButton(self.open_shell_button)
+
     # endregion
 
     # region =====Graphical Methods=====
-
-    def DisableButton(self, button : QPushButton):
-        buttons_color = self.theme['disabled_buttons_color']
-        text_color = self.theme['disabled_text_color']
-        text_font = self.theme['text_font']
-
-        button.setEnabled(False)
-        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font};')
-
-    def EnableButton(self, button : QPushButton):
-        buttons_color = self.theme['buttons_color']
-        text_color = self.theme['text_color']
-        text_font = self.theme['text_font']
-
-        button.setEnabled(True)
-        button.setStyleSheet(f'background-color: {buttons_color}; color: {text_color}; font-family: {text_font}')
 
     def AllowShell(self):
         self.EnableButton(self.open_shell_button)
@@ -86,9 +55,9 @@ class ActiveEnvWindow(QDialog):
         container_info = self.list_view.currentItem().text().split('-')[0]
         for container in self.containers:
             if container.name in container_info:
-                logger.info(f'Opening up a terminal for the {container.name} container.')
+                self.logger.info(f'Opening up a terminal for the {container.name} container.')
                 command = f"docker exec -it {container.id} /bin/sh"
-                misc.open_terminal(operating_system, command)
+                misc.open_terminal(self.operating_system, command)
 
     # endregion
 

@@ -21,7 +21,6 @@ class ContainersWindow(QDialog, BaseWindow):
         super().__init__()
         self.initUI(width, height)
 
-
     def initUI(self, width, height):
 
         self.setWindowTitle('Containers')
@@ -72,9 +71,10 @@ class ContainersWindow(QDialog, BaseWindow):
         
         # Fill the table
         self.updateTable()
+        # Styling and coloring
+        self.ImplementTheme()
+        self.DisableButtons(self.start_button, self.stop_button, self.remove_button)
         
-            
-
     # endregion
 
     # region =====Graphical Methods=====
@@ -120,7 +120,7 @@ class ContainersWindow(QDialog, BaseWindow):
         if status := selection[3].text() == 'running':
             self.DisableButton(self.start_button)
             self.EnableButton(self.stop_button)
-            logger.info(f'Started the container {selection[1].text()}')
+            self.logger.info(f'Started the container {selection[1].text()}')
             self.setText(f'Started the container {selection[1].text()}')
 
     def StopContainer(self):
@@ -137,7 +137,7 @@ class ContainersWindow(QDialog, BaseWindow):
         if status := selection[3].text() == 'exited':
             self.DisableButton(self.stop_button)
             self.EnableButton(self.start_button)
-            logger.info(f'Stopped the container {selection[1].text()}')
+            self.logger.info(f'Stopped the container {selection[1].text()}')
             self.setText(f'Stopped the container {selection[1].text()}')
 
 
@@ -153,7 +153,7 @@ class ContainersWindow(QDialog, BaseWindow):
             name = self.docker_client.containers.get(id).name
             self.docker_client.containers.get(id).remove()
             self.setText("Container successfully removed!")
-            logger.info(f'Removed the container {name}')
+            self.logger.info(f'Removed the container {name}')
         except Exception as ex:
             self.setText(str(ex))
         self.updateTable()
@@ -163,7 +163,6 @@ class ContainersWindow(QDialog, BaseWindow):
         self.images_window.exec()
 
     # endregion
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

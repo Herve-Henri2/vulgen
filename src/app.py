@@ -1,18 +1,17 @@
-import docker_utils as dutils
-import sys
-import os
-import config
 import docker
-import misc
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
+import os
+import sys
+
+from base_window import * 
 from options_window import *
 from scenarios_window import *
 from active_env_window import *
 from images_window import *
 from containers_window import *
 from scenarios import *
-from base_window import * 
+import config
+import docker_utils as dutils
+import misc
 
 # TODO Delete all scenario containers after an update
 
@@ -20,7 +19,6 @@ class MainWindow(BaseWindow):
 
     # region =====Initializing=====
 
-    docker_client = None
     welcome_text = ("Welcome to our vulnerable environment generator!\n"
                     "To use the application, check out the buttons on the left side.\n\n"
                     "Here is some useful information you need to know:\n"
@@ -54,11 +52,11 @@ class MainWindow(BaseWindow):
         super().__init__()
         self.initUI(width, height, col1, col2, col3)
 
-        if operating_system == "Windows":
-            if not configuration['docker_desktop'] or configuration['docker_desktop'] == "":
+        if self.operating_system == "Windows":
+            if not self.configuration['docker_desktop'] or self.configuration['docker_desktop'] == "":
                 self.DetectDockerDesktopPath()
             else:
-                self.docker_client_path = configuration['docker_desktop']
+                self.docker_client_path = self.configuration['docker_desktop']
 
         if not self.DockerServiceRunning():
             self.StartDocker()
@@ -159,6 +157,8 @@ class MainWindow(BaseWindow):
         self.scenario_ui_components.append(self.exit_scenario_button)
 
         self.HideScenarioUI()
+
+        # Styling and coloring
         self.ImplementTheme()
 
     # endregion
@@ -249,7 +249,7 @@ class MainWindow(BaseWindow):
         '''
         service_running = False
 
-        if operating_system == "Darwin":
+        if self.operating_system == "Darwin":
             self.Write('This program is not supported on Mac OS.')
             return service_running
 
@@ -288,20 +288,20 @@ class MainWindow(BaseWindow):
                 config.Save('docker_desktop', path)
 
     def StartDocker(self):
-        if operating_system == "Windows":
+        if self.operating_system == "Windows":
             if self.docker_client_path != "":
                 try:
-                    logger.info('Starting Docker Desktop')
+                    self.logger.info('Starting Docker Desktop')
                     os.popen(f'{self.docker_client_path}')
                     misc.unallowWindowOpening('Docker Desktop')
                 except Exception as ex:
-                    logger.error(ex)
-        elif operating_system == "Linux":
+                    self.logger.error(ex)
+        elif self.operating_system == "Linux":
             try:
-                logger.info('Starting docker')
+                self.logger.info('Starting docker')
                 os.popen('systemctl start docker')
             except Exception as ex:
-                logger.error(ex)
+                self.logger.error(ex)
 
     @CheckForDocker
     def ManageImages(self):
@@ -318,7 +318,7 @@ class MainWindow(BaseWindow):
         '''
         Launches the environment linked to a specified scenario.
         '''
-        logger.info(f'Launching the {scenario} environment.')
+        self.logger.info(f'Launching the {scenario} environment.')
         self.Clear()
         worker = ScenarioThread(scenario)
         worker.update_console.connect(self.Write)
@@ -334,7 +334,7 @@ class MainWindow(BaseWindow):
         '''
         scenario = self.GetRunningScenario()
         self.setText(f'Terminated the {scenario.name} environment.')
-        logger.info(f'Terminated the {scenario.name} environment.')
+        self.logger.info(f'Terminated the {scenario.name} environment.')
         
         # We stop the containers
         containers = self.docker_client.containers.list()
@@ -352,6 +352,9 @@ class MainWindow(BaseWindow):
 
 class ScenarioThread(QThread):
 
+    configuration = config.Load()
+    logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
+    logger = logging.getLogger()
     update_console = pyqtSignal(str)
 
     def __init__(self, scenario_name):
@@ -362,7 +365,7 @@ class ScenarioThread(QThread):
     def run(self):
         scenario = LoadScenario(self.scenario_name)
         self.update_console.emit(f'Launched the {scenario.name} scenario.')
-        logger.info(f'Launched the {scenario.name} environment.')
+        self.logger.info(f'Launched the {scenario.name} environment.')
 
         for index, image in enumerate(scenario.images['other']):
             image_name = image['name']
