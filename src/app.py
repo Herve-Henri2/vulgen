@@ -3,11 +3,11 @@ import os
 import sys
 
 from base_window import * 
-from options_window import *
-from scenarios_window import *
-from active_env_window import *
-from images_window import *
-from containers_window import *
+from options_window import OptionsWindow
+from scenarios_window import ScenariosWindow
+from active_env_window import ActiveEnvWindow
+from images_window import ImagesWindow
+from containers_window import ContainersWindow
 from scenarios import *
 import config
 import docker_utils as dutils
