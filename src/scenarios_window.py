@@ -161,9 +161,10 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.images_label.move(340, 270)
         self.edit_mode_ui.append(self.images_label)
 
-        self.images_list_view = QListView(self)
+        self.images_list_view = QListWidget(self)
         self.images_list_view.move(340, 290)
         self.images_list_view.resize(250, 120)
+        self.images_list_view.itemClicked.connect(self.AllowOpening)
         self.edit_mode_ui.append(self.images_list_view)
 
         self.HideEditUI()
@@ -185,6 +186,9 @@ class ScenariosWindow(QDialog, BaseWindow):
                             +f"\n-----------------------------\nCVE: {scenario['CVE']}")
         self.EnableButton(self.launch_button)
         self.EnableButton(self.edit_button)
+    
+    def AllowOpening(self):
+        self.EnableButtons(self.edit_image_button, self.remove_image_button)
 
     def HideEditUI(self):
         for element in self.edit_mode_ui:
@@ -193,7 +197,6 @@ class ScenariosWindow(QDialog, BaseWindow):
     def ShowEditUI(self):
         for element in self.edit_mode_ui:
             element.show()
-
 
     # endregion
 
@@ -209,35 +212,50 @@ class ScenariosWindow(QDialog, BaseWindow):
         Switches the window's UI to edit mode.
         '''
         # Setting up the UI
-        self.DisableButton(self.launch_button)
-        self.DisableButton(self.edit_button)
-        self.DisableButton(self.add_button)
+        self.launch_button.hide()
+        self.edit_button.hide()
+        self.add_button.hide()
         self.textbox.hide()
         self.list_view.hide()
         self.ShowEditUI()
 
         selected_scenario = self.list_view.currentItem().text()
+        scenario = scenarios.LoadScenario(selected_scenario)
+        self.scenario_name.setText(scenario.name)
+        self.type_entry.setText(scenario.type)
+        self.cve_entry.setText(scenario.cve)
+        self.scenario_desc.setPlainText(scenario.description)
+        self.instructions.setPlainText(scenario.instructions)
+        self.goal.setPlainText(scenario.goal)
+        for source in scenario.sources:
+            self.sources.appendPlainText(source)
+        for image in scenario.images:
+            if image['is_main'] is True:
+                self.images_list_view.addItem(f"(main) {image['name']}")
+            else:
+                self.images_list_view.addItem(image['name'])
 
     def AddMode(self):
         '''
         Switches the window's UI to add mode.
         '''
         # Setting up the UI
-        self.DisableButton(self.launch_button)
-        self.DisableButton(self.edit_button)
-        self.DisableButton(self.add_button)
-        self.textbox.hide()
-        self.list_view.hide()
+        self.HideElements(self.launch_button, self.edit_button, self.add_button,
+        self.textbox, self.list_view)
         self.ShowEditUI()
 
     def DefaultMode(self):
         '''
         Resets the window's UI back to default.
         '''
+        #TODO add unsaved changed confirmation
         self.HideEditUI()
-        self.EnableButton(self.add_button)
-        self.textbox.show()
-        self.list_view.show()
+        self.ShowElements(self.launch_button, self.edit_button, self.add_button,
+        self.textbox, self.list_view)
+        self.DisableButtons(self.edit_button, self.launch_button)
+        for element in self.edit_mode_ui:
+            if isinstance(element, QLineEdit) or isinstance(element, QPlainTextEdit) or isinstance(element, QListWidget):
+                element.clear()
 
     def SaveScenario(self):
         #TODO Check all the inputs!

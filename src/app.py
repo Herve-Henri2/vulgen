@@ -367,16 +367,14 @@ class ScenarioThread(QThread):
         self.update_console.emit(f'Launched the {scenario.name} scenario.')
         self.logger.info(f'Launched the {scenario.name} environment.')
 
-        for index, image in enumerate(scenario.images['other']):
+        for index, image in enumerate(scenario.images):
             image_name = image['name']
             image_ports = image['ports']
-            self.LaunchContainer(image_name, ports=image_ports, name=f'{scenario.name}_{index}')
+            if image['is_main'] is True:
+                self.LaunchContainer(image_name, main=True, ports=image_ports, name=f'{scenario.name}_main')
+            else:
+                self.LaunchContainer(image_name, ports=image_ports, name=f'{scenario.name}_{index}')
 
-
-        main_image = scenario.images['main']
-        image_name = main_image['name']
-        image_ports = main_image['ports']
-        self.LaunchContainer(image_name, main=True, ports=image_ports, name=f'{scenario.name}_main')
         self.update_console.emit('------------------------------------------------------------------------------------\n'
                                  '* Click on the Instructions button to get a better scope of what needs to be done.\n'
                                  '* You can interact with all the environment containers by clicking on the Containers button.')

@@ -56,6 +56,16 @@ class BaseWindow(QWidget):
             if isinstance(button, QPushButton) and button not in exceptions:
                 self.EnableButton(button)
 
+    def ShowElements(self, *elements : QWidget):
+        for element in elements:
+            if isinstance(element, QWidget):
+                element.show()
+
+    def HideElements(self, *elements : QWidget):
+        for element in elements:
+            if isinstance(element, QWidget):
+                element.hide()
+
     def setText(self, text : str):
         self.textbox.setPlainText(text)
 
@@ -63,7 +73,7 @@ class BaseWindow(QWidget):
         self.textbox.appendPlainText(text)
 
     def Clear(self):
-        self.textbox.setPlainText("")
+        self.textbox.clear()
 
     def ImplementTheme(self, *exceptions, main_window=True):
 
