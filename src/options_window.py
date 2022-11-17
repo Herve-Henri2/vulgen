@@ -1,6 +1,6 @@
 import sys
 import os
-from base_window import *
+from application import *
 
 class OptionsWindow(QDialog, BaseWindow):
 
@@ -28,10 +28,10 @@ class OptionsWindow(QDialog, BaseWindow):
         self.docker_path_label.move(50, 20)
         self.docker_path_label.resize(400, 20)
         
-        self.docker_desktop_entry = QLineEdit(self.docker_client_path, self)
+        self.docker_desktop_entry = QLineEdit(docker_client_path, self)
         self.docker_desktop_entry.move(50, 40)
         self.docker_desktop_entry.resize(400, 20)
-        if self.operating_system != "Windows":
+        if operating_system != "Windows":
             self.docker_desktop_entry.setEnabled(False)
         
 
@@ -45,7 +45,7 @@ class OptionsWindow(QDialog, BaseWindow):
         self.browse_button.move(50, 70)
         self.browse_button.resize(80, 20)
         self.browse_button.clicked.connect(self.FileDialog)
-        if self.operating_system != "Windows":
+        if operating_system != "Windows":
             self.docker_desktop_entry.setEnabled(False)
 
         # Theme Combobox + Label
@@ -56,9 +56,9 @@ class OptionsWindow(QDialog, BaseWindow):
 
         self.themes = QComboBox(self)
         self.themes.move(50, 120)
-        for theme in self.configuration['themes']:
+        for theme in configuration['themes']:
             self.themes.addItem(theme['name'])
-        self.themes.setCurrentText(self.configuration['themes'][self.configuration['current_theme_index']]['name'])
+        self.themes.setCurrentText(configuration['themes'][configuration['current_theme_index']]['name'])
 
         # Styling and coloring
         self.ImplementTheme()

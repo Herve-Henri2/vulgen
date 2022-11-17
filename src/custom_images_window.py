@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 
-from base_window import *
+from application import *
 import docker_utils as dutils
 
 class CustomImagesWindow(QDialog, BaseWindow):
@@ -71,7 +71,7 @@ class CustomImagesWindow(QDialog, BaseWindow):
             #misc.open_terminal(configuration['operating_system'], command=command)
         except Exception as ex:
             self.parent.setText(str(ex))
-            self.logger.error(f'An error occured while trying to build the image {selection}: {ex}')
+            logger.error(f'An error occured while trying to build the image {selection}: {ex}')
         finally:
             self.close()
         

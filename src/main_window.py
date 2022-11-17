@@ -2,7 +2,7 @@ import docker
 import os
 import sys
 
-from base_window import * 
+from application import * 
 from options_window import OptionsWindow
 from scenarios_window import ScenariosWindow
 from active_env_window import ActiveEnvWindow
@@ -51,12 +51,6 @@ class MainWindow(BaseWindow):
         # We then start initializing our window
         super().__init__()
         self.initUI(width, height, col1, col2, col3)
-
-        if self.operating_system == "Windows":
-            if not self.configuration['docker_desktop'] or self.configuration['docker_desktop'] == "":
-                self.DetectDockerDesktopPath()
-            else:
-                self.docker_client_path = self.configuration['docker_desktop']
 
         if not self.DockerServiceRunning():
             self.StartDocker()
@@ -237,7 +231,7 @@ class MainWindow(BaseWindow):
         '''
         container_list = []
         if (scenario := self.GetRunningScenario()) is not None:
-            containers = self.docker_client.containers.list()
+            containers = docker_client.containers.list()
             for container in containers:
                 if scenario.name in container.name:
                     container_list.append(container)
@@ -249,7 +243,7 @@ class MainWindow(BaseWindow):
         '''
         service_running = False
 
-        if self.operating_system == "Darwin":
+        if operating_system == "Darwin":
             self.Write('This program is not supported on Mac OS.')
             return service_running
 
@@ -270,38 +264,28 @@ class MainWindow(BaseWindow):
                 self.setText('It looks like docker is not running on your machine, please make sure you have docker installed or Docker Desktop if you are on Windows.\n'
                 'You may need to save the path your Docker Desktop.exe in the options window then restart the application.')
             else:
-                self.docker_client = docker.from_env()
+                docker_client = docker.from_env()
                 try:
                     func(self)
                 except TypeError:
                     func(self, *args, **kwargs)
         return wrapper
 
-    def DetectDockerDesktopPath(self):
-        '''
-        Tries to locate the path of the Docker Desktop executable (windows only)
-        '''
-        possible_paths = ['C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe', 'C:\\Program Files (x86)\\Docker\\Docker\\Docker Desktop.exe']
-        for path in possible_paths:
-            if os.path.exists(path):
-                self.docker_client_path = path
-                config.Save('docker_desktop', path)
-
     def StartDocker(self):
-        if self.operating_system == "Windows":
-            if self.docker_client_path != "":
+        if operating_system == "Windows":
+            if docker_client_path != "":
                 try:
-                    self.logger.info('Starting Docker Desktop')
-                    os.popen(f'{self.docker_client_path}')
+                    logger.info('Starting Docker Desktop')
+                    os.popen(f'{docker_client_path}')
                     misc.unallowWindowOpening('Docker Desktop')
                 except Exception as ex:
-                    self.logger.error(ex)
-        elif self.operating_system == "Linux":
+                    logger.error(ex)
+        elif operating_system == "Linux":
             try:
-                self.logger.info('Starting docker')
+                logger.info('Starting docker')
                 os.popen('systemctl start docker')
             except Exception as ex:
-                self.logger.error(ex)
+                logger.error(ex)
 
     @CheckForDocker
     def ManageImages(self):
@@ -318,7 +302,7 @@ class MainWindow(BaseWindow):
         '''
         Launches the environment linked to a specified scenario.
         '''
-        self.logger.info(f'Launching the {scenario} environment.')
+        logger.info(f'Launching the {scenario} environment.')
         self.Clear()
         worker = ScenarioThread(scenario)
         worker.update_console.connect(self.Write)
@@ -334,10 +318,10 @@ class MainWindow(BaseWindow):
         '''
         scenario = self.GetRunningScenario()
         self.setText(f'Terminated the {scenario.name} environment.')
-        self.logger.info(f'Terminated the {scenario.name} environment.')
+        logger.info(f'Terminated the {scenario.name} environment.')
         
         # We stop the containers
-        containers = self.docker_client.containers.list()
+        containers = docker_client.containers.list()
         for container in containers:
             if scenario.name in container.name:
                 container.stop()
@@ -360,12 +344,12 @@ class ScenarioThread(QThread):
     def __init__(self, scenario_name):
         super(ScenarioThread, self).__init__()
         self.scenario_name = scenario_name
-        self.docker_client = docker.from_env()
+        docker_client = docker.from_env()
 
     def run(self):
         scenario = LoadScenario(self.scenario_name)
         self.update_console.emit(f'Launched the {scenario.name} scenario.')
-        self.logger.info(f'Launched the {scenario.name} environment.')
+        logger.info(f'Launched the {scenario.name} environment.')
 
         for index, image in enumerate(scenario.images):
             image_name = image['name']
@@ -382,8 +366,8 @@ class ScenarioThread(QThread):
 
     def LaunchContainer(self, image_name, main=False, **kwargs):
 
-        images = self.docker_client.images.list()
-        containers = self.docker_client.containers.list(all=True)
+        images = docker_client.images.list()
+        containers = docker_client.containers.list(all=True)
 
         # We first check whether the container exists or not
         try:
@@ -396,14 +380,14 @@ class ScenarioThread(QThread):
             container.start()
         # If not, create it from the image, then call this function again
         elif dutils.image_in(images, image_name):
-            self.docker_client.containers.create(image_name, **kwargs)
+            docker_client.containers.create(image_name, **kwargs)
             self.LaunchContainer(image_name, main, **kwargs)
         # Pull the image if necessary, then call this function again
         else:
             self.update_console.emit(f'Pulling the lastest {image_name} image, please wait...')
-            self.docker_client.images.pull(image_name)
+            docker_client.images.pull(image_name)
             while not dutils.image_in(images, image_name):
-                images = self.docker_client.images.list()
+                images = docker_client.images.list()
             self.update_console.emit('Image pulled!')
             self.LaunchContainer(image_name, main, **kwargs)
         

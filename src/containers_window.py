@@ -3,7 +3,7 @@ import sys
 import docker
 import docker_utils as dutils
 from images_window import *
-from base_window import *
+from application import *
 
 class ContainersWindow(QDialog, BaseWindow):
 
@@ -12,7 +12,7 @@ class ContainersWindow(QDialog, BaseWindow):
     def __init__(self, parent=None):
 
         self.parent = parent
-        self.docker_client = docker.from_env()
+        docker_client = docker.from_env()
 
         # Defining our layout variables
         width = 700
@@ -114,13 +114,13 @@ class ContainersWindow(QDialog, BaseWindow):
         if selection is None or len(selection) == 0:
             return
         id = selection[0].text()
-        self.docker_client.containers.get(id).start()
+        docker_client.containers.get(id).start()
         self.updateTable()
         selection = self.table_view.selectedItems()
         if status := selection[3].text() == 'running':
             self.DisableButton(self.start_button)
             self.EnableButton(self.stop_button)
-            self.logger.info(f'Started the container {selection[1].text()}')
+            logger.info(f'Started the container {selection[1].text()}')
             self.setText(f'Started the container {selection[1].text()}')
 
     def StopContainer(self):
@@ -131,13 +131,13 @@ class ContainersWindow(QDialog, BaseWindow):
         if selection is None or len(selection) == 0:
             return
         id = selection[0].text()
-        self.docker_client.containers.get(id).stop()
+        docker_client.containers.get(id).stop()
         self.updateTable()
         selection = self.table_view.selectedItems()
         if status := selection[3].text() == 'exited':
             self.DisableButton(self.stop_button)
             self.EnableButton(self.start_button)
-            self.logger.info(f'Stopped the container {selection[1].text()}')
+            logger.info(f'Stopped the container {selection[1].text()}')
             self.setText(f'Stopped the container {selection[1].text()}')
 
 
@@ -150,10 +150,10 @@ class ContainersWindow(QDialog, BaseWindow):
             return
         id = selection[0].text()
         try:
-            name = self.docker_client.containers.get(id).name
-            self.docker_client.containers.get(id).remove()
+            name = docker_client.containers.get(id).name
+            docker_client.containers.get(id).remove()
             self.setText("Container successfully removed!")
-            self.logger.info(f'Removed the container {name}')
+            logger.info(f'Removed the container {name}')
         except Exception as ex:
             self.setText(str(ex))
         self.updateTable()

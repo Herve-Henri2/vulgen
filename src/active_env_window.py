@@ -1,6 +1,6 @@
 import sys
 
-from base_window import *
+from application import *
 import misc
 
 
@@ -55,9 +55,9 @@ class ActiveEnvWindow(QDialog, BaseWindow):
         container_info = self.list_view.currentItem().text().split('-')[0]
         for container in self.containers:
             if container.name in container_info:
-                self.logger.info(f'Opening up a terminal for the {container.name} container.')
+                logger.info(f'Opening up a terminal for the {container.name} container.')
                 command = f"docker exec -it {container.id} /bin/sh"
-                misc.open_terminal(self.operating_system, command)
+                misc.open_terminal(operating_system, command)
 
     # endregion
 

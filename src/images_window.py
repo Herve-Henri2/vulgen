@@ -1,6 +1,6 @@
 import sys
 
-from base_window import *
+from application import *
 from custom_images_window import *
 import docker_utils as dutils
 
@@ -114,12 +114,12 @@ class ImagesWindow(QDialog, BaseWindow):
             return
         id = selection[0].text()
         try:
-            self.docker_client.images.remove(id)
+            docker_client.images.remove(id)
             self.setText("Image successfully removed!")
-            self.logger.info(f"Deleted the image {selection[1].text() + ':' + selection[2].text()}")
+            logger.info(f"Deleted the image {selection[1].text() + ':' + selection[2].text()}")
         except Exception as ex:
             self.setText(str(ex))
-            self.logger.error(f"Error while attempting to remove the image {selection[1].text() + ':' + selection[2].text()}: {ex}")
+            logger.error(f"Error while attempting to remove the image {selection[1].text() + ':' + selection[2].text()}: {ex}")
         self.updateTable()
     
     def BuildCustomImage(self):
@@ -132,8 +132,8 @@ class ImagesWindow(QDialog, BaseWindow):
             return
         img = selection[1].text() + ':' + selection[2].text()
         try:
-            self.docker_client.containers.create(img, stdin_open=True, tty=True) #stdion_open and tty = True <=> docker create -it
-            self.logger.info(f"Created a container for {img}")    
+            docker_client.containers.create(img, stdin_open=True, tty=True) #stdion_open and tty = True <=> docker create -it
+            logger.info(f"Created a container for {img}")    
             self.parent.setText("Container successfully created!")
             self.parent.updateTable()
             self.close()

@@ -1,6 +1,6 @@
 import sys
 
-from base_window import *
+from application import *
 import scenarios
 
 
@@ -14,6 +14,7 @@ class ScenariosWindow(QDialog, BaseWindow):
     def __init__(self, parent=None):
 
         self.parent = parent
+        self.scen_to_save = None
 
         # Defining our layout variables
         width = 700
@@ -48,12 +49,12 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.edit_button = QPushButton('Edit Scenario', self)
         self.edit_button.move(400, 440)
         self.edit_button.resize(120, 20)
-        self.edit_button.clicked.connect(self.EditMode)
+        self.edit_button.clicked.connect(self.EditScenarioMode)
 
         self.add_button = QPushButton('Add Scenario', self)
         self.add_button.move(260, 440)
         self.add_button.resize(120, 20)
-        self.add_button.clicked.connect(self.AddMode)
+        self.add_button.clicked.connect(self.AddScenarioMode)
 
         for scenario in self.scenarios:
             self.list_view.addItem(scenario['name'])
@@ -207,7 +208,7 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.parent.LaunchScenario(scenario)
         self.close()
 
-    def EditMode(self):
+    def EditScenarioMode(self):
         '''
         Switches the window's UI to edit mode.
         '''
@@ -220,7 +221,7 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.ShowEditUI()
 
         selected_scenario = self.list_view.currentItem().text()
-        scenario = scenarios.LoadScenario(selected_scenario)
+        scenario = scenarios.Get(self.scenarios_db, selected_scenario)
         self.scenario_name.setText(scenario.name)
         self.type_entry.setText(scenario.type)
         self.cve_entry.setText(scenario.cve)
@@ -235,7 +236,7 @@ class ScenariosWindow(QDialog, BaseWindow):
             else:
                 self.images_list_view.addItem(image['name'])
 
-    def AddMode(self):
+    def AddScenarioMode(self):
         '''
         Switches the window's UI to add mode.
         '''
