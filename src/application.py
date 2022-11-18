@@ -1,14 +1,28 @@
 import config
+import docker
 import logging
 import os
 
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
 
+# Our wide application variables, that are shared between all the windows within our app
+configuration = config.Load()
+operating_system = configuration['operating_system']
+docker_desktop = configuration['docker_desktop']
+theme = config.GetTheme(configuration)
+logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
+logger = logging.getLogger()
+
 class BaseWindow(QWidget):
 
-    def __init__(self):
+    def __init__(self, parent=None):
         super().__init__()
+        self.docker_client = None
+        try: 
+            self.docker_client = docker.from_env()
+        except:
+            pass
 
     # region =====Graphical Methods=====
 
@@ -108,29 +122,20 @@ class BaseWindow(QWidget):
 
     # endregion
 
-# Our wide application variables, that are shared between all the windows within our app
-configuration = config.Load()
-operating_system = configuration['operating_system']
-docker_client_path = configuration['docker_desktop']
-theme = config.GetTheme(configuration)
-docker_client = None
-logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
-logger = logging.getLogger()
-
 def DetectDockerDesktopPath(self):
     '''
     Tries to locate the path of the Docker Desktop executable (windows only)
     '''
-    global docker_client_path
+    global docker_desktop
     
     possible_paths = ['C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe', 'C:\\Program Files (x86)\\Docker\\Docker\\Docker Desktop.exe']
     for path in possible_paths:
         if os.path.exists(path):
-            docker_client_path = path
+            docker_desktop = path
             config.Save('docker_desktop', path)
 
 if operating_system == "Windows":
     if not configuration['docker_desktop'] or configuration['docker_desktop'] == "":
         DetectDockerDesktopPath()
     else:
-        docker_client_path = configuration['docker_desktop']
+        docker_desktop = configuration['docker_desktop']

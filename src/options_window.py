@@ -28,7 +28,7 @@ class OptionsWindow(QDialog, BaseWindow):
         self.docker_path_label.move(50, 20)
         self.docker_path_label.resize(400, 20)
         
-        self.docker_desktop_entry = QLineEdit(docker_client_path, self)
+        self.docker_desktop_entry = QLineEdit(docker_desktop, self)
         self.docker_desktop_entry.move(50, 40)
         self.docker_desktop_entry.resize(400, 20)
         if operating_system != "Windows":

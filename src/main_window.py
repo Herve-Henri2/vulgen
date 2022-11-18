@@ -231,7 +231,7 @@ class MainWindow(BaseWindow):
         '''
         container_list = []
         if (scenario := self.GetRunningScenario()) is not None:
-            containers = docker_client.containers.list()
+            containers = self.docker_client.containers.list()
             for container in containers:
                 if scenario.name in container.name:
                     container_list.append(container)
@@ -264,7 +264,7 @@ class MainWindow(BaseWindow):
                 self.setText('It looks like docker is not running on your machine, please make sure you have docker installed or Docker Desktop if you are on Windows.\n'
                 'You may need to save the path your Docker Desktop.exe in the options window then restart the application.')
             else:
-                docker_client = docker.from_env()
+                self.docker_client = docker.from_env()
                 try:
                     func(self)
                 except TypeError:
@@ -273,10 +273,10 @@ class MainWindow(BaseWindow):
 
     def StartDocker(self):
         if operating_system == "Windows":
-            if docker_client_path != "":
+            if docker_desktop != "":
                 try:
                     logger.info('Starting Docker Desktop')
-                    os.popen(f'{docker_client_path}')
+                    os.popen(f'{docker_desktop}')
                     misc.unallowWindowOpening('Docker Desktop')
                 except Exception as ex:
                     logger.error(ex)
@@ -321,7 +321,7 @@ class MainWindow(BaseWindow):
         logger.info(f'Terminated the {scenario.name} environment.')
         
         # We stop the containers
-        containers = docker_client.containers.list()
+        containers = self.docker_client.containers.list()
         for container in containers:
             if scenario.name in container.name:
                 container.stop()
@@ -336,15 +336,12 @@ class MainWindow(BaseWindow):
 
 class ScenarioThread(QThread):
 
-    configuration = config.Load()
-    logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
-    logger = logging.getLogger()
     update_console = pyqtSignal(str)
 
     def __init__(self, scenario_name):
         super(ScenarioThread, self).__init__()
         self.scenario_name = scenario_name
-        docker_client = docker.from_env()
+        self.docker_client = docker.from_env()
 
     def run(self):
         scenario = LoadScenario(self.scenario_name)
@@ -366,8 +363,8 @@ class ScenarioThread(QThread):
 
     def LaunchContainer(self, image_name, main=False, **kwargs):
 
-        images = docker_client.images.list()
-        containers = docker_client.containers.list(all=True)
+        images = self.docker_client.images.list()
+        containers = self.docker_client.containers.list(all=True)
 
         # We first check whether the container exists or not
         try:
@@ -380,14 +377,14 @@ class ScenarioThread(QThread):
             container.start()
         # If not, create it from the image, then call this function again
         elif dutils.image_in(images, image_name):
-            docker_client.containers.create(image_name, **kwargs)
+            self.docker_client.containers.create(image_name, **kwargs)
             self.LaunchContainer(image_name, main, **kwargs)
         # Pull the image if necessary, then call this function again
         else:
             self.update_console.emit(f'Pulling the lastest {image_name} image, please wait...')
-            docker_client.images.pull(image_name)
+            self.docker_client.images.pull(image_name)
             while not dutils.image_in(images, image_name):
-                images = docker_client.images.list()
+                images = self.docker_client.images.list()
             self.update_console.emit('Image pulled!')
             self.LaunchContainer(image_name, main, **kwargs)
         

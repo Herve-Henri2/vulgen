@@ -66,7 +66,11 @@ class CustomImagesWindow(QDialog, BaseWindow):
         selection = self.list_view.currentItem().text()
         try:
             custom_images_path = os.path.realpath(os.path.dirname(__file__)) + "\\..\\docker_images"  # src folder absolute path + path to docker_images from src folder
-            subprocess.Popen(f'{custom_images_path}\\{selection}\\create_img.sh')
+            docker_file_path = f'{custom_images_path}\\{selection}'
+            self.docker_client.images.build(path=docker_file_path, rm=True)
+            self.parent.setText(f'Successfully built the {selection} image!')
+            logger.info(f'Built the {selection} image.')
+            #subprocess.Popen(f'{custom_images_path}\\{selection}\\create_img.sh')
             #command = f"cd {path}\\{selection}\\create_img.sh"
             #misc.open_terminal(configuration['operating_system'], command=command)
         except Exception as ex:

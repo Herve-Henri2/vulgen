@@ -73,7 +73,7 @@ class ImagesWindow(QDialog, BaseWindow):
 
         # Styling and coloring
         self.ImplementTheme()
-        if self.remove_button is not None:
+        if not self.containerMode:
             self.DisableButton(self.remove_button)
             
 
@@ -114,7 +114,7 @@ class ImagesWindow(QDialog, BaseWindow):
             return
         id = selection[0].text()
         try:
-            docker_client.images.remove(id)
+            self.docker_client.images.remove(id)
             self.setText("Image successfully removed!")
             logger.info(f"Deleted the image {selection[1].text() + ':' + selection[2].text()}")
         except Exception as ex:
@@ -132,7 +132,7 @@ class ImagesWindow(QDialog, BaseWindow):
             return
         img = selection[1].text() + ':' + selection[2].text()
         try:
-            docker_client.containers.create(img, stdin_open=True, tty=True) #stdion_open and tty = True <=> docker create -it
+            self.docker_client.containers.create(img, stdin_open=True, tty=True) #stdion_open and tty = True <=> docker create -it
             logger.info(f"Created a container for {img}")    
             self.parent.setText("Container successfully created!")
             self.parent.updateTable()

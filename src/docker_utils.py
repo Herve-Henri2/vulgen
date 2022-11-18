@@ -57,9 +57,13 @@ def GetImages(docker_client=None):
     img_dict = {'id':[], 'name':[], 'tag/version':[]}
     for image in images:
         img_dict['id'].append(image.short_id.replace('sha256:', ''))
-        img_name_label = image.tags[0].split(':')
-        img_dict['name'].append(img_name_label[0])
-        img_dict['tag/version'].append(img_name_label[1])
+        try:
+            img_name_label = image.tags[0].split(':')
+            img_dict['name'].append(img_name_label[0])
+            img_dict['tag/version'].append(img_name_label[1])
+        except IndexError:
+            img_dict['name'] = image.tags
+            img_dict['tag/version'] = image.tags
         
     return img_dict
         

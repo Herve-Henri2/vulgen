@@ -12,7 +12,7 @@ class ContainersWindow(QDialog, BaseWindow):
     def __init__(self, parent=None):
 
         self.parent = parent
-        docker_client = docker.from_env()
+        self.docker_client = docker.from_env()
 
         # Defining our layout variables
         width = 700
@@ -114,7 +114,7 @@ class ContainersWindow(QDialog, BaseWindow):
         if selection is None or len(selection) == 0:
             return
         id = selection[0].text()
-        docker_client.containers.get(id).start()
+        self.docker_client.containers.get(id).start()
         self.updateTable()
         selection = self.table_view.selectedItems()
         if status := selection[3].text() == 'running':
@@ -131,7 +131,7 @@ class ContainersWindow(QDialog, BaseWindow):
         if selection is None or len(selection) == 0:
             return
         id = selection[0].text()
-        docker_client.containers.get(id).stop()
+        self.docker_client.containers.get(id).stop()
         self.updateTable()
         selection = self.table_view.selectedItems()
         if status := selection[3].text() == 'exited':
@@ -150,8 +150,8 @@ class ContainersWindow(QDialog, BaseWindow):
             return
         id = selection[0].text()
         try:
-            name = docker_client.containers.get(id).name
-            docker_client.containers.get(id).remove()
+            name = self.docker_client.containers.get(id).name
+            self.docker_client.containers.get(id).remove()
             self.setText("Container successfully removed!")
             logger.info(f'Removed the container {name}')
         except Exception as ex:
