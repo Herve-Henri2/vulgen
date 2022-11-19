@@ -1,4 +1,5 @@
 import config
+import scenarios
 import docker
 import logging
 import os
@@ -8,6 +9,7 @@ from PyQt6.QtWidgets import *
 
 # Our wide application variables, that are shared between all the windows within our app
 configuration = config.Load()
+scenarios_db = scenarios.Load()
 operating_system = configuration['operating_system']
 docker_desktop = configuration['docker_desktop']
 theme = config.GetTheme(configuration)
@@ -16,7 +18,7 @@ logger = logging.getLogger()
 
 class BaseWindow(QWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self):
         super().__init__()
         self.docker_client = None
         try: 

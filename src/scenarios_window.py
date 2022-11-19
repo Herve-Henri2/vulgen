@@ -6,7 +6,6 @@ import scenarios
 
 class ScenariosWindow(QDialog, BaseWindow):
 
-    scenarios_db = scenarios.Load()
     scenarios = scenarios_db['scenarios']
 
     # region =====Initializing=====
@@ -77,10 +76,12 @@ class ScenariosWindow(QDialog, BaseWindow):
 
         self.add_image_button = QPushButton('Add', self)
         self.add_image_button.move(600, 290)
+        self.add_image_button.clicked.connect(self.OpenImageAdd)
         self.edit_mode_ui.append(self.add_image_button)
 
         self.edit_image_button = QPushButton('Edit', self)
         self.edit_image_button.move(600, 320)
+        self.edit_image_button.clicked.connect(self.OpenImageEdit)
         self.edit_mode_ui.append(self.edit_image_button)
 
         self.remove_image_button = QPushButton('Remove', self)
@@ -199,6 +200,16 @@ class ScenariosWindow(QDialog, BaseWindow):
         for element in self.edit_mode_ui:
             element.show()
 
+    def OpenImageAdd(self):
+        window = EditImagesWindow(parent=self)
+        window.exec()
+
+    def OpenImageEdit(self):
+        selected_image = self.images_list_view.currentItem().text()
+        window = EditImagesWindow(parent=self, image=selected_image)
+        print(selected_image)
+        window.exec()
+
     # endregion
 
     # region =====Main Methods=====
@@ -221,7 +232,8 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.ShowEditUI()
 
         selected_scenario = self.list_view.currentItem().text()
-        scenario = scenarios.Get(self.scenarios_db, selected_scenario)
+        self.scen_to_save = selected_scenario
+        scenario = scenarios.Get(scenarios_db, selected_scenario)
         self.scenario_name.setText(scenario.name)
         self.type_entry.setText(scenario.type)
         self.cve_entry.setText(scenario.cve)
@@ -250,6 +262,7 @@ class ScenariosWindow(QDialog, BaseWindow):
         Resets the window's UI back to default.
         '''
         #TODO add unsaved changed confirmation
+        self.scen_to_save = None
         self.HideEditUI()
         self.ShowElements(self.launch_button, self.edit_button, self.add_button,
         self.textbox, self.list_view)
@@ -260,9 +273,52 @@ class ScenariosWindow(QDialog, BaseWindow):
 
     def SaveScenario(self):
         #TODO Check all the inputs!
+        # if self.scen_to_save is None ...
         pass
         
         
+
+    # endregion
+
+class EditImagesWindow(QDialog, BaseWindow):
+    
+    # region =====Initializing=====
+
+    def __init__(self, parent=None, image=None):
+
+        self.parent = parent
+        self.image_to_save = image
+
+        # Defining our layout variables
+        width = 700
+        height = 500
+
+        super().__init__()
+        self.initUI(width, height)
+
+    def initUI(self, width, height):
+        self.setWindowTitle('Add | Edit scenario image')
+        self.setFixedSize(width, height)
+
+        # Buttons
+
+        self.save_button = QPushButton('Save', self)
+        self.save_button.move(120, 440)
+        self.save_button.resize(80, 20)
+        self.save_button.clicked.connect(self.SaveImage)
+
+        self.ImplementTheme()
+
+    # endregion
+
+    # region =====Graphical Methods=====
+
+    # endregion
+
+    # region =====Main Methods=====
+
+    def SaveImage(self):
+        pass
 
     # endregion
 
