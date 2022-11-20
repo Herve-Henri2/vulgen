@@ -3,6 +3,7 @@ from distutils.sysconfig import customize_compiler
 import os
 import docker
 from misc import *
+from application import *
 
 # Documentation link: https://docker-py.readthedocs.io/en/stable/
 
@@ -90,11 +91,8 @@ def GetCustomImages():
     '''
     to_exclude = ('README.md', 'base_images')
     
-    path = os.path.realpath(os.path.dirname(__file__)) + "/../docker_images"  # src folder absolute path + path to docker_images from src folder
+    sep = '/' if operating_system == "Linux" else '\\'
+    path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
     custom_images = [folder for folder in os.listdir(path) if folder not in to_exclude]
-    
-    img_list = []
-    for i in range(len(custom_images)):
-        img_list.append(custom_images[i])
         
-    return img_list
+    return custom_images

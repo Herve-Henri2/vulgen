@@ -296,6 +296,18 @@ class MainWindow(BaseWindow):
     def ManageContainers(self):
         self.containers_window = ContainersWindow(parent=self)
         self.containers_window.exec()
+    
+    @CheckForDocker
+    def BuildCustomImage(self, dockerfiles_path : list[str]):
+        '''
+        Build a custom image
+        '''
+        self.Clear()
+        worker = BuildImageThread(dockerfiles_path)
+        worker.update_console.connect(self.Write)
+        #worker.finished.connect()  ??TODO connect a method to remove the thread from self.threads
+        self.threads.append(worker)
+        self.threads[-1].start()
 
     @CheckForDocker
     def LaunchScenario(self, scenario : str):
@@ -389,7 +401,37 @@ class ScenarioThread(QThread):
             self.LaunchContainer(image_name, main, **kwargs)
         
 
-    # endregion
+class BuildImageThread(QThread):
+
+    update_console = pyqtSignal(str)
+
+    def __init__(self, dockerfiles_path : list[str]):
+        super(BuildImageThread, self).__init__()
+        self.dockerfiles_path = dockerfiles_path
+        self.docker_client = docker.from_env()
+
+    def run(self):
+        sep = '/' if operating_system == "Linux" else '\\'
+        main_image = self.dockerfiles_path[-1].split(sep)[-1]
+        self.update_console.emit(f'Started building the {main_image} image.')
+        logger.info(f'Started building the {main_image} image.')
+
+        try:
+            for dockerfile_path in self.dockerfiles_path:
+                image = dockerfile_path.split(sep)[-1]
+                self.update_console.emit(f'     Building the {image} image...')
+                logger.info(f'      Building the {image} image...')
+                self.docker_client.images.build(path=dockerfile_path, tag=image, rm=True)
+                self.update_console.emit(f'     Done!')
+                logger.info(f'      Done!')
+
+            self.update_console.emit('Done building the image!')
+        except Exception as ex:
+            self.update_console.emit(f'Error: {str(ex)}')
+            logger.info(ex)
+        finally:
+            self.finished.emit()
+
 
 if __name__ == "__main__":
 

@@ -53,8 +53,7 @@ class CustomImagesWindow(QDialog, BaseWindow):
         self.EnableButton(self.build_button)
     
     def updateList(self):        
-        img_list = dutils.GetCustomImages()
-        
+        img_list = dutils.GetCustomImages()        
         self.list_view.addItems(img_list)
 
     # endregion
@@ -64,21 +63,34 @@ class CustomImagesWindow(QDialog, BaseWindow):
     def BuildImage(self):
         #TODO add Windows compatibility
         selection = self.list_view.currentItem().text()
-        try:
-            sep = '/' if operating_system == "Linux" else '\\'
-            custom_images_path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
-            docker_file_path = f'{custom_images_path}{sep}{selection}'
-            self.docker_client.images.build(path=docker_file_path, rm=True)
-            self.parent.setText(f'Successfully built the {selection} image!')
-            logger.info(f'Built the {selection} image.')
-            #subprocess.Popen(f'{custom_images_path}\\{selection}\\create_img.sh')
-            #command = f"cd {path}\\{selection}\\create_img.sh"
-            #misc.open_terminal(configuration['operating_system'], command=command)
-        except Exception as ex:
-            self.parent.setText(str(ex))
-            logger.error(f'An error occured while trying to build the image {selection}: {ex}')
-        finally:
-            self.close()
+        
+        sep = '/' if operating_system == "Linux" else '\\'
+        # Get Dockerfile path
+        custom_images_path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
+        dockerfile_path = f'{custom_images_path}{sep}{selection}'
+        # Get custom image requirements
+        built_images = self.docker_client.images.list()
+        requirements = open(f"{dockerfile_path}{sep}req.txt", 'r')
+        required_images = []
+        for line in requirements:
+            if ':' in line:
+                req = line[:-1].split(':')
+                if req[0] == "Image":
+                    alreadyBuilt = False
+                    for built_image in built_images:
+                        if req[1] == built_image.tags[0].split(':')[0]:
+                            alreadyBuilt = True
+                    if not alreadyBuilt:
+                        required_images.append(req[1])
+        # Create Dockerfiles path list
+        dockerfiles_path = []
+        for req_image in required_images:
+            req_dockerfile_path = f'{custom_images_path}{sep}base_images{sep}{req_image}'
+            dockerfiles_path.append(req_dockerfile_path)
+        dockerfiles_path.append(dockerfile_path)
+        
+        self.parent.parent.BuildCustomImage(dockerfiles_path)
+        self.close()
         
     # endregion
 
