@@ -1,0 +1,5 @@
+Welcome !
+In the current folder you will find a binary vulnerable to a buffer overflow.
+It is up to you to exploit it succesfully.
+You will also find its source code.
+
