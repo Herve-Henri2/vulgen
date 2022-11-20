@@ -25,4 +25,4 @@ rm tmp1.txt tmp2.txt
 docker rmi $id
 
 # Create the new image
-docker image build -t $DIR_NAME:latest $DIR_NAME
+docker image build -t $DIR_NAME $DIR_NAME

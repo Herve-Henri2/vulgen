@@ -1,4 +1,4 @@
-FROM xenial-python-c:xenial-3.5
+FROM xenial-python-c
 
 WORKDIR /usr/app/src
 

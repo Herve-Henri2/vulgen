@@ -4,4 +4,4 @@
 DIR_NAME=$(dirname ${BASH_SOURCE:-$0})
 
 # Create the new image
-docker image build -t xenial-python-c:xenial-3.5 $DIR_NAME
+docker image build -t xenial-python-c $DIR_NAME
