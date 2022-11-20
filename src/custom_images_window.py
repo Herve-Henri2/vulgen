@@ -65,8 +65,9 @@ class CustomImagesWindow(QDialog, BaseWindow):
         #TODO add Windows compatibility
         selection = self.list_view.currentItem().text()
         try:
-            custom_images_path = os.path.realpath(os.path.dirname(__file__)) + "\\..\\docker_images"  # src folder absolute path + path to docker_images from src folder
-            docker_file_path = f'{custom_images_path}\\{selection}'
+            sep = '/' if operating_system == "Linux" else '\\'
+            custom_images_path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
+            docker_file_path = f'{custom_images_path}{sep}{selection}'
             self.docker_client.images.build(path=docker_file_path, rm=True)
             self.parent.setText(f'Successfully built the {selection} image!')
             logger.info(f'Built the {selection} image.')
