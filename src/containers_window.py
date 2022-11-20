@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import *
 import sys
 import docker
+import misc
 import docker_utils as dutils
 from images_window import *
 from application import *
@@ -69,11 +70,17 @@ class ContainersWindow(QDialog, BaseWindow):
         self.remove_button.clicked.connect(self.RemoveContainer)
         #self.DisableButton(self.remove_button)
         
+        self.attach_button = QPushButton('Attach to terminal', self)
+        self.attach_button.move(300, 450)
+        self.attach_button.resize(240, 20)
+        self.attach_button.clicked.connect(self.AttachContainer)
+        #self.DisableButton(self.attach_button)
+        
         # Fill the table
         self.updateTable()
         # Styling and coloring
         self.ImplementTheme()
-        self.DisableButtons(self.start_button, self.stop_button, self.remove_button)
+        self.DisableButtons(self.start_button, self.stop_button, self.remove_button, self.attach_button)
         
     # endregion
 
@@ -83,7 +90,7 @@ class ContainersWindow(QDialog, BaseWindow):
         selection = self.table_view.selectedItems()
         status = selection[3].text()
         if status == 'running':
-            self.EnableButton(self.stop_button)
+            self.EnableButtons(self.stop_button, self.attach_button)
         else:
             self.EnableButton(self.start_button)
         self.EnableButton(self.remove_button)
@@ -119,7 +126,7 @@ class ContainersWindow(QDialog, BaseWindow):
         selection = self.table_view.selectedItems()
         if status := selection[3].text() == 'running':
             self.DisableButton(self.start_button)
-            self.EnableButton(self.stop_button)
+            self.EnableButtons(self.stop_button, self.attach_button)
             logger.info(f'Started the container {selection[1].text()}')
             self.setText(f'Started the container {selection[1].text()}')
 
@@ -135,7 +142,7 @@ class ContainersWindow(QDialog, BaseWindow):
         self.updateTable()
         selection = self.table_view.selectedItems()
         if status := selection[3].text() == 'exited':
-            self.DisableButton(self.stop_button)
+            self.DisableButtons(self.stop_button, self.attach_button)
             self.EnableButton(self.start_button)
             logger.info(f'Stopped the container {selection[1].text()}')
             self.setText(f'Stopped the container {selection[1].text()}')
@@ -157,6 +164,26 @@ class ContainersWindow(QDialog, BaseWindow):
         except Exception as ex:
             self.setText(str(ex))
         self.updateTable()
+    
+    
+    def AttachContainer(self):
+        '''
+        Attach the container to a new terminal.
+        '''
+        selection = self.table_view.selectedItems()
+        if selection is None or len(selection) == 0:
+            return
+        id = selection[0].text()
+        try:
+            name = self.docker_client.containers.get(id).name
+            self.setText(f'Opening up a terminal for the {name} container.')
+            logger.info(f'Opening up a terminal for the {name} container.')
+            command = f"docker attach {id}"
+            misc.open_terminal(operating_system, command)
+        except Exception as ex:
+            self.setText(str(ex))
+        self.updateTable()
+    
     
     def CreateContainer(self):
         self.images_window = ImagesWindow(parent=self, containerMode=True)
