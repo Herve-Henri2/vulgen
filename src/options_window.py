@@ -86,7 +86,7 @@ class OptionsWindow(QDialog, BaseWindow):
         allowed_to_close = True
 
         # We check that the docker path entered is correct
-        if not os.path.exists(self.docker_desktop_entry.text()) or "Docker Desktop.exe" not in self.docker_desktop_entry.text():
+        if operating_system == "Windows" and (not os.path.exists(self.docker_desktop_entry.text()) or "Docker Desktop.exe" not in self.docker_desktop_entry.text()):
             messagebox = QMessageBox(self)
             messagebox.resize(200, 200)
             messagebox.setWindowTitle("Invalid Docker Desktop path")
@@ -95,7 +95,8 @@ class OptionsWindow(QDialog, BaseWindow):
             messagebox.exec()
             allowed_to_close = False
         if allowed_to_close:
-            config.Save('docker_desktop', self.docker_desktop_entry.text())
+            if operating_system == "Windows":
+                config.Save('docker_desktop', self.docker_desktop_entry.text())
             config.Save('current_theme_index', self.themes.currentIndex())
             self.close()
 
