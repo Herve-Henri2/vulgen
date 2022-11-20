@@ -4,7 +4,7 @@
 DIR_NAME=$(dirname ${BASH_SOURCE:-$0})
 
 # Create the required image if not already done
-$DIR_NAME/../base_images/xenial-python/create_img.sh
+$DIR_NAME/../base_images/ubuntu20-python-c/create_img.sh
 
 # Delete all containers
 docker rm $(docker ps -a -q)

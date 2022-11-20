@@ -1,7 +1,7 @@
-FROM xenial-python:xenial-3.5
+FROM ubuntu20-python-c:20.04-3.8
 
 WORKDIR /usr/app/src
 
 COPY test.py ./
 
-CMD ["python3.5", "./test.py"]
+CMD ["python3.8", "./test.py"]
