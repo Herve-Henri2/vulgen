@@ -117,6 +117,16 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.cve_entry.move(340, 40)
         self.cve_entry.resize(140, 20)
         self.edit_mode_ui.append(self.cve_entry)
+        
+        # Difficulty
+        self.diff_label = QLabel('Difficulty (/5)', self)
+        self.diff_label.move(500, 20)
+        self.edit_mode_ui.append(self.diff_label)
+
+        self.diff_entry = QLineEdit(self)
+        self.diff_entry.move(500, 40)
+        self.diff_entry.resize(140, 20)
+        self.edit_mode_ui.append(self.diff_entry)
 
         # Description
         self.scenario_desc_label = QLabel('Description', self)
@@ -135,8 +145,18 @@ class ScenariosWindow(QDialog, BaseWindow):
 
         self.instructions = QPlainTextEdit(self)
         self.instructions.move(340, 100)
-        self.instructions.resize(300, 150)
+        self.instructions.resize(300, 40)
         self.edit_mode_ui.append(self.instructions)
+
+        # Solution
+        self.solution_label = QLabel('Solution', self)
+        self.solution_label.move(340, 150)
+        self.edit_mode_ui.append(self.solution_label)
+
+        self.solution = QPlainTextEdit(self)
+        self.solution.move(340, 170)
+        self.solution.resize(300, 80)
+        self.edit_mode_ui.append(self.solution)
 
         # Goal
         self.goal_label = QLabel('Goal', self)
@@ -158,16 +178,16 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.sources.resize(300, 40)
         self.edit_mode_ui.append(self.sources)
 
-        # Images
-        self.images_label = QLabel('Images', self)
-        self.images_label.move(340, 270)
-        self.edit_mode_ui.append(self.images_label)
+        # Containers
+        self.containers_label = QLabel('Containers', self)
+        self.containers_label.move(340, 270)
+        self.edit_mode_ui.append(self.containers_label)
 
-        self.images_list_view = QListWidget(self)
-        self.images_list_view.move(340, 290)
-        self.images_list_view.resize(250, 120)
-        self.images_list_view.itemClicked.connect(self.AllowOpening)
-        self.edit_mode_ui.append(self.images_list_view)
+        self.containers_list_view = QListWidget(self)
+        self.containers_list_view.move(340, 290)
+        self.containers_list_view.resize(250, 120)
+        self.containers_list_view.itemClicked.connect(self.AllowOpening)
+        self.edit_mode_ui.append(self.containers_list_view)
 
         self.HideEditUI()
 
@@ -205,7 +225,7 @@ class ScenariosWindow(QDialog, BaseWindow):
         window.exec()
 
     def OpenImageEdit(self):
-        selected_image = self.images_list_view.currentItem().text()
+        selected_image = self.containers_list_view.currentItem().text()
         window = EditImagesWindow(parent=self, image=selected_image)
         print(selected_image)
         window.exec()
@@ -237,16 +257,18 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.scenario_name.setText(scenario.name)
         self.type_entry.setText(scenario.type)
         self.cve_entry.setText(scenario.cve)
+        self.diff_entry.setText(str(scenario.difficulty))
         self.scenario_desc.setPlainText(scenario.description)
         self.instructions.setPlainText(scenario.instructions)
+        self.solution.setPlainText(scenario.solution)
         self.goal.setPlainText(scenario.goal)
         for source in scenario.sources:
             self.sources.appendPlainText(source)
         for image in scenario.images:
             if image['is_main'] is True:
-                self.images_list_view.addItem(f"(main) {image['name']}")
+                self.containers_list_view.addItem(f"(main) {image['name']}")
             else:
-                self.images_list_view.addItem(image['name'])
+                self.containers_list_view.addItem(image['name'])
 
     def AddScenarioMode(self):
         '''

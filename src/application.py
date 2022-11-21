@@ -6,6 +6,7 @@ import os
 
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
+from PyQt6 import QtGui
 
 # Our wide application variables, that are shared between all the windows within our app
 configuration = config.Load()
@@ -21,6 +22,7 @@ class BaseWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.docker_client = None
+        self.threads = []
         try: 
             self.docker_client = docker.from_env()
         except:
@@ -123,6 +125,7 @@ class BaseWindow(QWidget):
                 element.verticalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
 
     # endregion
+
 
 def DetectDockerDesktopPath(self):
     '''

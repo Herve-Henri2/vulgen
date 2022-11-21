@@ -45,7 +45,7 @@ class ImagesWindow(QDialog, BaseWindow):
             self.build_button = QPushButton('Build custom image', self)
             self.build_button.move(40, 330)
             self.build_button.resize(140, 20)
-            self.build_button.clicked.connect(self.BuildCustomImage)
+            self.build_button.clicked.connect(self.OpenCustomImages)
             
             self.remove_button = QPushButton('Remove', self)
             self.remove_button.move(40, 360)
@@ -103,6 +103,12 @@ class ImagesWindow(QDialog, BaseWindow):
         self.table_view.resizeColumnsToContents()
         self.table_view.resizeRowsToContents()
 
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        if len(self.threads) != 0:
+            a0.ignore()
+        else:
+            super().closeEvent(a0)
+
 
     # endregion
 
@@ -122,7 +128,7 @@ class ImagesWindow(QDialog, BaseWindow):
             logger.error(f"Error while attempting to remove the image {selection[1].text() + ':' + selection[2].text()}: {ex}")
         self.updateTable()
     
-    def BuildCustomImage(self):
+    def OpenCustomImages(self):
         self.custom_images_window = CustomImagesWindow(parent=self)
         self.custom_images_window.exec()
     
@@ -139,8 +145,57 @@ class ImagesWindow(QDialog, BaseWindow):
             self.close()
         except Exception as ex:
             self.parent.setText(str(ex))
+
+    def BuildCustomImage(self, dockerfiles_path : list[str]):
+        '''
+        Build a custom image
+        '''
+        def ClearThreads():
+            for index, thread in enumerate(self.threads):
+                self.threads.remove(self.threads[index])
+
+        self.Clear()
+        worker = BuildImageThread(dockerfiles_path)
+        worker.update_console.connect(self.Write)
+        worker.update_table.connect(self.updateTable)
+        worker.finished.connect(ClearThreads)  
+        self.threads.append(worker)
+        self.threads[-1].start()   
             
     # endregion
+
+class BuildImageThread(QThread):
+
+    update_console = pyqtSignal(str)
+    update_table = pyqtSignal()
+
+    def __init__(self, dockerfiles_path : list[str]):
+        super(BuildImageThread, self).__init__()
+        self.dockerfiles_path = dockerfiles_path
+        self.docker_client = docker.from_env()
+
+    def run(self):
+        sep = '/' if operating_system == "Linux" else '\\'
+        main_image = self.dockerfiles_path[-1].split(sep)[-1]
+        self.update_console.emit(f'Started building the {main_image} image.')
+        logger.info(f'Started building the {main_image} image.')
+
+        try:
+            for dockerfile_path in self.dockerfiles_path:
+                image = dockerfile_path.split(sep)[-1]
+                self.update_console.emit(f'Building the {image} image...')
+                logger.info(f'Building the {image} image...')
+                self.docker_client.images.build(path=dockerfile_path, tag=image, rm=True)
+                self.update_console.emit(f'Done!')
+                self.update_table.emit()
+                logger.info(f'Done!')
+
+            self.update_console.emit('Done building the image!')
+        except Exception as ex:
+            self.update_console.emit(f'Error: {str(ex)}')
+            logger.info(ex)
+        finally:
+            self.finished.emit()
 
 
 if __name__ == "__main__":

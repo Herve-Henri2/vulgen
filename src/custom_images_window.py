@@ -61,7 +61,7 @@ class CustomImagesWindow(QDialog, BaseWindow):
     # region =====Main Methods=====
 
     def BuildImage(self):
-        #TODO add Windows compatibility
+        
         selection = self.list_view.currentItem().text()
         
         sep = '/' if operating_system == "Linux" else '\\'
@@ -73,15 +73,16 @@ class CustomImagesWindow(QDialog, BaseWindow):
         requirements = open(f"{dockerfile_path}{sep}req.txt", 'r')
         required_images = []
         for line in requirements:
-            if ':' in line:
-                req = line[:-1].split(':')
-                if req[0] == "Image":
-                    alreadyBuilt = False
-                    for built_image in built_images:
-                        if req[1] == built_image.tags[0].split(':')[0]:
-                            alreadyBuilt = True
-                    if not alreadyBuilt:
-                        required_images.append(req[1])
+            if ':' not in line:
+                continue
+            req = line[:-1].split(':')
+            if req[0] == "Image":
+                alreadyBuilt = False
+                for built_image in built_images:
+                    if req[1] == built_image.tags[0].split(':')[0]:
+                        alreadyBuilt = True
+                if not alreadyBuilt:
+                    required_images.append(req[1])
         # Create Dockerfiles path list
         dockerfiles_path = []
         for req_image in required_images:
@@ -89,7 +90,7 @@ class CustomImagesWindow(QDialog, BaseWindow):
             dockerfiles_path.append(req_dockerfile_path)
         dockerfiles_path.append(dockerfile_path)
         
-        self.parent.parent.BuildCustomImage(dockerfiles_path)
+        self.parent.BuildCustomImage(dockerfiles_path)
         self.close()
         
     # endregion
