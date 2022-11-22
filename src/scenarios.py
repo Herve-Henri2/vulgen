@@ -90,7 +90,7 @@ def UpdateFields(func):
 
     return wrapper
 
-@UpdateFields
+@UpdateFields # The decorator is mandatory for that function
 def Save(Scenario : Scenario):
     '''
     Saves a given Scenario object into the database file, updating all the necessary fields.

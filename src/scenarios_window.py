@@ -86,6 +86,7 @@ class ScenariosWindow(QDialog, BaseWindow):
 
         self.remove_image_button = QPushButton('Remove', self)
         self.remove_image_button.move(600, 350)
+        self.remove_image_button.clicked.connect(self.RemoveImage)
         self.edit_mode_ui.append(self.remove_image_button)
         
         # Scenario Name
@@ -221,14 +222,20 @@ class ScenariosWindow(QDialog, BaseWindow):
             element.show()
 
     def OpenImageAdd(self):
-        window = EditImagesWindow(parent=self)
+        window = EditContainersWindow(parent=self)
         window.exec()
 
     def OpenImageEdit(self):
-        selected_image = self.containers_list_view.currentItem().text()
-        window = EditImagesWindow(parent=self, image=selected_image)
-        print(selected_image)
+        selected_container = self.containers_list_view.currentItem().text()
+        window = EditContainersWindow(parent=self, container=selected_container)
         window.exec()
+
+    def RemoveImage(self):
+        messagebox = QMessageBox(self)
+        messagebox.setStyleSheet('background-color: white')
+        messagebox.question(self, 'Test', 'Are you sure you want to remove that container?\n(Note: This will not delete the container but only remove it from the scenario)')
+        #messagebox.setText('This will not delete the container but only remove it from the scenario.')
+        #TODO Remove container and update view
 
     # endregion
 
@@ -252,8 +259,8 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.ShowEditUI()
 
         selected_scenario = self.list_view.currentItem().text()
-        self.scen_to_save = selected_scenario
         scenario = scenarios.Get(scenarios_db, selected_scenario)
+        self.scen_to_save = scenario
         self.scenario_name.setText(scenario.name)
         self.type_entry.setText(scenario.type)
         self.cve_entry.setText(scenario.cve)
@@ -295,21 +302,81 @@ class ScenariosWindow(QDialog, BaseWindow):
 
     def SaveScenario(self):
         #TODO Check all the inputs!
-        # if self.scen_to_save is None ...
-        pass
+        # if self.scen_to_save is None (for adding a new scenario)...
+
+        global scenarios_db
+
+        def CheckValid(scenario : scenarios.Scenario):
+            import regex
+
+            result = {}
+            result['valid_scenario'] = True
+            result['message'] = ''
+
+            # A few variables we will use to do our checks
+            none_not_allowed = ['name', 'description', 'goal', 'instructions', 'images', 'CVE', 'difficulty','type']
+            min_difficulty = 1; max_difficulty = 5
+
+            # Checking that some attributes are not none
+            for attribute in scenario.__dict__:
+                attribute_name = attribute
+                attribute = getattr(scenario, attribute)
+                if attribute_name in none_not_allowed:
+                    if attribute is None or attribute == "":
+                        result['valid_scenario'] = False
+                        result['message'] = f'{attribute_name} cannot be empty!'
+            # Checking valid difficulty
+            try:
+                scenario.difficulty = int(scenario.difficulty)
+                if scenario.difficulty < min_difficulty or scenario.difficulty > max_difficulty:
+                    result['valid_scenario'] = False
+                    result['message'] = 'The difficulty must an integer between 1 and 5!'
+            except ValueError:
+                result['valid_scenario'] = False
+                result['message'] = 'The difficulty must an integer between 1 and 5!'
+            # Checking CVE
+            cve_expression = "^CVE-20[0-9]{2}-[0-9]{4,6}$"
+            if regex.search(cve_expression, scenario.cve) is None:
+                result['valid_scenario'] = False
+                result['message'] = 'Your CVE is in the wrong format or does not exist.\nA CVE must be written in the following format: CVE-YYYY-NNNN'
+            # Check the images/containers
+                   
+            return result
+
+        self.scen_to_save.name = self.scenario_name.text()
+        self.scen_to_save.description = self.scenario_desc.toPlainText()
+        self.scen_to_save.goal = self.goal.toPlainText()
+        self.scen_to_save.instructions = self.instructions.toPlainText()
+        self.scen_to_save.solution = self.solution.toPlainText()
+        self.scen_to_save.cve = self.cve_entry.text()
+        self.scen_to_save.difficulty = self.diff_entry.text()
+        self.scen_to_save.type = self.type_entry.text()
+        self.scen_to_save.sources = [str(source) for source in self.sources.toPlainText().split('\n')]
+        is_valid = CheckValid(self.scen_to_save)
+        if is_valid['valid_scenario'] is False:
+            messagebox = QMessageBox(self)
+            messagebox.setWindowTitle("Invalid parameters!")
+            messagebox.setText(is_valid['message'])
+            messagebox.setStyleSheet('background-color: white')
+            messagebox.exec()
+        else:
+            self.scen_to_save.difficulty = int(self.scen_to_save.difficulty)
+            scenarios.Save(self.scen_to_save)
+            scenarios_db = scenarios.Load()
+            self.DefaultMode()
         
         
 
     # endregion
 
-class EditImagesWindow(QDialog, BaseWindow):
+class EditContainersWindow(QDialog, BaseWindow):
     
     # region =====Initializing=====
 
-    def __init__(self, parent=None, image=None):
+    def __init__(self, parent=None, container=None):
 
         self.parent = parent
-        self.image_to_save = image
+        self.container_to_save = container
 
         # Defining our layout variables
         width = 700
@@ -319,7 +386,7 @@ class EditImagesWindow(QDialog, BaseWindow):
         self.initUI(width, height)
 
     def initUI(self, width, height):
-        self.setWindowTitle('Add | Edit scenario image')
+        self.setWindowTitle('Add | Edit scenario container')
         self.setFixedSize(width, height)
 
         # Buttons
