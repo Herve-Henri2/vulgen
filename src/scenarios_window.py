@@ -1,6 +1,7 @@
 import sys
 
 from application import *
+import docker_utils as dutils
 import scenarios
 
 
@@ -179,16 +180,16 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.sources.resize(300, 40)
         self.edit_mode_ui.append(self.sources)
 
-        # Containers
-        self.containers_label = QLabel('Containers', self)
-        self.containers_label.move(340, 270)
-        self.edit_mode_ui.append(self.containers_label)
+        # Images
+        self.images_label = QLabel('Images', self)
+        self.images_label.move(340, 270)
+        self.edit_mode_ui.append(self.images_label)
 
-        self.containers_list_view = QListWidget(self)
-        self.containers_list_view.move(340, 290)
-        self.containers_list_view.resize(250, 120)
-        self.containers_list_view.itemClicked.connect(self.AllowOpening)
-        self.edit_mode_ui.append(self.containers_list_view)
+        self.images_list_view = QListWidget(self)
+        self.images_list_view.move(340, 290)
+        self.images_list_view.resize(250, 120)
+        self.images_list_view.itemClicked.connect(self.AllowOpening)
+        self.edit_mode_ui.append(self.images_list_view)
 
         self.HideEditUI()
 
@@ -222,18 +223,18 @@ class ScenariosWindow(QDialog, BaseWindow):
             element.show()
 
     def OpenImageAdd(self):
-        window = EditContainersWindow(parent=self)
+        window = EditImagesWindow(parent=self)
         window.exec()
 
     def OpenImageEdit(self):
-        selected_container = self.containers_list_view.currentItem().text()
-        window = EditContainersWindow(parent=self, container=selected_container)
+        selected_image = self.images_list_view.currentItem().text().replace('(main) ', '')
+        window = EditImagesWindow(parent=self, image=selected_image)
         window.exec()
 
     def RemoveImage(self):
         messagebox = QMessageBox(self)
-        messagebox.setStyleSheet('background-color: white')
-        messagebox.question(self, 'Test', 'Are you sure you want to remove that container?\n(Note: This will not delete the container but only remove it from the scenario)')
+        messagebox.setStyleSheet('background-color: blue')
+        messagebox.question(self, 'Removing image', 'Are you sure you want to remove that image?\n(Note: This will not delete the image but only remove it from the scenario)')
         #messagebox.setText('This will not delete the container but only remove it from the scenario.')
         #TODO Remove container and update view
 
@@ -273,9 +274,9 @@ class ScenariosWindow(QDialog, BaseWindow):
             self.sources.appendPlainText(source)
         for image in scenario.images:
             if image['is_main'] is True:
-                self.containers_list_view.addItem(f"(main) {image['name']}")
+                self.images_list_view.addItem(f"(main) {image['name']}")
             else:
-                self.containers_list_view.addItem(image['name'])
+                self.images_list_view.addItem(image['name'])
 
     def AddScenarioMode(self):
         '''
@@ -295,12 +296,15 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.HideEditUI()
         self.ShowElements(self.launch_button, self.edit_button, self.add_button,
         self.textbox, self.list_view)
-        self.DisableButtons(self.edit_button, self.launch_button)
+        self.DisableButtons(self.edit_button, self.launch_button, self.edit_image_button, self.remove_image_button)
         for element in self.edit_mode_ui:
             if isinstance(element, QLineEdit) or isinstance(element, QPlainTextEdit) or isinstance(element, QListWidget):
                 element.clear()
 
     def SaveScenario(self):
+        '''
+        Saves the changes made to the scenario to the scenarios.json file.
+        '''
         #TODO Check all the inputs!
         # if self.scen_to_save is None (for adding a new scenario)...
 
@@ -369,34 +373,94 @@ class ScenariosWindow(QDialog, BaseWindow):
 
     # endregion
 
-class EditContainersWindow(QDialog, BaseWindow):
+class EditImagesWindow(QDialog, BaseWindow):
     
     # region =====Initializing=====
 
-    def __init__(self, parent=None, container=None):
+    def __init__(self, parent=None, image=None):
 
         self.parent = parent
-        self.container_to_save = container
+        if self.parent.scen_to_save is not None:
+            self.image_to_save = self.LoadImageJson(image, self.parent.scen_to_save)
+        else:
+            self.image_to_save = image
 
         # Defining our layout variables
-        width = 700
+        width = 600
         height = 500
 
         super().__init__()
         self.initUI(width, height)
 
     def initUI(self, width, height):
-        self.setWindowTitle('Add | Edit scenario container')
+        self.setWindowTitle('Add | Edit scenario image')
         self.setFixedSize(width, height)
 
-        # Buttons
+        # Image selection
+        self.image_label = QLabel('From existing image', self)
+        self.image_label.move(20, 20)
 
+        self.images = QComboBox(self)
+        self.images.move(20, 40)
+        self.images.resize(300, 20)
+
+        # Dockerfile entry
+        self.dockerfile_label = QLabel('From Dockerfile', self)
+        self.dockerfile_label.move(20, 70)
+
+        self.dockerfile_entry = QLineEdit(self)
+        self.dockerfile_entry.move(20, 90)
+        self.dockerfile_entry.resize(300, 20)
+        self.dockerfile_entry.setPlaceholderText('Put the dockerfile path here')
+
+        # Main image or not?
+        self.is_main_label = QLabel('Main Image?', self)
+        self.is_main_label.move(350, 20)
+
+        self.is_main = QComboBox(self)
+        self.is_main.move(350, 40)
+        self.is_main.addItems(['Yes', 'No'])
+
+        # Container port
+        self.container_port_label = QLabel('Container port', self)
+        self.container_port_label.move(350, 70)
+
+        self.container_port = QLineEdit(self)
+        self.container_port.move(350, 90)
+        self.container_port.resize(100, 20)
+
+        # Host port
+        self.host_port_label = QLabel('Host port', self)
+        self.host_port_label.move(460, 70)
+
+        self.host_port = QLineEdit(self)
+        self.host_port.move(460, 90)
+        self.host_port.resize(100, 20)
+
+        # Operating System
+        self.image_os_label = QLabel('Operating system', self)
+        self.image_os_label.move(20, 150)
+
+        self.image_os = QLineEdit(self)
+        self.image_os.move(20, 170)
+        self.image_os.resize(150, 20)
+
+        # Buttons
         self.save_button = QPushButton('Save', self)
-        self.save_button.move(120, 440)
+        self.save_button.move(20, 440)
         self.save_button.resize(80, 20)
         self.save_button.clicked.connect(self.SaveImage)
 
-        self.ImplementTheme()
+        self.browse_button = QPushButton('browse', self) #Browse for dockerfile
+        self.browse_button.move(20, 120)
+        self.browse_button.resize(80, 20)
+        self.browse_button.clicked.connect(self.FileDialog)
+
+        self.ImplementTheme(self.dockerfile_entry)
+        self.dockerfile_entry.setStyleSheet(f'background-color: {theme["main_window_textbox_color"]}; color: {theme["text_color"]};'
+                                            f'font-family: {theme["text_font"]}; font-style: italic; border: 1px solid "{theme["border_color"]}"')
+
+        self.FillFields()
 
     # endregion
 
@@ -405,6 +469,46 @@ class EditContainersWindow(QDialog, BaseWindow):
     # endregion
 
     # region =====Main Methods=====
+
+    def LoadImageJson(self, wanted_image, scenario):
+        for image in scenario.images:
+            if wanted_image in image['name']:
+                return image
+
+    def FileDialog(self):
+        fname = QFileDialog.getOpenFileName(self, "Select the DockerFile", "", 'All Files (Dockerfile)')
+
+        if fname:
+            self.dockerfile_entry.setText(fname[0])
+
+    def FillFields(self):
+
+        # Adding the existing images
+        if self.parent.scen_to_save is None:
+            self.images.addItem('None')
+        else:
+            self.images.addItem(self.image_to_save['name'])
+
+        for image in self.docker_client.images.list():
+            try:
+                if self.image_to_save['name'] is not None and self.image_to_save['name'] in image.tags[0].split(':')[0]:
+                    continue
+            except TypeError:
+                pass
+            self.images.addItem(image.tags[0])
+
+        # Filling the other fields (or not)
+        try:
+            if self.image_to_save['is_main'] is True:
+                self.is_main.setCurrentText('Yes')
+            else:
+                self.is_main.setCurrentText('No')
+            self.image_os.setText(self.image_to_save['operating_system'])
+            for key, value in self.image_to_save['ports'].items():
+                self.container_port.setText(key)
+                self.host_port.setText(value)
+        except TypeError:
+            pass
 
     def SaveImage(self):
         pass

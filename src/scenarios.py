@@ -129,7 +129,7 @@ def CreateDefault():
     main_image['name'] = base
     main_image['is_main'] = True
     main_image['operating_system'] = "Alpine Linux-3.8.2"
-    main_image['ports'] = {"8080/tcp":8080} # Container port: Host port
+    main_image['ports'] = {"8080/tcp": "8080"} # Container port: Host port
     main_image['download_link'] = None
     images.append(main_image)
     cve = 'CVE-2021-44228'

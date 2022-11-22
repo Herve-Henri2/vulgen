@@ -1,5 +1,3 @@
-from curses.ascii import isdigit
-from distutils.sysconfig import customize_compiler
 import os
 import docker
 from misc import *

@@ -127,7 +127,7 @@ class BaseWindow(QWidget):
     # endregion
 
 
-def DetectDockerDesktopPath(self):
+def DetectDockerDesktopPath():
     '''
     Tries to locate the path of the Docker Desktop executable (windows only)
     '''
