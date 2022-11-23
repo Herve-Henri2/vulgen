@@ -15,13 +15,13 @@ scenarios['total_types'] = 0
 class Scenario:
     
     # /!\ Whenever you add a new field to the scenario object, make sure you update all the fields in __init__, __str__, CreateDefault() and Parse()
-    def __init__(self, name, description, goal, instructions, solution, base, images, CVE, difficulty, type, sources):
+    def __init__(self, name=None, description=None, goal=None, instructions=None, solution=None,
+     images=None, CVE=None, difficulty=None, type=None, sources=None):
         self.name = name
         self.description = description
         self.goal = goal
         self.instructions = instructions
         self.solution = solution
-        self.base = base
         self.images = images
         self.cve = CVE
         self.difficulty = difficulty # /5, 5/5 being the most difficult
@@ -35,7 +35,6 @@ class Scenario:
         scenario['goal'] = self.goal
         scenario['instructions'] = self.instructions
         scenario['solution'] = self.solution
-        scenario['base'] = self.base
         scenario['images'] = self.images
         scenario['CVE'] = self.cve
         scenario['difficulty'] = self.difficulty
@@ -112,7 +111,6 @@ def CreateDefault():
     
     # Scenario 1 : log4shell
     name = 'log4shell'
-    base = 'ghcr.io/christophetd/log4shell-vulnerable-app'
     description = ('Also known as CVE-2021-44228, log4shell is a zero-day software vulnerability in Apache Log4j2, a popular Java library used for logging purposes in applications.\n'
                    'This vulnerability enables a remote attacker to take control of a device on the internet if the device is running certain unpatched versions of Log4j2.\n'
                    'In December 2021, Apache had to release up to 4 corrective patches to fully close the breach. It is believed that malicious actors likely knew about the vulnerability'
@@ -126,16 +124,17 @@ def CreateDefault():
     difficulty = 2
     images = []
     main_image = {}
-    main_image['name'] = base
+    main_image['name'] = 'ghcr.io/christophetd/log4shell-vulnerable-app'
     main_image['is_main'] = True
     main_image['operating_system'] = "Alpine Linux-3.8.2"
     main_image['ports'] = {"8080/tcp": "8080"} # Container port: Host port
     main_image['download_link'] = None
+    main_image['dockerfile'] = None
     images.append(main_image)
     cve = 'CVE-2021-44228'
     type = 'Remote Code Execution'
     sources = ['https://www.dynatrace.com/news/blog/what-is-log4shell/', 'https://en.wikipedia.org/wiki/Log4Shell', 'https://github.com/christophetd/log4shell-vulnerable-app']
-    scenario = Scenario(name, description, goal, instructions, solution, base, images, cve, difficulty, type, sources)
+    scenario = Scenario(name, description, goal, instructions, solution, images, cve, difficulty, type, sources)
     Save(scenario)
 
 
@@ -152,14 +151,13 @@ def Parse(_json : dict) -> Scenario:
     goal = _json['goal']
     inst = _json['instructions']
     sol = _json['solution']
-    base = _json['base']
     images = _json['images']
     cve = _json['CVE']
     diff = _json['difficulty']
     type = _json['type']
     sources = _json['sources']
 
-    scen = Scenario(name, desc, goal, inst, sol, base, images, cve, diff, type, sources)
+    scen = Scenario(name, desc, goal, inst, sol, images, cve, diff, type, sources)
     return scen
 
 def LoadScenario(name : str, object=True) -> Scenario:
@@ -172,7 +170,7 @@ def LoadScenario(name : str, object=True) -> Scenario:
         else:
             return scenarios['scenarios'][index]
 
-def Get(scenarios_db : dict, scenario_name, object=True) -> dict | None:
+def Get(scenarios_db : dict, scenario_name, object=True):
     for scenario in scenarios_db['scenarios']:
         if scenario_name in scenario['name']:
             if object is True:

@@ -14,7 +14,7 @@ class ScenariosWindow(QDialog, BaseWindow):
     def __init__(self, parent=None):
 
         self.parent = parent
-        self.scen_to_save = None
+        self.scen_to_save = scenarios.Scenario()
 
         # Defining our layout variables
         width = 700
@@ -343,8 +343,10 @@ class ScenariosWindow(QDialog, BaseWindow):
             if regex.search(cve_expression, scenario.cve) is None:
                 result['valid_scenario'] = False
                 result['message'] = 'Your CVE is in the wrong format or does not exist.\nA CVE must be written in the following format: CVE-YYYY-NNNN'
-            # Check the images/containers
-                   
+            # Check the images/containers (we won't check whether the images are valid or nor as this is done in the add | edit image window)
+            if scenario.images is None or len(scenario.images) == 0:
+                result['valid_scenario'] = False
+                result['message'] = 'You need at least one image in your scenario!'             
             return result
 
         self.scen_to_save.name = self.scenario_name.text()
@@ -367,6 +369,8 @@ class ScenariosWindow(QDialog, BaseWindow):
             self.scen_to_save.difficulty = int(self.scen_to_save.difficulty)
             scenarios.Save(self.scen_to_save)
             scenarios_db = scenarios.Load()
+            self.scenarios = scenarios_db['scenarios']
+            self.list_view.addItem(self.scen_to_save.name)
             self.DefaultMode()
         
         
@@ -380,10 +384,7 @@ class EditImagesWindow(QDialog, BaseWindow):
     def __init__(self, parent=None, image=None):
 
         self.parent = parent
-        if self.parent.scen_to_save is not None:
-            self.image_to_save = self.LoadImageJson(image, self.parent.scen_to_save)
-        else:
-            self.image_to_save = image
+        self.image_to_save = self.LoadImageJson(image, self.parent.scen_to_save)
 
         # Defining our layout variables
         width = 600
@@ -471,9 +472,12 @@ class EditImagesWindow(QDialog, BaseWindow):
     # region =====Main Methods=====
 
     def LoadImageJson(self, wanted_image, scenario):
-        for image in scenario.images:
-            if wanted_image in image['name']:
-                return image
+        if scenario.images is not None:
+            for image in scenario.images:
+                if wanted_image in image['name']:
+                    return image
+        else:
+            return {}
 
     def FileDialog(self):
         fname = QFileDialog.getOpenFileName(self, "Select the DockerFile", "", 'All Files (Dockerfile)')
@@ -484,7 +488,7 @@ class EditImagesWindow(QDialog, BaseWindow):
     def FillFields(self):
 
         # Adding the existing images
-        if self.parent.scen_to_save is None:
+        if self.parent.scen_to_save.images is None:
             self.images.addItem('None')
         else:
             self.images.addItem(self.image_to_save['name'])
@@ -494,6 +498,8 @@ class EditImagesWindow(QDialog, BaseWindow):
                 if self.image_to_save['name'] is not None and self.image_to_save['name'] in image.tags[0].split(':')[0]:
                     continue
             except TypeError:
+                pass
+            except KeyError:
                 pass
             self.images.addItem(image.tags[0])
 
@@ -509,9 +515,69 @@ class EditImagesWindow(QDialog, BaseWindow):
                 self.host_port.setText(value)
         except TypeError:
             pass
+        except KeyError:
+            pass
 
     def SaveImage(self):
-        pass
+        
+        def CheckValid(image : dict):
+            import regex
+
+            none_not_allowed = ['name', 'is_main', 'operating_system'] # ports are not allowed to be empty either but they will have a special verification
+            result = {}
+            result['is_valid'] = True
+
+            for key in image:
+                if key in none_not_allowed:
+                    if image[key] is None or image[key] == "":
+                        result['is_valid'] = False
+                        result['message'] = f'{key} cannot be empty!'
+                if key == 'name':
+                    if image[key] == "None" and image['dockerfile'] == "":
+                        result['is_valid'] = False
+                        result['message'] = 'You need to select either an image or dockerfile!'
+                if key == 'ports':
+                    if not image[key]:
+                        result['is_valid'] = False
+                        result['message'] = 'You must enter the container and host ports fields!'
+                    else:
+                        for _key in image[key]:
+                            if _key == "":
+                                result['is_valid'] = False
+                                result['message'] = 'You must enter the container port!'
+                            if image[key][_key] is None or image[key][_key] == "":
+                                result['is_valid'] = False
+                                result['message'] = 'You must enter the host port!'
+
+            return result
+
+        self.image_to_save['name'] = self.images.currentText()
+        self.image_to_save['dockerfile'] = self.dockerfile_entry.text()
+        self.image_to_save['is_main'] = True
+        if self.is_main.currentText() == "No":
+            self.image_to_save['is_main'] = False
+        self.image_to_save['ports'] = {}
+        self.image_to_save['ports'][self.container_port.text()] = self.host_port.text()
+        self.image_to_save['operating_system'] = self.image_os.text()
+
+        is_valid = CheckValid(self.image_to_save)
+        if is_valid['is_valid'] is False:
+            messagebox = QMessageBox(self)
+            messagebox.setWindowTitle("Invalid parameters!")
+            messagebox.setText(is_valid['message'])
+            messagebox.setStyleSheet('background-color: white')
+            messagebox.exec()
+        else:
+            if self.parent.scen_to_save.images is None or len(self.parent.scen_to_save.images) == 0:
+                self.parent.scen_to_save.images = []
+                self.parent.scen_to_save.images.append(self.image_to_save)
+                self.parent.images_list_view.addItem(self.image_to_save['name'])
+            else:
+                for image in self.parent.scen_to_save.images:
+                    if image['name'] == self.image_to_save['name']:
+                        image = self.image_to_save
+
+            self.close()
 
     # endregion
 
