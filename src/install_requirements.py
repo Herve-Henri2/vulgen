@@ -17,6 +17,11 @@ try:
 except ModuleNotFoundError:
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'psutil'])
 
+try:
+    import regex
+except ModuleNotFoundError:
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'regex'])
+
 if operating_system == "Windows":
     try:
         import curses
