@@ -1,0 +1,10 @@
+{
+   "total": 1,
+   "scenarios_names": [
+      "log4shell"
+   ],
+   "total_types": 1,
+   "types": [
+      "Remote Code Execution"
+   ]
+}

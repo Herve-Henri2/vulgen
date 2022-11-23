@@ -56,8 +56,8 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.add_button.resize(120, 20)
         self.add_button.clicked.connect(self.AddScenarioMode)
 
-        for scenario in self.scenarios:
-            self.list_view.addItem(scenario['name'])
+        for scenario_name in self.scenarios:
+            self.list_view.addItem(scenario_name)
 
         # Add & Edit mode UI elements
         self.edit_mode_ui = []
@@ -202,12 +202,12 @@ class ScenariosWindow(QDialog, BaseWindow):
     # region =====Graphical Methods=====
 
     def showDetails(self):
-        for scenario in self.scenarios:
-            if scenario['name'] == self.list_view.currentItem().text():
-                self.setText(scenario['description']
-                            +f"\n-----------------------------\nGoal: {scenario['goal']}"
-                            +f"\n-----------------------------\nType: {scenario['type']}"
-                            +f"\n-----------------------------\nCVE: {scenario['CVE']}")
+        scenario_name = self.list_view.currentItem().text()
+        scenario = self.scenarios[scenario_name]
+        self.setText(scenario.description
+                    +f"\n-----------------------------\nGoal: {scenario.goal}"
+                    +f"\n-----------------------------\nType: {scenario.type}"
+                    +f"\n-----------------------------\nCVE: {scenario.cve}")
         self.EnableButton(self.launch_button)
         self.EnableButton(self.edit_button)
     
@@ -260,14 +260,13 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.ShowEditUI()
 
         selected_scenario = self.list_view.currentItem().text()
-        scenario = scenarios.Get(scenarios_db, selected_scenario)
+        scenario = self.scenarios[selected_scenario]
         self.scen_to_save = scenario
         self.scenario_name.setText(scenario.name)
         self.type_entry.setText(scenario.type)
         self.cve_entry.setText(scenario.cve)
         self.diff_entry.setText(str(scenario.difficulty))
         self.scenario_desc.setPlainText(scenario.description)
-        self.instructions.setPlainText(scenario.instructions)
         self.solution.setPlainText(scenario.solution)
         self.goal.setPlainText(scenario.goal)
         for source in scenario.sources:
@@ -318,7 +317,7 @@ class ScenariosWindow(QDialog, BaseWindow):
             result['message'] = ''
 
             # A few variables we will use to do our checks
-            none_not_allowed = ['name', 'description', 'goal', 'instructions', 'images', 'CVE', 'difficulty','type']
+            none_not_allowed = ['name', 'description', 'goal', 'images', 'difficulty','type']
             min_difficulty = 1; max_difficulty = 5
 
             # Checking that some attributes are not none
@@ -339,10 +338,10 @@ class ScenariosWindow(QDialog, BaseWindow):
                 result['valid_scenario'] = False
                 result['message'] = 'The difficulty must an integer between 1 and 5!'
             # Checking CVE
-            cve_expression = "^CVE-20[0-9]{2}-[0-9]{4,6}$"
-            if regex.search(cve_expression, scenario.cve) is None:
-                result['valid_scenario'] = False
-                result['message'] = 'Your CVE is in the wrong format or does not exist.\nA CVE must be written in the following format: CVE-YYYY-NNNN'
+            #cve_expression = "^CVE-20[0-9]{2}-[0-9]{4,6}$"
+            #if regex.search(cve_expression, scenario.cve) is None:
+            #    result['valid_scenario'] = False
+            #    result['message'] = 'Your CVE is in the wrong format or does not exist.\nA CVE must be written in the following format: CVE-YYYY-NNNN'
             # Check the images/containers (we won't check whether the images are valid or nor as this is done in the add | edit image window)
             if scenario.images is None or len(scenario.images) == 0:
                 result['valid_scenario'] = False
@@ -352,7 +351,6 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.scen_to_save.name = self.scenario_name.text()
         self.scen_to_save.description = self.scenario_desc.toPlainText()
         self.scen_to_save.goal = self.goal.toPlainText()
-        self.scen_to_save.instructions = self.instructions.toPlainText()
         self.scen_to_save.solution = self.solution.toPlainText()
         self.scen_to_save.cve = self.cve_entry.text()
         self.scen_to_save.difficulty = self.diff_entry.text()
@@ -370,7 +368,7 @@ class ScenariosWindow(QDialog, BaseWindow):
             scenarios.Save(self.scen_to_save)
             scenarios_db = scenarios.Load()
             self.scenarios = scenarios_db['scenarios']
-            self.list_view.addItem(self.scen_to_save.name)
+            self.list_view.addItem(self.scen_to_save.name) # TODO refresh list_view instead of addItem
             self.DefaultMode()
         
         

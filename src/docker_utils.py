@@ -1,7 +1,7 @@
 import os
 import docker
 from misc import *
-from application import *
+from application import src_folder_path, operating_system
 
 # Documentation link: https://docker-py.readthedocs.io/en/stable/
 
@@ -90,7 +90,7 @@ def GetCustomImages():
     to_exclude = ('README.md', 'base_images')
     
     sep = '/' if operating_system == "Linux" else '\\'
-    path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
+    path = src_folder_path + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
     custom_images = [folder for folder in os.listdir(path) if folder not in to_exclude]
         
     return custom_images

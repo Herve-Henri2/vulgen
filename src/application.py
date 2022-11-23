@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import *
 from PyQt6 import QtGui
 
 # Our wide application variables, that are shared between all the windows within our app
+src_folder_path = os.path.realpath(os.path.dirname(__file__))
 configuration = config.Load()
 scenarios_db = scenarios.Load()
 operating_system = configuration['operating_system']

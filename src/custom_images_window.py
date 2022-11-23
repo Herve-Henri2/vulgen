@@ -66,23 +66,21 @@ class CustomImagesWindow(QDialog, BaseWindow):
         
         sep = '/' if operating_system == "Linux" else '\\'
         # Get Dockerfile path
-        custom_images_path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
+        custom_images_path = src_folder_path + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
         dockerfile_path = f'{custom_images_path}{sep}{selection}'
         # Get custom image requirements
         built_images = self.docker_client.images.list()
-        requirements = open(f"{dockerfile_path}{sep}req.txt", 'r')
         required_images = []
-        for line in requirements:
-            if ':' not in line:
-                continue
-            req = line[:-1].split(':')
-            if req[0] == "Image":
-                alreadyBuilt = False
-                for built_image in built_images:
-                    if req[1] == built_image.tags[0].split(':')[0]:
-                        alreadyBuilt = True
-                if not alreadyBuilt:
-                    required_images.append(req[1])
+        with open(f"{dockerfile_path}{sep}req.txt", 'r') as requirements:
+            for line in requirements:
+                if ':' in line and (req := line[:-1].split(':'))[0] == "Image":
+                    alreadyBuilt = False
+                    for built_image in built_images:
+                        if req[1] == built_image.tags[0].split(':')[0]:
+                            alreadyBuilt = True
+                            break
+                    if not alreadyBuilt:
+                        required_images.append(req[1])
         # Create Dockerfiles path list
         dockerfiles_path = []
         for req_image in required_images:
