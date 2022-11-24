@@ -1,10 +1,12 @@
 {
-   "total": 1,
+   "total": 2,
    "scenarios_names": [
+      "metasploitable2",
       "log4shell"
    ],
-   "total_types": 1,
+   "total_types": 2,
    "types": [
-      "Remote Code Execution"
+      "Remote Code Execution",
+      "N/A"
    ]
 }

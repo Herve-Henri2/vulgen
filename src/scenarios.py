@@ -6,6 +6,7 @@ import json
 scenarios = {}
 sep = '/' if platform.system() == "Linux" else '\\'
 scenarios_folder_path = src_folder_path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}scenarios"
+global_json_path = scenarios_folder_path + f"{sep}scenarios.json"
 
 # A few default variables
 scenarios['total'] = 0
@@ -52,20 +53,20 @@ def Load() -> dict:
     '''
     global scenarios
 
-    # TODO implement creating scenarios folder and/or file if they don't exist
-    #if not os.path.exists(scenarios_file):
-    #    with open(scenarios_file, 'w') as file:
-    #        file.write(json.dumps(scenarios, indent=3))
-    #    CreateDefault()
+    if not os.path.exists(scenarios_folder_path):
+        os.mkdir(scenarios_folder_path)
+    if not os.path.exists(global_json_path):
+        with open(global_json_path, 'w') as file:
+            default_global_scenario_data = {"total":0, "scenarios_names":[], "total_types":0, "types":[]}
+            file.write(json.dumps(default_global_scenario_data, indent=3))
     
-    _scenarios = dict()
     
-    global_json_path = scenarios_folder_path + f"{sep}scenarios.json"
+    _scenarios = dict()    
     with open(global_json_path, 'r') as file:
         _scenarios = json.load(file)
     _scenarios['scenarios'] = dict[str, Scenario]()
     
-    to_exclude = ('scenarios.json', 'metasploitable2')
+    to_exclude = ['scenarios.json']
     scenarios_list = [folder for folder in os.listdir(scenarios_folder_path) if folder not in to_exclude]
     for scenario_name in scenarios_list:
         folder_path = scenarios_folder_path + f"{sep}{scenario_name}"
@@ -74,6 +75,9 @@ def Load() -> dict:
     return _scenarios
 
 def retrieveScenarioDataFromFolder(folder_path : str, scenarios_dict : dict):
+    '''
+    Instantiate a scenario in the database from the data in the specified folder
+    '''
     json_path = folder_path + f"{sep}scenario_data.json"
     readme_path = folder_path + f"{sep}README.md"
     
@@ -84,32 +88,79 @@ def retrieveScenarioDataFromFolder(folder_path : str, scenarios_dict : dict):
     scenarios_dict['scenarios'][_json['name']] = Parse(_json, readme_path)
 
 
-def Save(Scenario : Scenario):
+def Save(scenario : Scenario):
     '''
     Saves a given Scenario object into the database file, updating all the necessary fields.
     '''
     scenarios = Load()    
-    scenarios['scenarios'][Scenario.name] = Scenario
+    scenarios['scenarios'][scenario.name] = scenario
     
     # Update global scenarios.json
     scenarios['total'] = len(scenarios['scenarios'])
     scenarios['scenarios_names'] = list(scenarios['scenarios'].keys())
     scenarios['types'] = list(GetAllTypes(scenarios['scenarios']))
     scenarios['total_types'] = len(scenarios['types'])
-    global_json_path = scenarios_folder_path + f"{sep}scenarios.json"
     with open(global_json_path, 'w') as file:
         global_scenarios_data = {k:v for k,v in scenarios.items() if k != 'scenarios'}
         file.write(json.dumps(global_scenarios_data, indent=3))
     
     # Update specific scenario data
-    # TODO
+    scenario_folder_path = scenarios_folder_path + f"{sep}{scenario.name}"
+    if not os.path.exists(scenario_folder_path):
+        os.mkdir(scenario_folder_path)        
+    
+    json_path = scenario_folder_path + f"{sep}scenario_data.json"
+    with open(json_path, 'w') as file:
+        scenario_data = {"name":scenario.name, "images":scenario.images, "CVE":scenario.cve, "difficulty":scenario.difficulty, "type":scenario.type, "sources":scenario.sources}
+        file.write(json.dumps(scenario_data, indent=3))
+    
+    readme_path = scenario_folder_path + f"{sep}README.md"
+    with open(readme_path, 'w') as file:
+        content = generateReadmeContent(scenario)
+        file.write(content)    
 
 def GetAllTypes(s_dict : dict[str, Scenario]):
+    '''
+    Return all distinct types currently in the scenarios database
+    '''
     types = set()
     for scenario in s_dict.values():
         types.add(scenario.type)
     return types
 
+def generateReadmeContent(scenario : Scenario):
+    '''
+    Returns a string formated like a scenario README.md file
+    '''
+    content = ""
+    # Description
+    content += encaseInBalise("Description", "h2") + '\n'
+    for desc in scenario.description.split('\n'):
+        content += encaseInBalise(desc, "p") + '\n'
+    # Goal
+    content += '\n' + encaseInBalise("Goal", "h2") + '\n'
+    for goal in scenario.goal.split('\n'):
+        content += encaseInBalise(goal, "p") + '\n'
+    # Solution
+    content += '\n' + encaseInBalise("Solution", "h2") + '\n'
+    content += "<details>" + '\n'
+    content += "    " + encaseInBalise("Spoilers! (click to expand)", "summary") + '\n'
+    for sol in scenario.solution.split('\n'):
+        content += "    " + encaseInBalise(sol, "p") + '\n'
+    content += "</details>" + '\n'
+    
+    return content
+    
+
+def encaseInBalise(text : str, balise :str):
+    return f"<{balise}>{text}</{balise}>"
+
+def LoadScenario(name : str) -> Scenario:
+    '''
+    Returns the Scenario object asociated with the given name 
+    '''
+    scenarios = Load()
+    return scenarios['scenarios'][name]
 
 def Parse(_json : dict, readme_path = "") -> Scenario:
     '''
@@ -133,12 +184,10 @@ def Parse(_json : dict, readme_path = "") -> Scenario:
     scen = Scenario(name, desc, goal, sol, images, cve, diff, type, sources)
     return scen
 
-def LoadScenario(name : str) -> Scenario:
-    scenarios = Load()
-    return scenarios['scenarios'][name]
-
-
 def ParseReadme(readme_file_path : str):
+    '''
+    Return a scenario description, goal and solution from a README.md file
+    '''
     desc = ""; goal = ""; sol = ""
     
     readme = open(readme_file_path, 'r')
@@ -146,9 +195,8 @@ def ParseReadme(readme_file_path : str):
     readme.close()
     
     h2split = buffer.split('<h2>')
-    h2split.remove('')    
-    index = 0
-    for split in h2split:
+    h2split.remove('')
+    for index,split in enumerate(h2split):
         split_buffer = ""
         lastPIndex = 0
         noMoreParagraphs = False
@@ -162,11 +210,11 @@ def ParseReadme(readme_file_path : str):
                 lastPIndex = pEndIndex + 4
         
         if index == 0:
-            desc += split_buffer
+            desc += split_buffer[:-1]
         elif index == 1:
-            goal += split_buffer
+            goal += split_buffer[:-1]
         elif index == 2:
-            sol += split_buffer
+            sol += split_buffer[:-1]
         index += 1
     
     return (desc, goal, sol)

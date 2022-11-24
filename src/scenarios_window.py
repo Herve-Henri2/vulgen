@@ -368,7 +368,9 @@ class ScenariosWindow(QDialog, BaseWindow):
             scenarios.Save(self.scen_to_save)
             scenarios_db = scenarios.Load()
             self.scenarios = scenarios_db['scenarios']
-            self.list_view.addItem(self.scen_to_save.name) # TODO refresh list_view instead of addItem
+            self.list_view.clear()
+            for scenario_name in self.scenarios:
+                self.list_view.addItem(scenario_name)
             self.DefaultMode()
         
         
@@ -383,6 +385,7 @@ class EditImagesWindow(QDialog, BaseWindow):
 
         self.parent = parent
         self.image_to_save = self.LoadImageJson(image, self.parent.scen_to_save)
+        self.addingMode = len(self.image_to_save) == 0
 
         # Defining our layout variables
         width = 600
@@ -470,7 +473,7 @@ class EditImagesWindow(QDialog, BaseWindow):
     # region =====Main Methods=====
 
     def LoadImageJson(self, wanted_image, scenario):
-        if scenario.images is not None:
+        if scenario.images is not None and wanted_image is not None:
             for image in scenario.images:
                 if wanted_image in image['name']:
                     return image
@@ -483,17 +486,16 @@ class EditImagesWindow(QDialog, BaseWindow):
         if fname:
             self.dockerfile_entry.setText(fname[0])
 
-    def FillFields(self):
-
+    def FillFields(self):        
         # Adding the existing images
-        if self.parent.scen_to_save.images is None:
+        if self.parent.scen_to_save.images is None or self.addingMode is True:
             self.images.addItem('None')
         else:
             self.images.addItem(self.image_to_save['name'])
 
         for image in self.docker_client.images.list():
             try:
-                if self.image_to_save['name'] is not None and self.image_to_save['name'] in image.tags[0].split(':')[0]:
+                if self.addingMode is False and self.image_to_save['name'] is not None and self.image_to_save['name'] in image.tags[0].split(':')[0]:
                     continue
             except TypeError:
                 pass
@@ -502,19 +504,20 @@ class EditImagesWindow(QDialog, BaseWindow):
             self.images.addItem(image.tags[0])
 
         # Filling the other fields (or not)
-        try:
-            if self.image_to_save['is_main'] is True:
-                self.is_main.setCurrentText('Yes')
-            else:
-                self.is_main.setCurrentText('No')
-            self.image_os.setText(self.image_to_save['operating_system'])
-            for key, value in self.image_to_save['ports'].items():
-                self.container_port.setText(key)
-                self.host_port.setText(value)
-        except TypeError:
-            pass
-        except KeyError:
-            pass
+        if self.addingMode is False:
+            try:
+                if self.image_to_save['is_main'] is True:
+                    self.is_main.setCurrentText('Yes')
+                else:
+                    self.is_main.setCurrentText('No')
+                self.image_os.setText(self.image_to_save['operating_system'])
+                for key, value in self.image_to_save['ports'].items():
+                    self.container_port.setText(key)
+                    self.host_port.setText(value)
+            except TypeError:
+                pass
+            except KeyError:
+                pass
 
     def SaveImage(self):
         
@@ -551,9 +554,7 @@ class EditImagesWindow(QDialog, BaseWindow):
 
         self.image_to_save['name'] = self.images.currentText()
         self.image_to_save['dockerfile'] = self.dockerfile_entry.text()
-        self.image_to_save['is_main'] = True
-        if self.is_main.currentText() == "No":
-            self.image_to_save['is_main'] = False
+        self.image_to_save['is_main'] = True if self.is_main.currentText() == "Yes" else False
         self.image_to_save['ports'] = {}
         self.image_to_save['ports'][self.container_port.text()] = self.host_port.text()
         self.image_to_save['operating_system'] = self.image_os.text()
@@ -571,9 +572,13 @@ class EditImagesWindow(QDialog, BaseWindow):
                 self.parent.scen_to_save.images.append(self.image_to_save)
                 self.parent.images_list_view.addItem(self.image_to_save['name'])
             else:
-                for image in self.parent.scen_to_save.images:
-                    if image['name'] == self.image_to_save['name']:
-                        image = self.image_to_save
+                if self.addingMode is False:
+                    for image in self.parent.scen_to_save.images:
+                        if image['name'] == self.image_to_save['name']:
+                            image = self.image_to_save
+                else:
+                    self.parent.scen_to_save.images.append(self.image_to_save)
+                    self.parent.images_list_view.addItem(self.image_to_save['name'])
 
             self.close()
 

@@ -87,7 +87,7 @@ def GetCustomImages():
     '''
     Retrieves all custom images names from the docker_images folder.
     '''
-    to_exclude = ('README.md', 'base_images')
+    to_exclude = ['README.md', 'base_images']
     
     sep = '/' if operating_system == "Linux" else '\\'
     path = src_folder_path + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder

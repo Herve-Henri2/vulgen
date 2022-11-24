@@ -1,0 +1,29 @@
+{
+   "name": "metasploitable2",
+   "images": [
+      {
+         "name": "kalilinux:latest",
+         "dockerfile": "",
+         "is_main": true,
+         "ports": {
+            "N/A": "N/A"
+         },
+         "operating_system": "Kali Linux"
+      },
+      {
+         "name": "tleemcjr/metasploitable2:latest",
+         "dockerfile": "",
+         "is_main": false,
+         "ports": {
+            "N/A": "N/A"
+         },
+         "operating_system": "Linux"
+      }
+   ],
+   "CVE": "N/A",
+   "difficulty": 2,
+   "type": "N/A",
+   "sources": [
+      "N/A"
+   ]
+}
