@@ -1,17 +1,22 @@
 {
-    "name": "log4shell",
-    "images": [ {
-                    "name": "ghcr.io/christophetd/log4shell-vulnerable-app",
-                    "is_main": true,
-                    "operating_system": "Alpine Linux-3.8.2",
-                    "ports": {"8080/tcp": "8080"},
-                    "download_link": null,
-                    "dockerfile": null
-                } ],
-    "CVE": "CVE-2021-44228",
-    "difficulty": 2,
-    "type": "Remote Code Execution",
-    "sources": [ "https://www.dynatrace.com/news/blog/what-is-log4shell/",
-                 "https://en.wikipedia.org/wiki/Log4Shell",
-                 "https://github.com/christophetd/log4shell-vulnerable-app" ]
+   "name": "log4shell",
+   "CVE": "CVE-2021-44228",
+   "difficulty": "2",
+   "type": "Remote Code Execution",
+   "sources": [
+      "https://www.dynatrace.com/news/blog/what-is-log4shell/",
+      "https://en.wikipedia.org/wiki/Log4Shell",
+      "https://github.com/christophetd/log4shell-vulnerable-app"
+   ],
+   "images": [
+      {
+         "name": "ghcr.io/christophetd/log4shell-vulnerable-app",
+         "dockerfile": "N/A",
+         "is_main": true,
+         "ports": {
+            "8080/tcp": "8080"
+         },
+         "operating_system": "Alpine Linux-3.8.2"
+      }
+   ]
 }

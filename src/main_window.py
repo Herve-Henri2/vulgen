@@ -8,6 +8,7 @@ from scenarios_window import ScenariosWindow
 from active_env_window import ActiveEnvWindow
 from images_window import ImagesWindow
 from containers_window import ContainersWindow
+from networks_window import NetworksWindow
 from scenarios import *
 import config
 import docker_utils as dutils
@@ -107,9 +108,14 @@ class MainWindow(BaseWindow):
         self.manage_containers_button.move(col1 + 20, 100)
         self.manage_containers_button.resize(140, 20)
         self.manage_containers_button.clicked.connect(self.ManageContainers)
+        
+        self.manage_networks_button = QPushButton('Manage Networks', self)
+        self.manage_networks_button.move(col1 + 20, 140)
+        self.manage_networks_button.resize(140, 20)
+        self.manage_networks_button.clicked.connect(self.ManageNetworks)
 
         self.scenarios_button = QPushButton('Scenarios', self)
-        self.scenarios_button.move(col1 + 20, 140)
+        self.scenarios_button.move(col1 + 20, 180)
         self.scenarios_button.resize(140, 20)
         self.scenarios_button.clicked.connect(self.OpenScenarios)
         self.scenarios_button.setShortcut('s')
@@ -295,15 +301,20 @@ class MainWindow(BaseWindow):
     def ManageContainers(self):
         self.containers_window = ContainersWindow(parent=self)
         self.containers_window.exec()
+        
+    @CheckForDocker
+    def ManageNetworks(self):
+        self.containers_window = NetworksWindow(parent=self)
+        self.containers_window.exec()
 
     @CheckForDocker
-    def LaunchScenario(self, scenario : str):
+    def LaunchScenario(self, scenario_name : str):
         '''
         Launches the environment linked to a specified scenario.
         '''
-        logger.info(f'Launching the {scenario} environment.')
+        logger.info(f'Launching the {scenario_name} environment.')
         self.Clear()
-        worker = ScenarioThread(scenario)
+        worker = ScenarioThread(scenario_name)
         worker.update_console.connect(self.Write)
         worker.started.connect(self.DisableAllButtons)
         worker.finished.connect(self.ShowScenarioUI)
@@ -348,12 +359,10 @@ class ScenarioThread(QThread):
         logger.info(f'Launched the {scenario.name} environment.')
 
         for index, image in enumerate(scenario.images):
-            image_name = image['name']
-            image_ports = image['ports']
-            if image['is_main'] is True:
-                self.LaunchContainer(image_name, main=True, ports=image_ports, name=f'{scenario.name}_main')
+            if image.is_main is True:
+                self.LaunchContainer(image.name, main=True, ports=image.ports, name=f'{scenario.name}_main')
             else:
-                self.LaunchContainer(image_name, ports=image_ports, name=f'{scenario.name}_{index}')
+                self.LaunchContainer(image.name, ports=image.ports, name=f'{scenario.name}_{index}')
 
         self.update_console.emit('------------------------------------------------------------------------------------\n'
                                  '* Click on the Instructions button to get a better scope of what needs to be done.\n'
@@ -380,7 +389,7 @@ class ScenarioThread(QThread):
             self.LaunchContainer(image_name, main, **kwargs)
         # Pull the image if necessary, then call this function again
         else:
-            self.update_console.emit(f'Pulling the lastest {image_name} image, please wait...')
+            self.update_console.emit(f'Pulling the latest {image_name} image, please wait...')
             self.docker_client.images.pull(image_name)
             while not dutils.image_in(images, image_name):
                 images = self.docker_client.images.list()

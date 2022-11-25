@@ -4,9 +4,8 @@
       "metasploitable2",
       "log4shell"
    ],
-   "total_types": 2,
+   "total_types": 1,
    "types": [
-      "Remote Code Execution",
-      "N/A"
+      "Remote Code Execution"
    ]
 }

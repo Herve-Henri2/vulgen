@@ -13,7 +13,6 @@ class ContainersWindow(QDialog, BaseWindow):
     def __init__(self, parent=None):
 
         self.parent = parent
-        self.docker_client = docker.from_env()
 
         # Defining our layout variables
         width = 700
@@ -51,13 +50,11 @@ class ContainersWindow(QDialog, BaseWindow):
         self.start_button.move(50, 330)
         self.start_button.resize(120, 20)
         self.start_button.clicked.connect(self.StartContainer)
-        #self.DisableButton(self.start_button)
 
         self.stop_button = QPushButton('Stop container', self)
         self.stop_button.move(50, 360)
         self.stop_button.resize(120, 20)
         self.stop_button.clicked.connect(self.StopContainer)
-        #self.DisableButton(self.stop_button)
         
         self.create_button = QPushButton('Create container', self)
         self.create_button.move(50, 390)
@@ -68,13 +65,11 @@ class ContainersWindow(QDialog, BaseWindow):
         self.remove_button.move(50, 420)
         self.remove_button.resize(120, 20)
         self.remove_button.clicked.connect(self.RemoveContainer)
-        #self.DisableButton(self.remove_button)
         
         self.attach_button = QPushButton('Attach to terminal', self)
         self.attach_button.move(300, 450)
         self.attach_button.resize(240, 20)
         self.attach_button.clicked.connect(self.AttachContainer)
-        #self.DisableButton(self.attach_button)
         
         # Fill the table
         self.updateTable()
@@ -163,6 +158,7 @@ class ContainersWindow(QDialog, BaseWindow):
             logger.info(f'Removed the container {name}')
         except Exception as ex:
             self.setText(str(ex))
+            logger.info(ex)
         self.updateTable()
     
     
