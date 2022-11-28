@@ -1,4 +1,4 @@
-FROM ubuntu20-python-c
+FROM ubuntu20-python-c:custom
 
 WORKDIR /usr/app/src
 

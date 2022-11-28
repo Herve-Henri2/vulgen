@@ -1,6 +1,5 @@
 from PyQt6.QtWidgets import *
 import sys
-import docker
 import misc
 import docker_utils as dutils
 from images_window import *
@@ -171,13 +170,14 @@ class ContainersWindow(QDialog, BaseWindow):
             return
         id = selection[0].text()
         try:
-            name = self.docker_client.containers.get(id).name
-            self.setText(f'Opening up a terminal for the {name} container.')
-            logger.info(f'Opening up a terminal for the {name} container.')
-            command = f"docker attach {id}"
+            container = self.docker_client.containers.get(id)
+            self.setText(f'Opening up a terminal for the {container.name} container.')
+            logger.info(f'Opening up a terminal for the {container.name} container.')
+            command = f"docker logs {id};docker attach {id}"
             misc.open_terminal(operating_system, command)
         except Exception as ex:
             self.setText(str(ex))
+            logger.info(ex)
         self.updateTable()
     
     

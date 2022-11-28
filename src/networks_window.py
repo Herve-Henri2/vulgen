@@ -1,7 +1,5 @@
 from PyQt6.QtWidgets import *
 import sys
-import docker
-import misc
 import docker_utils as dutils
 from application import *
 

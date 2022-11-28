@@ -175,7 +175,6 @@ class BuildImageThread(QThread):
         self.docker_client = docker.from_env()
 
     def run(self):
-        sep = '/' if operating_system == "Linux" else '\\'
         main_image = self.dockerfiles_path[-1].split(sep)[-1]
         self.update_console.emit(f'Started building the {main_image} image.')
         logger.info(f'Started building the {main_image} image.')
@@ -185,9 +184,9 @@ class BuildImageThread(QThread):
                 image = dockerfile_path.split(sep)[-1]
                 self.update_console.emit(f'Building the {image} image...')
                 logger.info(f'Building the {image} image...')
-                self.docker_client.images.build(path=dockerfile_path, tag=image, rm=True)
-                self.update_console.emit(f'Done!')
+                self.docker_client.images.build(path=dockerfile_path, tag=f"{image}:custom", rm=True)                
                 self.update_table.emit()
+                self.update_console.emit(f'Done!')
                 logger.info(f'Done!')
 
             self.update_console.emit('Done building the image!')

@@ -1,7 +1,7 @@
 import os
 import docker
 from misc import *
-from application import src_folder_path, operating_system
+from application import sep, src_folder_path
 
 # Documentation link: https://docker-py.readthedocs.io/en/stable/
 
@@ -21,6 +21,15 @@ def container_in(containers, wanted_container_image_name):
     '''
     for container in containers:
         if wanted_container_image_name in container.image.tags[0]:
+            return True
+    return False
+
+def network_in(networks, wanted_network_name):
+    '''
+    Checks whether or not a network list contains a specific network based on the network's name.
+    '''
+    for network in networks:
+        if wanted_network_name in network.name:
             return True
     return False
 
@@ -45,6 +54,16 @@ def get_container(containers, container_image_name):
         if container_image_name in container.image.tags[0]:
             return container, index
     #print(f"No {container_image_name} container was found")
+
+def get_network(networks, network_name):
+    '''
+    Searches for a network object in a network list based on the network's name.
+    
+    Returns docker.network object, index of network
+    '''
+    for index, network in enumerate(networks):
+        if network_name in network.name:
+            return network, index
 
 
 def GetImages(docker_client=None):
@@ -97,9 +116,11 @@ def GetCustomImages():
     '''
     to_exclude = ['README.md', 'base_images']
     
-    sep = '/' if operating_system == "Linux" else '\\'
-    path = src_folder_path + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
-    custom_images = [folder for folder in os.listdir(path) if folder not in to_exclude]
+    custom_images_path = src_folder_path + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
+    base_images_path = custom_images_path + f"{sep}base_images"
+    
+    custom_images = [folder for folder in os.listdir(custom_images_path) if folder not in to_exclude]
+    custom_images.extend([f"base_images{sep}{folder}" for folder in os.listdir(base_images_path) if folder not in to_exclude])
         
     return custom_images
 

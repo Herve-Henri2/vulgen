@@ -137,10 +137,10 @@ class MainWindow(BaseWindow):
         self.scenario_textbox.setReadOnly(True)
         self.scenario_ui_components.append(self.scenario_textbox)
 
-        self.scenario_instructions_button = QPushButton('Instructions', self)
+        self.scenario_instructions_button = QPushButton('Goal', self)
         self.scenario_instructions_button.move(col1 + 20, 300)
         self.scenario_instructions_button.resize(120, 20)
-        self.scenario_instructions_button.clicked.connect(self.ShowInstructions)
+        self.scenario_instructions_button.clicked.connect(self.ShowGoal)
         self.scenario_ui_components.append(self.scenario_instructions_button)
 
         self.scenario_containers_button = QPushButton('Containers', self)
@@ -202,9 +202,9 @@ class MainWindow(BaseWindow):
         for container in self.GetRunningScenarioContainers():
             self.Write(container.name)
 
-    def ShowInstructions(self):
+    def ShowGoal(self):
         running_scenario = self.GetRunningScenario()
-        self.setText(running_scenario.instructions)
+        self.setText(running_scenario.goal)
     
     def ShowScenarioContainers(self):
         self.active_env_containers = ActiveEnvWindow(parent=self)
@@ -335,6 +335,7 @@ class MainWindow(BaseWindow):
         for container in containers:
             if scenario.name in container.name:
                 container.stop()
+                container.remove()
         # We destroy the thread
         scenario_thread = self.ScenarioRunning()
         self.threads.remove(scenario_thread)
@@ -358,43 +359,52 @@ class ScenarioThread(QThread):
         self.update_console.emit(f'Launched the {scenario.name} scenario.')
         logger.info(f'Launched the {scenario.name} environment.')
 
-        for index, image in enumerate(scenario.images):
-            if image.is_main is True:
-                self.LaunchContainer(image.name, main=True, ports=image.ports, name=f'{scenario.name}_main')
+        for container in scenario.containers.values():
+            name = f"{scenario.name}_{container.image_name.split(':')[0].split('/')[-1]}"
+            if container.is_main: name += "_main"
+            if len(container.ports) != 0:
+                self.LaunchContainer(image_name=container.image_name, dockerfile=container.dockerfile, main=container.is_main, networks_names=container.networks, ports=container.ports, name=name, stdin_open=True, tty=True)
             else:
-                self.LaunchContainer(image.name, ports=image.ports, name=f'{scenario.name}_{index}')
+                self.LaunchContainer(image_name=container.image_name, dockerfile=container.dockerfile, main=container.is_main, networks_names=container.networks, name=name, stdin_open=True, tty=True)
 
         self.update_console.emit('------------------------------------------------------------------------------------\n'
                                  '* Click on the Instructions button to get a better scope of what needs to be done.\n'
                                  '* You can interact with all the environment containers by clicking on the Containers button.')
         self.finished.emit()
 
-    def LaunchContainer(self, image_name, main=False, **kwargs):
-
-        images = self.docker_client.images.list()
-        containers = self.docker_client.containers.list(all=True)
-
-        # We first check whether the container exists or not
+    def LaunchContainer(self, image_name, dockerfile, main, networks_names, **kwargs):     
+        if len(dockerfile) != 0:
+            try:
+                self.update_console.emit(f'Building the {image_name} image...')
+                logger.info(f'Building the {image_name} image...')
+                dockerfile = src_folder_path + sep + dockerfile
+                self.docker_client.images.build(path=dockerfile, tag=image_name, rm=True)
+                self.update_console.emit(f'Done!')
+                logger.info(f'Done!')
+            except Exception as ex:
+                self.update_console.emit(f'Error: {str(ex)}')
+                logger.info(ex)
+        
         try:
-            container = dutils.get_container(containers, image_name)[0]
-        except: 
-            container = None
-
-        # If it exists, just start it
-        if container:
-            container.start()
-        # If not, create it from the image, then call this function again
-        elif dutils.image_in(images, image_name):
-            self.docker_client.containers.create(image_name, **kwargs)
-            self.LaunchContainer(image_name, main, **kwargs)
-        # Pull the image if necessary, then call this function again
-        else:
-            self.update_console.emit(f'Pulling the latest {image_name} image, please wait...')
-            self.docker_client.images.pull(image_name)
-            while not dutils.image_in(images, image_name):
-                images = self.docker_client.images.list()
-            self.update_console.emit('Image pulled!')
-            self.LaunchContainer(image_name, main, **kwargs) 
+            self.update_console.emit(f"Setting up the \"{image_name}\" container...")
+            logger.info(f"Setting up the \"{image_name}\" container...")
+            if len(networks_names) == 0:
+                self.docker_client.containers.run(image_name, detach=True, network_disabled=True, **kwargs)
+            else:
+                for network_name in networks_names:
+                    if not dutils.network_in(self.docker_client.networks.list(), network_name):
+                        self.docker_client.networks.create(network_name, driver="bridge")
+                
+                container = self.docker_client.containers.run(image_name, detach=True, network=networks_names[0], **kwargs)
+                if len(networks_names) > 1:
+                    networks = [network for network in self.docker_client.networks.list() if network.name in networks_names[1:]]
+                    for network in networks:
+                        network.connect(container.short_id)
+            self.update_console.emit(f"Done!")
+            logger.info(f"Done!")
+        except Exception as ex:
+            self.update_console.emit(f'Error: {str(ex)}')
+            logger.info(ex)
 
 
 if __name__ == "__main__":

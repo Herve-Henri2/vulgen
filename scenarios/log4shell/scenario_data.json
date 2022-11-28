@@ -8,11 +8,14 @@
       "https://en.wikipedia.org/wiki/Log4Shell",
       "https://github.com/christophetd/log4shell-vulnerable-app"
    ],
-   "images": [
+   "containers": [
       {
-         "name": "ghcr.io/christophetd/log4shell-vulnerable-app",
+         "image_name": "ghcr.io/christophetd/log4shell-vulnerable-app",
          "dockerfile": "N/A",
          "is_main": true,
+         "networks": [
+            "bridge"
+         ],
          "ports": {
             "8080/tcp": "8080"
          },

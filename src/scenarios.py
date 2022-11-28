@@ -15,31 +15,23 @@ import json
 
 # Defining the main paths
 sep = '/' if platform.system() == "Linux" else '\\'
-scenarios_folder_path = src_folder_path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}scenarios"
+scenarios_folder_path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}scenarios"
 global_json_path = scenarios_folder_path + f"{sep}scenarios.json"
 
 
-# region =====Image Class=====
+# region =====Container Class=====
 
-class Image:
-    def __init__(self, name="", dockerfile="", is_main=False, ports : dict[str,str] = {}, os=""):
-        self.name = name
+class Container:
+    def __init__(self, image_name="", dockerfile="", is_main=False, networks : list[str] = [], ports : dict[str,str] = {}, operating_system=""):
+        self.image_name = image_name
         self.dockerfile = dockerfile
         self.is_main = is_main
+        self.networks = networks
         self.ports = ports
-        self.os = os
-    
-    def toDict(self):
-        return {"name": self.name, "dockerfile": self.dockerfile, "is_main": self.is_main, "ports": self.ports, "operating_system": self.os}
+        self.operating_system = operating_system
     
     def __str__(self):
-        image = {}
-        image['name'] = self.name
-        image['dockerfile'] = self.dockerfile
-        image['is_main'] = self.is_main
-        image['ports'] = self.ports
-        image['os'] = self.os
-        return image
+        return self.__dict__
 
 # endregion
 
@@ -48,29 +40,19 @@ class Image:
 class Scenario:
     
     # /!\ Whenever you add a new field to the scenario object, make sure you update all the fields in __init__, __str__, CreateDefault() and Parse()
-    def __init__(self, name="", CVE="", difficulty="", type="", sources : list[str] = [], description="", goal="", solution="", images : dict[str, Image] = {}):
+    def __init__(self, name="", CVE="", difficulty="", type="", sources : list[str] = [], description="", goal="", solution="", containers : dict[str, Container] = {}):
         self.name = name
-        self.cve = CVE
+        self.CVE = CVE
         self.difficulty = difficulty # /5, 5/5 being the most difficult
         self.type = type
         self.sources = sources
         self.description = description
         self.goal = goal
         self.solution = solution
-        self.images = images
+        self.containers = containers
 
     def __str__(self):
-        scenario = {}
-        scenario['name'] = self.name
-        scenario['CVE'] = self.cve
-        scenario['difficulty'] = self.difficulty
-        scenario['type'] = self.type
-        scenario['sources'] = self.sources
-        scenario['description'] = self.description
-        scenario['goal'] = self.goal
-        scenario['solution'] = self.solution
-        scenario['images'] = self.images
-        return scenario
+        return self.__dict__
 
 # endregion
 
@@ -107,10 +89,15 @@ def retrieveScenarioDataFromFolder(folder_path : str, scenarios_db : dict):
     json_path = folder_path + f"{sep}scenario_data.json"
     readme_path = folder_path + f"{sep}README.md"
     
-    scenario_json_data = dict()
-    with open(json_path, 'r') as file:
-        scenario_json_data = json.load(file)
     
+    scenario_json_data = dict()
+    try:
+        with open(json_path, 'r') as file:
+            scenario_json_data = json.load(file)
+    except Exception as ex:
+        # TODO logger
+        return
+        
     scenarios_db['scenarios'][scenario_json_data['name']] = Parse(scenario_json_data, readme_path)
 
 
@@ -118,7 +105,7 @@ def Save(scenario : Scenario):
     '''
     Saves the data from a given Scenario object into the scenarios folder, updating all that is necessary.
     '''
-    scenarios_db = Load()    
+    scenarios_db = Load()
     scenarios_db['scenarios'][scenario.name] = scenario
     
     # Update global scenarios.json
@@ -137,18 +124,21 @@ def Save(scenario : Scenario):
     
     json_path = scenario_folder_path + f"{sep}scenario_data.json"
     with open(json_path, 'w') as file:
+        scenario_data = dict()        
         to_exclude = ["description", "goal", "solution"]
         for attribute_name in scenario.__dict__:
-            if attribute_name not in to_exclude and getattr(scenario, attribute_name) == "":
-                setattr(scenario, attribute_name, "N/A")
+            if attribute_name not in to_exclude:
+                if getattr(scenario, attribute_name) == "":
+                    setattr(scenario, attribute_name, "N/A")
+                scenario_data[attribute_name] = getattr(scenario, attribute_name)
                 
-        images = [image.toDict() for image in scenario.images.values()]
-        for image in images:
-            for key in image:
-                if image[key] == "":
-                    image[key] = "N/A"
+        containers = [container.__dict__ for container in scenario.containers.values()]
+        for container in containers:
+            for key in container:
+                if container[key] == "":
+                    container[key] = "N/A"
+        scenario_data["containers"] = containers
         
-        scenario_data = {"name":scenario.name, "CVE":scenario.cve, "difficulty":scenario.difficulty, "type":scenario.type, "sources":scenario.sources, "images":images}
         file.write(json.dumps(scenario_data, indent=3))
     
     readme_path = scenario_folder_path + f"{sep}README.md"
@@ -163,7 +153,8 @@ def GetAllTypes(scenario_db : dict) -> set[str]:
     types = set[str]()
     for scenario in scenario_db['scenarios'].values():
         types.add(scenario.type)
-    types.remove("")
+    if "" in types:
+        types.remove("")
     return types
 
 def generateReadmeContent(scenario : Scenario) -> str:
@@ -203,6 +194,7 @@ def LoadScenario(name : str) -> Scenario:
     scenarios_db = Load()
     return scenarios_db['scenarios'][name]
 
+
 def Parse(scenario_json_data : dict, readme_path = "") -> Scenario:
     '''
     Instantiates a Scenario object from a given scenario dictionnary.
@@ -211,29 +203,44 @@ def Parse(scenario_json_data : dict, readme_path = "") -> Scenario:
 
     scenario_json_data: The dictionnary we are going to read to instantiate the scenario
     readme_path: Path of the README.md file in order to recover description, goal and solution data
-    '''    
+    '''
     for key in scenario_json_data:
         if scenario_json_data[key] == "N/A":
             scenario_json_data[key] = ""
     
-    name = scenario_json_data['name']
-    cve = scenario_json_data['CVE']
-    diff = scenario_json_data['difficulty']
-    type = scenario_json_data['type']
-    sources = scenario_json_data['sources']
+    scenario = Scenario()    
+    to_exclude = ["description", "goal", "solution", "containers"]
+    for attribute_name in scenario.__dict__:
+        if attribute_name not in to_exclude:
+            try:
+                setattr(scenario, attribute_name, scenario_json_data[attribute_name])
+            except Exception as ex:
+                # TODO logger
+                pass
     
     desc = ""; goal = ""; sol = ""
-    if readme_path != "":
+    if len(readme_path) != 0:
         desc, goal, sol = ParseReadme(readme_path)
+        scenario.description = desc; scenario.goal = goal; scenario.solution = sol
     
-    images = dict[str,Image]()
-    for image in scenario_json_data['images']:
-        for key in image:
-            if image[key] == "N/A":
-                image[key] = ""
-        images[image['name']] = (Image(name=image['name'], dockerfile=image['dockerfile'], is_main=image['is_main'], ports=image['ports'], os=image['operating_system']))
+    containers = dict[str,Container]()
+    for container_data in scenario_json_data['containers']:
+        for key in container_data:
+            if container_data[key] == "N/A":
+                container_data[key] = ""
+        
+        container = Container()
+        for attribute_name in container.__dict__:
+            try:
+                setattr(container, attribute_name, container_data[attribute_name])
+            except Exception as ex:
+                # TODO logger
+                pass
+        
+        containers[container.image_name] = container
+    scenario.containers = containers
 
-    return Scenario(name=name, CVE=cve, difficulty=diff, type=type, sources=sources, description=desc, goal=goal, solution=sol, images=images)
+    return scenario
 
 def ParseReadme(readme_file_path : str) -> tuple[str, str, str]:
     '''
@@ -241,32 +248,36 @@ def ParseReadme(readme_file_path : str) -> tuple[str, str, str]:
     '''
     desc = ""; goal = ""; sol = ""
     
-    readme = open(readme_file_path, 'r')
-    buffer = readme.read()
-    readme.close()
-    
-    h2split = buffer.split('<h2>')
-    h2split.remove('')
-    for index,split in enumerate(h2split):
-        split_buffer = ""
-        lastPIndex = 0
-        noMoreParagraphs = False
-        while not noMoreParagraphs:
-            pStartIndex = split.find('<p>', lastPIndex)
-            pEndIndex = split.find('</p>', lastPIndex)
-            if pStartIndex == -1 or pEndIndex == -1:
-                noMoreParagraphs = True
-            else:
-                split_buffer += split[pStartIndex + 3 : pEndIndex] + '\n'
-                lastPIndex = pEndIndex + 4
+    try:
+        readme = open(readme_file_path, 'r')
+        buffer = readme.read()
+        readme.close()
         
-        if index == 0:
-            desc += split_buffer[:-1]
-        elif index == 1:
-            goal += split_buffer[:-1]
-        elif index == 2:
-            sol += split_buffer[:-1]
-        index += 1
+        h2split = buffer.split('<h2>')
+        h2split.remove('')
+        for index,split in enumerate(h2split):
+            split_buffer = ""
+            lastPIndex = 0
+            noMoreParagraphs = False
+            while not noMoreParagraphs:
+                pStartIndex = split.find('<p>', lastPIndex)
+                pEndIndex = split.find('</p>', lastPIndex)
+                if pStartIndex == -1 or pEndIndex == -1:
+                    noMoreParagraphs = True
+                else:
+                    split_buffer += split[pStartIndex + 3 : pEndIndex] + '\n'
+                    lastPIndex = pEndIndex + 4
+            
+            if index == 0:
+                desc += split_buffer[:-1]
+            elif index == 1:
+                goal += split_buffer[:-1]
+            elif index == 2:
+                sol += split_buffer[:-1]
+            index += 1
+    except Exception as ex:
+        # TODO logger
+        pass
     
     return (desc, goal, sol)
 
