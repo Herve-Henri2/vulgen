@@ -207,7 +207,8 @@ class ScenariosWindow(QDialog, BaseWindow):
                 self.setText(scenario['description']
                             +f"\n-----------------------------\nGoal: {scenario['goal']}"
                             +f"\n-----------------------------\nType: {scenario['type']}"
-                            +f"\n-----------------------------\nCVE: {scenario['CVE']}")
+                            +f"\n-----------------------------\nCVE: {scenario['CVE']}"
+                            +f"\n-----------------------------\nDifficulty Level: {scenario['difficulty']}")
         self.EnableButton(self.launch_button)
         self.EnableButton(self.edit_button)
     
@@ -372,7 +373,10 @@ class ScenariosWindow(QDialog, BaseWindow):
             self.scenarios = scenarios_db['scenarios']
             self.list_view.addItem(self.scen_to_save.name)
             self.DefaultMode()
-        
+            # delete container(s)?
+            for container in self.docker_client.containers.list(all=True):
+                if self.scen_to_save.name in container.name:
+                    container.remove(force=True)
         
 
     # endregion
@@ -405,6 +409,14 @@ class EditImagesWindow(QDialog, BaseWindow):
         self.images.move(20, 40)
         self.images.resize(300, 20)
 
+        # Image name
+        # self.name_label = QLabel('Image name (if no existing image)', self)
+        # self.name_label.move(350, 20)
+
+        # self.image_name = QLineEdit(self)
+        # self.image_name.move(350, 40)
+        # self.image_name.resize(210, 20)
+
         # Dockerfile entry
         self.dockerfile_label = QLabel('From Dockerfile', self)
         self.dockerfile_label.move(20, 70)
@@ -413,14 +425,6 @@ class EditImagesWindow(QDialog, BaseWindow):
         self.dockerfile_entry.move(20, 90)
         self.dockerfile_entry.resize(300, 20)
         self.dockerfile_entry.setPlaceholderText('Put the dockerfile path here')
-
-        # Main image or not?
-        self.is_main_label = QLabel('Main Image?', self)
-        self.is_main_label.move(350, 20)
-
-        self.is_main = QComboBox(self)
-        self.is_main.move(350, 40)
-        self.is_main.addItems(['Yes', 'No'])
 
         # Container port
         self.container_port_label = QLabel('Container port', self)
@@ -438,13 +442,37 @@ class EditImagesWindow(QDialog, BaseWindow):
         self.host_port.move(460, 90)
         self.host_port.resize(100, 20)
 
+        # Hub name (to download from the hub)
+        self.hub_name_label = QLabel('Hub name (to pull)', self)
+        self.hub_name_label.move(20, 150)
+
+        self.hub_name_entry = QLineEdit(self)
+        self.hub_name_entry.move(20, 170)
+        self.hub_name_entry.resize(300, 20)
+
         # Operating System
         self.image_os_label = QLabel('Operating system', self)
-        self.image_os_label.move(20, 150)
+        self.image_os_label.move(20, 200)
 
         self.image_os = QLineEdit(self)
-        self.image_os.move(20, 170)
+        self.image_os.move(20, 220)
         self.image_os.resize(150, 20)
+
+        # Network 
+        self.nw_label = QLabel('Network', self)
+        self.nw_label.move(350, 150)
+
+        self.nw_entry = QLineEdit(self)
+        self.nw_entry.move(350, 170)
+        self.nw_entry.resize(210, 20)
+
+        # Main image or not?
+        self.is_main_label = QLabel('Main Image?', self)
+        self.is_main_label.move(20, 250)
+
+        self.is_main = QComboBox(self)
+        self.is_main.move(20, 270)
+        self.is_main.addItems(['Yes', 'No'])
 
         # Buttons
         self.save_button = QPushButton('Save', self)
@@ -472,6 +500,8 @@ class EditImagesWindow(QDialog, BaseWindow):
     # region =====Main Methods=====
 
     def LoadImageJson(self, wanted_image, scenario):
+        if wanted_image is None:
+            return {}
         if scenario.images is not None:
             for image in scenario.images:
                 if wanted_image in image['name']:
@@ -491,7 +521,10 @@ class EditImagesWindow(QDialog, BaseWindow):
         if self.parent.scen_to_save.images is None:
             self.images.addItem('None')
         else:
-            self.images.addItem(self.image_to_save['name'])
+            if 'name' in self.image_to_save:
+                self.images.addItem(self.image_to_save['name'])
+            else:
+                self.images.addItem('None')
 
         for image in self.docker_client.images.list():
             try:
@@ -510,6 +543,8 @@ class EditImagesWindow(QDialog, BaseWindow):
             else:
                 self.is_main.setCurrentText('No')
             self.image_os.setText(self.image_to_save['operating_system'])
+            self.hub_name_entry.setText(self.image_to_save['hub_name'])
+            self.nw_entry.setText(self.image_to_save['network'])
             for key, value in self.image_to_save['ports'].items():
                 self.container_port.setText(key)
                 self.host_port.setText(value)
@@ -521,7 +556,6 @@ class EditImagesWindow(QDialog, BaseWindow):
     def SaveImage(self):
         
         def CheckValid(image : dict):
-            import regex
 
             none_not_allowed = ['name', 'is_main', 'operating_system'] # ports are not allowed to be empty either but they will have a special verification
             result = {}
@@ -533,9 +567,9 @@ class EditImagesWindow(QDialog, BaseWindow):
                         result['is_valid'] = False
                         result['message'] = f'{key} cannot be empty!'
                 if key == 'name':
-                    if image[key] == "None" and image['dockerfile'] == "":
+                    if image[key] == "None" and image['dockerfile'] == "" and image['hub_name_entry']:
                         result['is_valid'] = False
-                        result['message'] = 'You need to select either an image or dockerfile!'
+                        result['message'] = 'You need to select either an existing image, dockerfile or specify the hub name of the image.'
                 if key == 'ports':
                     if not image[key]:
                         result['is_valid'] = False
@@ -548,11 +582,21 @@ class EditImagesWindow(QDialog, BaseWindow):
                             if image[key][_key] is None or image[key][_key] == "":
                                 result['is_valid'] = False
                                 result['message'] = 'You must enter the host port!'
+                if key == 'is_main':
+                    if image[key] is True:
+                        if self.parent.scen_to_save.images is not None and len(self.parent.scen_to_save.images) > 0:
+                            for image in self.parent.scen_to_save.images:
+                                if image['is_main'] is True:
+                                    result['is_valid'] = False
+                                    result['message'] = 'There is already a main image in the current scenario!'
+                            
+                    
 
             return result
 
         self.image_to_save['name'] = self.images.currentText()
         self.image_to_save['dockerfile'] = self.dockerfile_entry.text()
+        self.image_to_save['hub_name_entry'] = self.hub_name_entry.text()
         self.image_to_save['is_main'] = True
         if self.is_main.currentText() == "No":
             self.image_to_save['is_main'] = False

@@ -387,6 +387,15 @@ class ScenarioThread(QThread):
             self.update_console.emit('Image pulled!')
             self.LaunchContainer(image_name, main, **kwargs) 
 
+    def LaunchContainer2(self, image_name, main=False, **kwargs):
+        # 1. Check if the container exists, if yes, launch it
+        # 2. If container doesn't exist, check if the image exists, if yes, create a container then call the function again
+        # 3. If no image, if dockerfile exists, build it from the dockerfile then call the function again (/!\ create the network)
+        # 4. If no dockerfile, if hub name, pull the image then call the function again
+        # 5. If no hub name, we cannot do anything, log and write an error
+
+        # /!\ Some db updates will be necessary (for example if there's no image and we create one, we update the name field)
+        pass
 
 if __name__ == "__main__":
 

@@ -1,9 +1,11 @@
 FROM gradle:7.3.1-jdk17 AS builder
 COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
-COPY files/build.gradle .
-RUN gradle bootJar --no-daemon
 
+COPY files/settings.gradle .
+COPY files/build.gradle .
+
+RUN gradle bootJar --no-daemon
 
 FROM openjdk:8u181-jdk-alpine
 EXPOSE 8080

@@ -124,12 +124,12 @@ def CreateDefault():
     difficulty = 2
     images = []
     main_image = {}
-    main_image['name'] = 'ghcr.io/christophetd/log4shell-vulnerable-app'
+    main_image['name'] = main_image['hub_name'] = 'ghcr.io/christophetd/log4shell-vulnerable-app'
     main_image['is_main'] = True
     main_image['operating_system'] = "Alpine Linux-3.8.2"
     main_image['ports'] = {"8080/tcp": "8080"} # Container port: Host port
-    main_image['download_link'] = None
     main_image['dockerfile'] = None
+    main_image['network'] = None
     images.append(main_image)
     cve = 'CVE-2021-44228'
     type = 'Remote Code Execution'
