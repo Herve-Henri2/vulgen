@@ -2,7 +2,7 @@ import sys
 
 from application import *
 import docker_utils as dutils
-from src.scenarios import *
+from scenarios import *
 
 
 class ScenariosWindow(QDialog, BaseWindow):
