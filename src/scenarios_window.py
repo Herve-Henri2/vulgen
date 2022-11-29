@@ -486,10 +486,8 @@ class EditContainersWindow(QDialog, BaseWindow):
         self.is_main_checkbox.move(470, 130)
         self.is_main_checkbox.resize(20, 20)
 
-        self.ImplementTheme(self.dockerfile_entry)
-        #self.dockerfile_entry.setStyleSheet(f'background-color: {theme["main_window_textbox_color"]}; color: {theme["text_color"]};'
-        #                                    f'font-family: {theme["text_font"]}; font-style: italic; border: 1px solid "{theme["border_color"]}"')
-        
+        self.ImplementTheme()
+
         self.checkBoxGroup = QButtonGroup(self)
         self.checkBoxGroup.addButton(self.image_checkbox); self.checkBoxGroup.addButton(self.dockerfile_checkbox)
         
@@ -522,6 +520,7 @@ class EditContainersWindow(QDialog, BaseWindow):
         non_custom_images = [image for image in images if image.split(':')[1] != "custom"]
         
         if len(non_custom_images) != 0:
+            # TODO implement style on it
             image, ok = QInputDialog.getItem(self, "Image input", "List of non custom images:", non_custom_images, 0, False)
             if ok and image:            
                 self.image_entry.setText(image)
