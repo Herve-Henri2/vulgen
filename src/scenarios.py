@@ -15,7 +15,7 @@ import json
 
 # Defining the main paths
 sep = '/' if platform.system() == "Linux" else '\\'
-scenarios_folder_path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}scenarios"
+scenarios_folder_path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}Scenarios"
 global_json_path = scenarios_folder_path + f"{sep}scenarios.json"
 
 
@@ -68,7 +68,7 @@ def Load() -> dict:
             default_global_scenario_data = {"total":0, "scenarios_names":[], "total_types":0, "types":[]}
             file.write(json.dumps(default_global_scenario_data, indent=3))
     
-    
+    # We first instantiate our database dictionnary and parse into it our scenarios.json file
     scenarios_db = dict()    
     with open(global_json_path, 'r') as file:
         scenarios_db = json.load(file)
@@ -76,6 +76,7 @@ def Load() -> dict:
     
     to_exclude = ['scenarios.json']
     scenarios_list = [folder for folder in os.listdir(scenarios_folder_path) if folder not in to_exclude]
+    # We then complete our variable with all the existing scenarios
     for scenario_name in scenarios_list:
         folder_path = scenarios_folder_path + f"{sep}{scenario_name}"
         retrieveScenarioDataFromFolder(folder_path, scenarios_db)
