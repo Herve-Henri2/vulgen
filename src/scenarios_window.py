@@ -147,12 +147,12 @@ class ScenariosWindow(QDialog, BaseWindow):
 
         # Solution
         self.solution_label = QLabel('Solution', self)
-        self.solution_label.move(340, 150)
+        self.solution_label.move(340, 80)
         self.edit_mode_ui.append(self.solution_label)
 
         self.solution = QPlainTextEdit(self)
-        self.solution.move(340, 170)
-        self.solution.resize(300, 80)
+        self.solution.move(340, 100)
+        self.solution.resize(300, 150)
         self.edit_mode_ui.append(self.solution)
 
         # Goal

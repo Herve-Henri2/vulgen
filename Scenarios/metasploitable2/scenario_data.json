@@ -1,0 +1,32 @@
+{
+   "name": "metasploitable2",
+   "CVE": "N/A",
+   "difficulty": "2",
+   "type": "Misc",
+   "sources": [
+      "https://hub.docker.com/r/kalilinux/kali-rolling",
+      "https://hub.docker.com/r/tleemcjr/metasploitable2"
+   ],
+   "containers": [
+      {
+         "image_name": "kalilinux:custom",
+         "dockerfile": "../docker_images/base_images/kalilinux",
+         "is_main": true,
+         "networks": [
+            "network_demo"
+         ],
+         "ports": {},
+         "operating_system": "Kali Linux"
+      },
+      {
+         "image_name": "tleemcjr/metasploitable2:latest",
+         "dockerfile": "N/A",
+         "is_main": false,
+         "networks": [
+            "network_demo"
+         ],
+         "ports": {},
+         "operating_system": "Linux"
+      }
+   ]
+}
