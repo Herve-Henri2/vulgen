@@ -362,10 +362,6 @@ class ScenariosWindow(QDialog, BaseWindow):
             for scenario_name in self.scenarios:
                 self.list_view.addItem(scenario_name)
             self.DefaultMode()
-            # delete container(s)?
-            for container in self.docker_client.containers.list(all=True):
-                if self.scen_to_save.name in container.name:
-                    container.remove(force=True)
         
 
     # endregion

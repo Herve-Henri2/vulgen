@@ -2,7 +2,7 @@
 <p>This will generate an environment with a Kali Linux and a metasploitable2 machine deployed on the same network.</p>
 
 <h2>Goal</h2>
-<p>Exploit vulnerabilities of the metasploitable2 machine.</p>
+<p>Exploit the vulnerabilities of the metasploitable2 machine. test</p>
 
 <h2>Solution</h2>
 <details>
