@@ -33,7 +33,7 @@ class ActiveEnvWindow(QDialog, BaseWindow):
         self.open_shell_button = QPushButton('Open Shell', self)
         self.open_shell_button.move(40, 240)
         self.open_shell_button.resize(120, 20)
-        self.open_shell_button.clicked.connect(self.OpenShell)
+        self.open_shell_button.clicked.connect(self.AttachContainer)
 
         if self.parent is not None:
             self.containers = self.parent.GetRunningScenarioContainers()
@@ -51,13 +51,17 @@ class ActiveEnvWindow(QDialog, BaseWindow):
     def AllowShell(self):
         self.EnableButton(self.open_shell_button)
 
-    def OpenShell(self):
-        container_info = self.list_view.currentItem().text().split('-')[0]
-        for container in self.containers:
-            if container.name in container_info:
-                logger.info(f'Opening up a terminal for the {container.name} container.')
-                command = f"docker exec -it {container.id} /bin/sh"
-                misc.open_terminal(operating_system, command)
+    def AttachContainer(self):        
+        selection = self.list_view.currentItem().text().split('|')[0][:-1]
+        if selection is None or len(selection) == 0:
+            return
+        try:
+            container = self.docker_client.containers.get(selection)
+            logger.info(f'Opening up a terminal for the {selection} container.')
+            command = f"docker logs {container.short_id};docker attach {container.short_id}"
+            misc.open_terminal(operating_system, command)
+        except Exception as ex:
+            logger.info(ex)
 
     # endregion
 

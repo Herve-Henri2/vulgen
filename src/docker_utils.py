@@ -1,7 +1,7 @@
 import os
 import docker
 from misc import *
-from application import *
+from application import sep, src_folder_path
 
 # Documentation link: https://docker-py.readthedocs.io/en/stable/
 
@@ -21,6 +21,15 @@ def container_in(containers, wanted_container_image_name):
     '''
     for container in containers:
         if wanted_container_image_name in container.image.tags[0]:
+            return True
+    return False
+
+def network_in(networks, wanted_network_name):
+    '''
+    Checks whether or not a network list contains a specific network based on the network's name.
+    '''
+    for network in networks:
+        if wanted_network_name in network.name:
             return True
     return False
 
@@ -45,6 +54,16 @@ def get_container(containers, container_image_name):
         if container_image_name in container.image.tags[0]:
             return container, index
     #print(f"No {container_image_name} container was found")
+
+def get_network(networks, network_name):
+    '''
+    Searches for a network object in a network list based on the network's name.
+    
+    Returns docker.network object, index of network
+    '''
+    for index, network in enumerate(networks):
+        if network_name in network.name:
+            return network, index
 
 
 def GetImages(docker_client=None):
@@ -73,12 +92,20 @@ def GetContainers(docker_client=None):
     
     containers = docker_client.containers.list(all=True)
     
-    cont_dict = {'id':[], 'name':[], 'image':[], 'status':[]}
+    cont_dict = {'id':[], 'name':[], 'image':[], 'status':[], 'networks':[]}
     for container in containers:
         cont_dict['id'].append(container.short_id)
         cont_dict['name'].append(container.name)
         cont_dict['image'].append(container.image.tags[0])
         cont_dict['status'].append(container.status)
+        
+        cont_dict['networks'].append("") # can only work if the container is running
+        networks = docker_client.networks.list()
+        for network in networks:
+            network.reload()
+            if container in network.containers:
+                cont_dict['networks'][-1] += f"{network.name}, "
+        cont_dict['networks'][-1] = cont_dict['networks'][-1][:-2]                
     
     return cont_dict
 
@@ -87,10 +114,27 @@ def GetCustomImages():
     '''
     Retrieves all custom images names from the docker_images folder.
     '''
-    to_exclude = ('README.md', 'base_images')
+    to_exclude = ['README.md', 'base_images']
     
-    sep = '/' if operating_system == "Linux" else '\\'
-    path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
-    custom_images = [folder for folder in os.listdir(path) if folder not in to_exclude]
+    custom_images_path = src_folder_path + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
+    base_images_path = custom_images_path + f"{sep}base_images"
+    
+    custom_images = [folder for folder in os.listdir(custom_images_path) if folder not in to_exclude]
+    custom_images.extend([f"base_images{sep}{folder}" for folder in os.listdir(base_images_path) if folder not in to_exclude])
         
     return custom_images
+
+
+def GetNetworks(docker_client=None):
+    if docker_client is None:
+        docker_client = docker.from_env()
+    
+    networks = docker_client.networks.list()
+    network_dict = {'id':[], 'name':[], 'containers':[]}
+    for network in networks:
+        network.reload() # required to get connected containers (cf. https://github.com/docker/docker-py/issues/1775)
+        network_dict['id'].append(network.short_id)
+        network_dict['name'].append(network.name)
+        network_dict['containers'].append(str(len(network.containers))) # only counts currently running containers
+    
+    return network_dict

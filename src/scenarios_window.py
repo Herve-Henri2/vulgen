@@ -2,19 +2,16 @@ import sys
 
 from application import *
 import docker_utils as dutils
-import scenarios
+from scenarios import *
 
 
 class ScenariosWindow(QDialog, BaseWindow):
-
-    scenarios = scenarios_db['scenarios']
-
     # region =====Initializing=====
 
     def __init__(self, parent=None):
-
         self.parent = parent
-        self.scen_to_save = scenarios.Scenario()
+        self.scenarios : dict[str, Scenario] = scenarios_db['scenarios']
+        self.current_scenario_containers = dict[str, Container]()
 
         # Defining our layout variables
         width = 700
@@ -28,36 +25,44 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.setWindowTitle('Scenarios')
         self.setFixedSize(width, height)
 
+        # Default UI elements
+        self.default_mode_ui = []
+        
         # Side ListView
         self.list_view = QListWidget(self)
         self.list_view.move(40, 20)
         self.list_view.resize(200, 400)
         self.list_view.itemClicked.connect(self.showDetails)
+        self.default_mode_ui.append(self.list_view)
 
         # Side TextBox
         self.textbox = QPlainTextEdit(self)
         self.textbox.move(240, 20)
         self.textbox.resize(420, 400)
         self.textbox.setReadOnly(True)
+        self.default_mode_ui.append(self.textbox)
 
         # Buttons
         self.launch_button = QPushButton('Launch Scenario', self)
         self.launch_button.move(540, 440)
         self.launch_button.resize(120, 20)
         self.launch_button.clicked.connect(self.LaunchScenario)
+        self.default_mode_ui.append(self.launch_button)
 
         self.edit_button = QPushButton('Edit Scenario', self)
         self.edit_button.move(400, 440)
         self.edit_button.resize(120, 20)
         self.edit_button.clicked.connect(self.EditScenarioMode)
+        self.default_mode_ui.append(self.edit_button)
 
         self.add_button = QPushButton('Add Scenario', self)
         self.add_button.move(260, 440)
         self.add_button.resize(120, 20)
         self.add_button.clicked.connect(self.AddScenarioMode)
+        self.default_mode_ui.append(self.add_button)
 
-        for scenario in self.scenarios:
-            self.list_view.addItem(scenario['name'])
+        for scenario_name in self.scenarios:
+            self.list_view.addItem(scenario_name)
 
         # Add & Edit mode UI elements
         self.edit_mode_ui = []
@@ -75,20 +80,20 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.save_button.clicked.connect(self.SaveScenario)
         self.edit_mode_ui.append(self.save_button)
 
-        self.add_image_button = QPushButton('Add', self)
-        self.add_image_button.move(600, 290)
-        self.add_image_button.clicked.connect(self.OpenImageAdd)
-        self.edit_mode_ui.append(self.add_image_button)
+        self.add_container_button = QPushButton('Add', self)
+        self.add_container_button.move(600, 290)
+        self.add_container_button.clicked.connect(self.OpenContainerAdd)
+        self.edit_mode_ui.append(self.add_container_button)
 
-        self.edit_image_button = QPushButton('Edit', self)
-        self.edit_image_button.move(600, 320)
-        self.edit_image_button.clicked.connect(self.OpenImageEdit)
-        self.edit_mode_ui.append(self.edit_image_button)
+        self.edit_container_button = QPushButton('Edit', self)
+        self.edit_container_button.move(600, 320)
+        self.edit_container_button.clicked.connect(self.OpenContainerEdit)
+        self.edit_mode_ui.append(self.edit_container_button)
 
-        self.remove_image_button = QPushButton('Remove', self)
-        self.remove_image_button.move(600, 350)
-        self.remove_image_button.clicked.connect(self.RemoveImage)
-        self.edit_mode_ui.append(self.remove_image_button)
+        self.remove_container_button = QPushButton('Remove', self)
+        self.remove_container_button.move(600, 350)
+        self.remove_container_button.clicked.connect(self.RemoveContainer)
+        self.edit_mode_ui.append(self.remove_container_button)
         
         # Scenario Name
         self.scenario_name_label = QLabel('Scenario Name', self)
@@ -140,24 +145,14 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.scenario_desc.resize(300, 150)
         self.edit_mode_ui.append(self.scenario_desc)
 
-        # Instructions
-        self.instructions_label = QLabel('Instructions', self)
-        self.instructions_label.move(340, 80)
-        self.edit_mode_ui.append(self.instructions_label)
-
-        self.instructions = QPlainTextEdit(self)
-        self.instructions.move(340, 100)
-        self.instructions.resize(300, 40)
-        self.edit_mode_ui.append(self.instructions)
-
         # Solution
         self.solution_label = QLabel('Solution', self)
-        self.solution_label.move(340, 150)
+        self.solution_label.move(340, 80)
         self.edit_mode_ui.append(self.solution_label)
 
         self.solution = QPlainTextEdit(self)
-        self.solution.move(340, 170)
-        self.solution.resize(300, 80)
+        self.solution.move(340, 100)
+        self.solution.resize(300, 150)
         self.edit_mode_ui.append(self.solution)
 
         # Goal
@@ -180,62 +175,62 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.sources.resize(300, 40)
         self.edit_mode_ui.append(self.sources)
 
-        # Images
-        self.images_label = QLabel('Images', self)
-        self.images_label.move(340, 270)
-        self.edit_mode_ui.append(self.images_label)
+        # Containers
+        self.containers_label = QLabel('Containers', self)
+        self.containers_label.move(340, 270)
+        self.edit_mode_ui.append(self.containers_label)
 
-        self.images_list_view = QListWidget(self)
-        self.images_list_view.move(340, 290)
-        self.images_list_view.resize(250, 120)
-        self.images_list_view.itemClicked.connect(self.AllowOpening)
-        self.edit_mode_ui.append(self.images_list_view)
+        self.containers_list_view = QListWidget(self)
+        self.containers_list_view.move(340, 290)
+        self.containers_list_view.resize(250, 120)
+        self.containers_list_view.itemClicked.connect(self.AllowOpening)
+        self.edit_mode_ui.append(self.containers_list_view)
 
-        self.HideEditUI()
+        self.HideUIElements(self.edit_mode_ui)
 
         # Styling and coloring
         self.ImplementTheme()
-        self.DisableButtons(self.edit_button, self.launch_button, self.edit_image_button, self.remove_image_button)
+        self.DisableButtons(self.edit_button, self.launch_button, self.edit_container_button, self.remove_container_button)
 
     # endregion
 
     # region =====Graphical Methods=====
 
     def showDetails(self):
-        for scenario in self.scenarios:
-            if scenario['name'] == self.list_view.currentItem().text():
-                self.setText(scenario['description']
-                            +f"\n-----------------------------\nGoal: {scenario['goal']}"
-                            +f"\n-----------------------------\nType: {scenario['type']}"
-                            +f"\n-----------------------------\nCVE: {scenario['CVE']}"
-                            +f"\n-----------------------------\nDifficulty Level: {scenario['difficulty']}")
+        scenario_name = self.list_view.currentItem().text()
+        scenario = self.scenarios[scenario_name]
+        self.setText(scenario.description
+                    +f"\n-----------------------------\nGoal: {scenario.goal}"
+                    +f"\n-----------------------------\nType: {scenario.type}"
+                    +f"\n-----------------------------\nCVE: {scenario.CVE}")
         self.EnableButton(self.launch_button)
         self.EnableButton(self.edit_button)
     
     def AllowOpening(self):
-        self.EnableButtons(self.edit_image_button, self.remove_image_button)
+        self.EnableButtons(self.edit_container_button, self.remove_container_button)
 
-    def HideEditUI(self):
-        for element in self.edit_mode_ui:
+    def HideUIElements(self, ui_elements):
+        for element in ui_elements:
             element.hide()
 
-    def ShowEditUI(self):
-        for element in self.edit_mode_ui:
+    def ShowUIElements(self, ui_elements):
+        for element in ui_elements:
             element.show()
 
-    def OpenImageAdd(self):
-        window = EditImagesWindow(parent=self)
+    def OpenContainerAdd(self):
+        window = EditContainersWindow(parent=self, addingMode=True)
         window.exec()
 
-    def OpenImageEdit(self):
-        selected_image = self.images_list_view.currentItem().text().replace('(main) ', '')
-        window = EditImagesWindow(parent=self, image=selected_image)
+    def OpenContainerEdit(self):
+        selected_container_name = self.containers_list_view.currentItem().text().replace('(main) ', '')
+        selected_container = self.current_scenario_containers[selected_container_name]
+        window = EditContainersWindow(parent=self, container_to_edit=selected_container)
         window.exec()
 
-    def RemoveImage(self):
+    def RemoveContainer(self):
         messagebox = QMessageBox(self)
         messagebox.setStyleSheet('background-color: blue')
-        messagebox.question(self, 'Removing image', 'Are you sure you want to remove that image?\n(Note: This will not delete the image but only remove it from the scenario)')
+        messagebox.question(self, 'Removing container', 'Are you sure you want to remove that container?\n(Note: This will not delete the container but only remove it from the scenario)')
         #messagebox.setText('This will not delete the container but only remove it from the scenario.')
         #TODO Remove container and update view
 
@@ -244,8 +239,8 @@ class ScenariosWindow(QDialog, BaseWindow):
     # region =====Main Methods=====
 
     def LaunchScenario(self):
-        scenario = self.list_view.currentItem().text()
-        self.parent.LaunchScenario(scenario)
+        scenario_name = self.list_view.currentItem().text()
+        self.parent.LaunchScenario(scenario_name)
         self.close()
 
     def EditScenarioMode(self):
@@ -253,51 +248,42 @@ class ScenariosWindow(QDialog, BaseWindow):
         Switches the window's UI to edit mode.
         '''
         # Setting up the UI
-        self.launch_button.hide()
-        self.edit_button.hide()
-        self.add_button.hide()
-        self.textbox.hide()
-        self.list_view.hide()
-        self.ShowEditUI()
+        self.HideUIElements(self.default_mode_ui)
+        self.ShowUIElements(self.edit_mode_ui)
 
-        selected_scenario = self.list_view.currentItem().text()
-        scenario = scenarios.Get(scenarios_db, selected_scenario)
-        self.scen_to_save = scenario
+        selected_scenario_name = self.list_view.currentItem().text()
+        scenario = self.scenarios[selected_scenario_name]
         self.scenario_name.setText(scenario.name)
         self.type_entry.setText(scenario.type)
-        self.cve_entry.setText(scenario.cve)
+        self.cve_entry.setText(scenario.CVE)
         self.diff_entry.setText(str(scenario.difficulty))
         self.scenario_desc.setPlainText(scenario.description)
-        self.instructions.setPlainText(scenario.instructions)
         self.solution.setPlainText(scenario.solution)
         self.goal.setPlainText(scenario.goal)
         for source in scenario.sources:
             self.sources.appendPlainText(source)
-        for image in scenario.images:
-            if image['is_main'] is True:
-                self.images_list_view.addItem(f"(main) {image['name']}")
-            else:
-                self.images_list_view.addItem(image['name'])
+        for container in scenario.containers.values():
+            self.current_scenario_containers[container.image_name] = container
+            self.containers_list_view.addItem(f"(main) {container.image_name}") if container.is_main is True else self.containers_list_view.addItem(container.image_name)
+                
 
     def AddScenarioMode(self):
         '''
         Switches the window's UI to add mode.
         '''
         # Setting up the UI
-        self.HideElements(self.launch_button, self.edit_button, self.add_button,
-        self.textbox, self.list_view)
-        self.ShowEditUI()
+        self.HideUIElements(self.default_mode_ui)
+        self.ShowUIElements(self.edit_mode_ui)
 
     def DefaultMode(self):
         '''
         Resets the window's UI back to default.
         '''
         #TODO add unsaved changed confirmation
-        self.scen_to_save = None
-        self.HideEditUI()
-        self.ShowElements(self.launch_button, self.edit_button, self.add_button,
-        self.textbox, self.list_view)
-        self.DisableButtons(self.edit_button, self.launch_button, self.edit_image_button, self.remove_image_button)
+        self.HideUIElements(self.edit_mode_ui)
+        self.ShowUIElements(self.default_mode_ui)
+        self.DisableButtons(self.edit_button, self.launch_button, self.edit_container_button, self.remove_container_button)
+        self.current_scenario_containers.clear()
         for element in self.edit_mode_ui:
             if isinstance(element, QLineEdit) or isinstance(element, QPlainTextEdit) or isinstance(element, QListWidget):
                 element.clear()
@@ -306,72 +292,75 @@ class ScenariosWindow(QDialog, BaseWindow):
         '''
         Saves the changes made to the scenario to the scenarios.json file.
         '''
-        #TODO Check all the inputs!
-        # if self.scen_to_save is None (for adding a new scenario)...
-
         global scenarios_db
-
-        def CheckValid(scenario : scenarios.Scenario):
+        
+        def CheckValid():
+            # TODO check if scenario name not already exists when adding
             import regex
 
-            result = {}
+            result = dict()
             result['valid_scenario'] = True
             result['message'] = ''
-
-            # A few variables we will use to do our checks
-            none_not_allowed = ['name', 'description', 'goal', 'instructions', 'images', 'CVE', 'difficulty','type']
-            min_difficulty = 1; max_difficulty = 5
-
-            # Checking that some attributes are not none
-            for attribute in scenario.__dict__:
-                attribute_name = attribute
-                attribute = getattr(scenario, attribute)
-                if attribute_name in none_not_allowed:
-                    if attribute is None or attribute == "":
-                        result['valid_scenario'] = False
-                        result['message'] = f'{attribute_name} cannot be empty!'
-            # Checking valid difficulty
-            try:
-                scenario.difficulty = int(scenario.difficulty)
-                if scenario.difficulty < min_difficulty or scenario.difficulty > max_difficulty:
+            
+            # Name
+            name = self.scenario_name.text()
+            if len(name) == 0:
+                result['valid_scenario'] = False
+                result['message'] += f'Name cannot be empty!' + '\n'
+            
+            # CVE
+            cve = self.cve_entry.text()
+            if(len(cve) != 0):
+                cve_expression = "^CVE-20[0-9]{2}-[0-9]{4,6}$"
+                if regex.search(cve_expression, cve) is None:
                     result['valid_scenario'] = False
-                    result['message'] = 'The difficulty must an integer between 1 and 5!'
-            except ValueError:
-                result['valid_scenario'] = False
-                result['message'] = 'The difficulty must an integer between 1 and 5!'
-            # Checking CVE
-            cve_expression = "^CVE-20[0-9]{2}-[0-9]{4,6}$"
-            if regex.search(cve_expression, scenario.cve) is None:
-                result['valid_scenario'] = False
-                result['message'] = 'Your CVE is in the wrong format or does not exist.\nA CVE must be written in the following format: CVE-YYYY-NNNN'
-            # Check the images/containers (we won't check whether the images are valid or nor as this is done in the add | edit image window)
-            if scenario.images is None or len(scenario.images) == 0:
-                result['valid_scenario'] = False
-                result['message'] = 'You need at least one image in your scenario!'             
-            return result
+                    result['message'] += 'Your CVE is in the wrong format or does not exist.\nA CVE must be written in the following format: CVE-YYYY-NNNN' + '\n'
 
-        self.scen_to_save.name = self.scenario_name.text()
-        self.scen_to_save.description = self.scenario_desc.toPlainText()
-        self.scen_to_save.goal = self.goal.toPlainText()
-        self.scen_to_save.instructions = self.instructions.toPlainText()
-        self.scen_to_save.solution = self.solution.toPlainText()
-        self.scen_to_save.cve = self.cve_entry.text()
-        self.scen_to_save.difficulty = self.diff_entry.text()
-        self.scen_to_save.type = self.type_entry.text()
-        self.scen_to_save.sources = [str(source) for source in self.sources.toPlainText().split('\n')]
-        is_valid = CheckValid(self.scen_to_save)
+            # Difficulty
+            min_difficulty = 1; max_difficulty = 5
+            difficulty = self.diff_entry.text()
+            if len(difficulty) != 0:
+                if difficulty.isdigit():
+                    difficulty = int(difficulty)
+                    if difficulty < min_difficulty or difficulty > max_difficulty:
+                        result['valid_scenario'] = False
+                        result['message'] += 'The difficulty, if specified, must be an integer between 1 and 5!' + '\n'
+                else:
+                    result['valid_scenario'] = False
+                    result['message'] += 'The difficulty, if specified, must be an integer between 1 and 5!' + '\n'
+            
+            # Containers
+            if self.containers_list_view.count() == 0:
+                result['valid_scenario'] = False
+                result['message'] += 'You need at least one container in your scenario!' + '\n'
+            
+            return result
+        
+        is_valid = CheckValid()
         if is_valid['valid_scenario'] is False:
             messagebox = QMessageBox(self)
             messagebox.setWindowTitle("Invalid parameters!")
             messagebox.setText(is_valid['message'])
-            messagebox.setStyleSheet('background-color: white')
+            messagebox.setStyleSheet('background-color: white; color: black')
             messagebox.exec()
         else:
-            self.scen_to_save.difficulty = int(self.scen_to_save.difficulty)
-            scenarios.Save(self.scen_to_save)
+            scenario_to_save = Scenario()
+            scenario_to_save.name = self.scenario_name.text()
+            scenario_to_save.description = self.scenario_desc.toPlainText()
+            scenario_to_save.goal = self.goal.toPlainText()
+            scenario_to_save.solution = self.solution.toPlainText()
+            scenario_to_save.CVE = self.cve_entry.text()
+            scenario_to_save.difficulty = self.diff_entry.text()
+            scenario_to_save.type = self.type_entry.text()
+            scenario_to_save.sources = [str(source) for source in self.sources.toPlainText().split('\n') if len(source) > 0]
+            scenario_to_save.containers = self.current_scenario_containers
+            
+            scenarios.Save(scenario_to_save)
             scenarios_db = scenarios.Load()
             self.scenarios = scenarios_db['scenarios']
-            self.list_view.addItem(self.scen_to_save.name)
+            self.list_view.clear()
+            for scenario_name in self.scenarios:
+                self.list_view.addItem(scenario_name)
             self.DefaultMode()
             # delete container(s)?
             for container in self.docker_client.containers.list(all=True):
@@ -381,14 +370,16 @@ class ScenariosWindow(QDialog, BaseWindow):
 
     # endregion
 
-class EditImagesWindow(QDialog, BaseWindow):
+class EditContainersWindow(QDialog, BaseWindow):
     
     # region =====Initializing=====
 
-    def __init__(self, parent=None, image=None):
+    def __init__(self, parent = None, addingMode = False, container_to_edit : Container = None):
 
         self.parent = parent
-        self.image_to_save = self.LoadImageJson(image, self.parent.scen_to_save)
+        self.addingMode = addingMode
+        if self.addingMode is False:
+            self.container_to_edit = container_to_edit
 
         # Defining our layout variables
         width = 600
@@ -398,96 +389,112 @@ class EditImagesWindow(QDialog, BaseWindow):
         self.initUI(width, height)
 
     def initUI(self, width, height):
-        self.setWindowTitle('Add | Edit scenario image')
+        self.setWindowTitle('Add | Edit scenario container')
         self.setFixedSize(width, height)
 
-        # Image selection
-        self.image_label = QLabel('From existing image', self)
+        # Image
+        self.image_label = QLabel('From Image', self)
         self.image_label.move(20, 20)
 
-        self.images = QComboBox(self)
-        self.images.move(20, 40)
-        self.images.resize(300, 20)
+        self.image_entry = QLineEdit(self)
+        self.image_entry.move(20, 40)
+        self.image_entry.resize(300, 20)
 
-        # Image name
-        # self.name_label = QLabel('Image name (if no existing image)', self)
-        # self.name_label.move(350, 20)
-
-        # self.image_name = QLineEdit(self)
-        # self.image_name.move(350, 40)
-        # self.image_name.resize(210, 20)
-
-        # Dockerfile entry
+        # Dockerfile
         self.dockerfile_label = QLabel('From Dockerfile', self)
-        self.dockerfile_label.move(20, 70)
+        self.dockerfile_label.move(20, 20)
 
         self.dockerfile_entry = QLineEdit(self)
-        self.dockerfile_entry.move(20, 90)
+        self.dockerfile_entry.move(20, 40)
         self.dockerfile_entry.resize(300, 20)
-        self.dockerfile_entry.setPlaceholderText('Put the dockerfile path here')
+        self.dockerfile_entry.setEnabled(False)
+        
+        # Networks
+        self.networks_label = QLabel('Networks', self)
+        self.networks_label.move(20, 110)
+        
+        self.networks_entry = QLineEdit(self)
+        self.networks_entry.move(20, 130)
+        self.networks_entry.resize(140, 20)
 
+        self.networks = QListWidget(self)
+        self.networks.move(20, 160)
+        self.networks.resize(210, 150)
+        self.networks.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)        
+        
         # Container port
         self.container_port_label = QLabel('Container port', self)
-        self.container_port_label.move(350, 70)
+        self.container_port_label.move(350, 160)
 
         self.container_port = QLineEdit(self)
-        self.container_port.move(350, 90)
+        self.container_port.move(350, 180)
         self.container_port.resize(100, 20)
-
+        
         # Host port
         self.host_port_label = QLabel('Host port', self)
-        self.host_port_label.move(460, 70)
+        self.host_port_label.move(470, 160)
 
         self.host_port = QLineEdit(self)
-        self.host_port.move(460, 90)
+        self.host_port.move(470, 180)
         self.host_port.resize(100, 20)
-
-        # Hub name (to download from the hub)
-        self.hub_name_label = QLabel('Hub name (to pull)', self)
-        self.hub_name_label.move(20, 150)
-
-        self.hub_name_entry = QLineEdit(self)
-        self.hub_name_entry.move(20, 170)
-        self.hub_name_entry.resize(300, 20)
-
+        
         # Operating System
-        self.image_os_label = QLabel('Operating system', self)
-        self.image_os_label.move(20, 200)
+        self.container_os_label = QLabel('Operating system', self)
+        self.container_os_label.move(350, 210)
 
-        self.image_os = QLineEdit(self)
-        self.image_os.move(20, 220)
-        self.image_os.resize(150, 20)
-
-        # Network 
-        self.nw_label = QLabel('Network', self)
-        self.nw_label.move(350, 150)
-
-        self.nw_entry = QLineEdit(self)
-        self.nw_entry.move(350, 170)
-        self.nw_entry.resize(210, 20)
-
-        # Main image or not?
-        self.is_main_label = QLabel('Main Image?', self)
-        self.is_main_label.move(20, 250)
-
-        self.is_main = QComboBox(self)
-        self.is_main.move(20, 270)
-        self.is_main.addItems(['Yes', 'No'])
-
+        self.container_os = QLineEdit(self)
+        self.container_os.move(350, 230)
+        self.container_os.resize(150, 20)
+        
         # Buttons
         self.save_button = QPushButton('Save', self)
         self.save_button.move(20, 440)
         self.save_button.resize(80, 20)
-        self.save_button.clicked.connect(self.SaveImage)
+        self.save_button.clicked.connect(self.SaveContainer)
 
-        self.browse_button = QPushButton('browse', self) #Browse for dockerfile
-        self.browse_button.move(20, 120)
-        self.browse_button.resize(80, 20)
-        self.browse_button.clicked.connect(self.FileDialog)
+        self.image_browse_button = QPushButton('Browse', self)
+        self.image_browse_button.move(20, 70)
+        self.image_browse_button.resize(80, 20)
+        self.image_browse_button.clicked.connect(self.ImageDialog)
+        
+        self.dockerfile_browse_button = QPushButton('Browse', self)
+        self.dockerfile_browse_button.move(20, 70)
+        self.dockerfile_browse_button.resize(80, 20)
+        self.dockerfile_browse_button.clicked.connect(self.FileDialog)
+        
+        self.network_add_button = QPushButton('Add', self)
+        self.network_add_button.move(170, 130)
+        self.network_add_button.resize(40, 20)
+        self.network_add_button.clicked.connect(self.AddNetworkChoice)
+        
+        # Checkboxes
+        self.image_checkbox_label = QLabel("Image", self)
+        self.image_checkbox_label.move(360, 40)  
+        self.image_checkbox = QCheckBox(self)
+        self.image_checkbox.move(415, 40)
+        self.image_checkbox.resize(20, 20)
+        self.image_checkbox.setChecked(True)
+        self.image_checkbox.stateChanged.connect(self.onCheck)
+        
+        self.dockerfile_checkbox_label = QLabel("Dockerfile", self)
+        self.dockerfile_checkbox_label.move(460, 40)
+        self.dockerfile_checkbox = QCheckBox(self)
+        self.dockerfile_checkbox.move(540, 40)
+        self.dockerfile_checkbox.resize(20, 20)
+        self.dockerfile_checkbox.stateChanged.connect(self.onCheck)        
 
-        self.ImplementTheme(self.dockerfile_entry)
-        self.dockerfile_entry.setStyleSheet(f'background-color: {theme["main_window_textbox_color"]}; color: {theme["text_color"]};'
-                                            f'font-family: {theme["text_font"]}; font-style: italic; border: 1px solid "{theme["border_color"]}"')
+        self.is_main_checkbox_label = QLabel('Main Container', self)
+        self.is_main_checkbox_label.move(350, 130)
+        self.is_main_checkbox = QCheckBox(self)
+        self.is_main_checkbox.move(470, 130)
+        self.is_main_checkbox.resize(20, 20)
+
+        self.ImplementTheme()
+
+        self.checkBoxGroup = QButtonGroup(self)
+        self.checkBoxGroup.addButton(self.image_checkbox); self.checkBoxGroup.addButton(self.dockerfile_checkbox)
+        
+        self.dockerfile_label.hide(); self.dockerfile_entry.hide(); self.dockerfile_browse_button.hide()
 
         self.FillFields()
 
@@ -495,131 +502,140 @@ class EditImagesWindow(QDialog, BaseWindow):
 
     # region =====Graphical Methods=====
 
+    def onCheck(self):
+        if self.image_checkbox.isChecked():
+            self.image_label.show(); self.image_entry.show(); self.image_browse_button.show()
+            self.dockerfile_label.hide(); self.dockerfile_entry.hide(); self.dockerfile_browse_button.hide()
+        elif self.dockerfile_checkbox.isChecked():
+            self.dockerfile_label.show(); self.dockerfile_entry.show(); self.dockerfile_browse_button.show()
+            self.image_label.hide(); self.image_entry.hide(); self.image_browse_button.hide()
+        
+    def AddNetworkChoice(self):
+        new_choice = self.networks_entry.text()
+        if not self.networks.findItems(new_choice, Qt.MatchFlag.MatchFixedString | Qt.MatchFlag.MatchCaseSensitive):
+            self.networks.addItem(new_choice)
+    
     # endregion
 
     # region =====Main Methods=====
-
-    def LoadImageJson(self, wanted_image, scenario):
-        if wanted_image is None:
-            return {}
-        if scenario.images is not None:
-            for image in scenario.images:
-                if wanted_image in image['name']:
-                    return image
+    def ImageDialog(self):
+        images = [image.tags[0] for image in self.docker_client.images.list()]
+        non_custom_images = [image for image in images if image.split(':')[1] != "custom"]
+        
+        if len(non_custom_images) != 0:
+            # TODO implement style on it
+            image, ok = QInputDialog.getItem(self, "Image input", "List of non custom images:", non_custom_images, 0, False)
+            if ok and image:            
+                self.image_entry.setText(image)
         else:
-            return {}
-
+            messagebox = QMessageBox(self)
+            messagebox.setWindowTitle("Error")
+            messagebox.setText("No images available!")
+            messagebox.exec()
+    
     def FileDialog(self):
-        fname = QFileDialog.getOpenFileName(self, "Select the DockerFile", "", 'All Files (Dockerfile)')
-
+        custom_images_path = src_folder_path + f"{sep}..{sep}docker_images"
+        fname = QFileDialog.getExistingDirectory(self, caption="Select the DockerFile folder", directory=custom_images_path)
         if fname:
-            self.dockerfile_entry.setText(fname[0])
+            project_folder_path = src_folder_path[:src_folder_path.rfind(sep)]
+            fname = fname.replace(project_folder_path, "..")
+            self.dockerfile_entry.setText(fname)
 
-    def FillFields(self):
-
-        # Adding the existing images
-        if self.parent.scen_to_save.images is None:
-            self.images.addItem('None')
-        else:
-            if 'name' in self.image_to_save:
-                self.images.addItem(self.image_to_save['name'])
-            else:
-                self.images.addItem('None')
-
-        for image in self.docker_client.images.list():
-            try:
-                if self.image_to_save['name'] is not None and self.image_to_save['name'] in image.tags[0].split(':')[0]:
-                    continue
-            except TypeError:
-                pass
-            except KeyError:
-                pass
-            self.images.addItem(image.tags[0])
+    def FillFields(self):        
+        # Filling the networks
+        existing_networks = [network.name for network in self.docker_client.networks.list()]
+        if self.addingMode is False:
+            existing_networks.extend(self.container_to_edit.networks)
+            all_networks = set(existing_networks)
+            self.networks.addItems(all_networks)            
+            
+            for i in range(self.networks.count()):
+                if self.networks.item(i).text() in self.container_to_edit.networks:
+                    self.networks.item(i).setSelected(True)   
+        else:            
+            self.networks.addItems(existing_networks)
 
         # Filling the other fields (or not)
-        try:
-            if self.image_to_save['is_main'] is True:
-                self.is_main.setCurrentText('Yes')
+        if self.addingMode is False:
+            self.container_os.setText(self.container_to_edit.operating_system)
+            
+            if len(self.container_to_edit.dockerfile) != 0:
+                self.dockerfile_checkbox.setChecked(True)
+                self.dockerfile_entry.setText(self.container_to_edit.dockerfile)
             else:
-                self.is_main.setCurrentText('No')
-            self.image_os.setText(self.image_to_save['operating_system'])
-            self.hub_name_entry.setText(self.image_to_save['hub_name'])
-            self.nw_entry.setText(self.image_to_save['network'])
-            for key, value in self.image_to_save['ports'].items():
+                self.image_entry.setText(self.container_to_edit.image_name)
+            
+            if self.container_to_edit.is_main is True:
+                self.is_main_checkbox.setChecked(True)
+                
+            for key, value in self.container_to_edit.ports.items():
                 self.container_port.setText(key)
                 self.host_port.setText(value)
-        except TypeError:
-            pass
-        except KeyError:
-            pass
 
-    def SaveImage(self):
+    def SaveContainer(self):
         
-        def CheckValid(image : dict):
-
-            none_not_allowed = ['name', 'is_main', 'operating_system'] # ports are not allowed to be empty either but they will have a special verification
+        def CheckValid():
             result = {}
             result['is_valid'] = True
-
-            for key in image:
-                if key in none_not_allowed:
-                    if image[key] is None or image[key] == "":
-                        result['is_valid'] = False
-                        result['message'] = f'{key} cannot be empty!'
-                if key == 'name':
-                    if image[key] == "None" and image['dockerfile'] == "" and image['hub_name_entry']:
-                        result['is_valid'] = False
-                        result['message'] = 'You need to select either an existing image, dockerfile or specify the hub name of the image.'
-                if key == 'ports':
-                    if not image[key]:
-                        result['is_valid'] = False
-                        result['message'] = 'You must enter the container and host ports fields!'
-                    else:
-                        for _key in image[key]:
-                            if _key == "":
-                                result['is_valid'] = False
-                                result['message'] = 'You must enter the container port!'
-                            if image[key][_key] is None or image[key][_key] == "":
-                                result['is_valid'] = False
-                                result['message'] = 'You must enter the host port!'
-                if key == 'is_main':
-                    if image[key] is True:
-                        if self.parent.scen_to_save.images is not None and len(self.parent.scen_to_save.images) > 0:
-                            for image in self.parent.scen_to_save.images:
-                                if image['is_main'] is True:
-                                    result['is_valid'] = False
-                                    result['message'] = 'There is already a main image in the current scenario!'
-                            
-                    
+            result['message'] = ""
+            
+            # Image Name & Dockerfile
+            image_name = self.image_entry.text()
+            dockerfile = self.dockerfile_entry.text()
+            if len(image_name) == 0 and len(dockerfile) == 0:
+                result['is_valid'] = False
+                result['message'] += 'You need to have either an image or a dockerfile!' + '\n'
+            
+            # Ports
+            #ports = (self.container_port.text(), self.host_port.text())
+            #if len(ports[0]) != 0 or len(ports[1]) != 0:
+            #    if not ports[0].isdigit() or not ports[1].isdigit():
+            #        result['is_valid'] = False
+            #        result['message'] += 'If specified, the ports number must be positive integers!' + '\n'
 
             return result
 
-        self.image_to_save['name'] = self.images.currentText()
-        self.image_to_save['dockerfile'] = self.dockerfile_entry.text()
-        self.image_to_save['hub_name_entry'] = self.hub_name_entry.text()
-        self.image_to_save['is_main'] = True
-        if self.is_main.currentText() == "No":
-            self.image_to_save['is_main'] = False
-        self.image_to_save['ports'] = {}
-        self.image_to_save['ports'][self.container_port.text()] = self.host_port.text()
-        self.image_to_save['operating_system'] = self.image_os.text()
-
-        is_valid = CheckValid(self.image_to_save)
+        is_valid = CheckValid()
         if is_valid['is_valid'] is False:
             messagebox = QMessageBox(self)
             messagebox.setWindowTitle("Invalid parameters!")
             messagebox.setText(is_valid['message'])
-            messagebox.setStyleSheet('background-color: white')
+            messagebox.setStyleSheet('background-color: white; color: black')
             messagebox.exec()
         else:
-            if self.parent.scen_to_save.images is None or len(self.parent.scen_to_save.images) == 0:
-                self.parent.scen_to_save.images = []
-                self.parent.scen_to_save.images.append(self.image_to_save)
-                self.parent.images_list_view.addItem(self.image_to_save['name'])
+            container_to_save = Container()
+            
+            if self.dockerfile_checkbox.isChecked():
+                container_to_save.dockerfile = self.dockerfile_entry.text()
+                container_to_save.image_name = f"{container_to_save.dockerfile.split(sep)[-1]}:custom"
             else:
-                for image in self.parent.scen_to_save.images:
-                    if image['name'] == self.image_to_save['name']:
-                        image = self.image_to_save
+                container_to_save.image_name = self.image_entry.text()
+                
+            container_to_save.is_main = self.is_main_checkbox.isChecked()
+            container_to_save.networks = [selection.text() for selection in self.networks.selectedItems()]
+            if len(self.container_port.text()) != 0 and len(self.host_port.text()) != 0:
+                container_to_save.ports = {self.container_port.text() : self.host_port.text()}
+            container_to_save.operating_system = self.container_os.text()
+            
+            self.parent.current_scenario_containers[container_to_save.image_name] = container_to_save
+            if self.addingMode is True:
+                if container_to_save.is_main:
+                    self.parent.containers_list_view.addItem(f"(main) {container_to_save.image_name}")
+                else:
+                    self.parent.containers_list_view.addItem(container_to_save.image_name)
+            else:
+                image_name_changed = self.container_to_edit.image_name != container_to_save.image_name
+                                
+                for i in range(self.parent.containers_list_view.count()):
+                    item = self.parent.containers_list_view.item(i)
+                    if item.text().replace("(main) ", "") == self.container_to_edit.image_name:
+                        if container_to_save.is_main:
+                            item.setText(f"(main) {container_to_save.image_name}")
+                        else:
+                            item.setText(container_to_save.image_name)
+                        break
+                if image_name_changed:
+                    self.parent.current_scenario_containers.pop(self.container_to_edit.image_name)
 
             self.close()
 
