@@ -243,7 +243,9 @@ class ScenariosWindow(QDialog, BaseWindow):
         remove = messagebox.question(self, 'Removing container', 'Are you sure you want to remove that container from the scenario?', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         
         if remove == QMessageBox.StandardButton.Yes:
+            scenario_name = self.containers_list_view.currentItem().text().replace("(main) ", "")
             self.containers_list_view.takeItem(self.containers_list_view.currentRow())
+            self.current_scenario_containers.pop(scenario_name)
 
     # endregion
 
