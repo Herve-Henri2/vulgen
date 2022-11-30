@@ -1,5 +1,6 @@
 import platform
 import os
+import shutil # for recursive removal of folder
 import json
 
 
@@ -187,6 +188,19 @@ def encaseInBalise(text : str, balise :str) -> str:
     Returns a string formated in the following way: <balise>text</balise>
     '''
     return f"<{balise}>{text}</{balise}>"
+
+
+def Remove(scenario_name : str):
+    '''
+    Removes the folder associated with the specified scenario.
+    '''
+    scenario_folder_path = scenarios_folder_path + f"{sep}{scenario_name}"
+    try:
+        shutil.rmtree(scenario_folder_path)
+    except:
+        # TODO logger
+        pass
+
 
 def LoadScenario(name : str) -> Scenario:
     '''
