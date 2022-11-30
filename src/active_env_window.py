@@ -30,15 +30,15 @@ class ActiveEnvWindow(QDialog, BaseWindow):
         self.list_view.itemClicked.connect(self.AllowShell)
 
         # Buttons
-        self.open_shell_button = QPushButton('Open Shell', self)
+        self.open_shell_button = QPushButton('Attach to terminal', self)
         self.open_shell_button.move(40, 240)
-        self.open_shell_button.resize(120, 20)
+        self.open_shell_button.resize(200, 20)
         self.open_shell_button.clicked.connect(self.AttachContainer)
 
         if self.parent is not None:
             self.containers = self.parent.GetRunningScenarioContainers()
             for container in self.containers:
-                self.list_view.addItem(f'{container.name} - {container.ports}')
+                self.list_view.addItem(f'{container.name} | {container.ports}')
 
         # Styling and coloring
         self.ImplementTheme()

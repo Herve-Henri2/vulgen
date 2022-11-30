@@ -6,7 +6,8 @@ def main():
     print("Hello !")
     print("This is only a test.\n")
     
-    age = input("Please input your age : ")    
+    print("Please input your age : ")
+    age = input()    
     if age == '25':
         print("\nNice !\n")
     else:

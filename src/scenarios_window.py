@@ -335,6 +335,9 @@ class ScenariosWindow(QDialog, BaseWindow):
             if len(name) == 0:
                 result['valid_scenario'] = False
                 result['message'] += f'Name cannot be empty!' + '\n'
+            elif not name[0].isalnum():
+                result['valid_scenario'] = False
+                result['message'] += f'The first character of the name must be an alphanumeric character [a-zA-Z0-9]!'
             
             # CVE
             cve = self.cve_entry.text()
