@@ -30,16 +30,15 @@ class ActiveEnvWindow(QDialog, BaseWindow):
         self.list_view.itemClicked.connect(self.AllowShell)
 
         # Buttons
-        self.open_shell_button = QPushButton('Attach to terminal', self)
+        self.open_shell_button = QPushButton('Open Shell', self)
         self.open_shell_button.move(40, 240)
-
         self.open_shell_button.resize(120, 20)
         self.open_shell_button.clicked.connect(self.OpenShell)
 
-        self.logs_button = QPushButton('Logs', self)
+        self.logs_button = QPushButton('Attach to terminal', self)
         self.logs_button.move(180, 240)
         self.logs_button.resize(80, 20)
-        self.logs_button.clicked.connect(self.OpenLogs)
+        self.logs_button.clicked.connect(self.AttachToTerminal)
 
         if self.parent is not None:
             self.containers = self.parent.GetRunningScenarioContainers()
@@ -64,20 +63,20 @@ class ActiveEnvWindow(QDialog, BaseWindow):
             return
         try:
             container = self.docker_client.containers.get(selection)
-            logger.info(f'Opening up a logs terminal for the {selection} container.')
+            logger.info(f'Starting a terminal process for the {selection} container.')
             command = f"docker exec -it {container.short_id} /bin/sh"
             misc.open_terminal(operating_system, command)
         except Exception as ex:
             logger.info(ex)
 
-    def OpenLogs(self):        
+    def AttachToTerminal(self):        
         selection = self.list_view.currentItem().text().split('|')[0][:-1]
         print(selection)
         if selection is None or len(selection) == 0:
             return
         try:
             container = self.docker_client.containers.get(selection)
-            logger.info(f'Opening up a logs terminal for the {selection} container.')
+            logger.info(f'Attaching the {selection} container to a new terminal.')
             command = f"docker logs {container.short_id};docker attach {container.short_id}"
             misc.open_terminal(operating_system, command)
         except Exception as ex:

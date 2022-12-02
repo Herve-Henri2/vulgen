@@ -66,7 +66,7 @@ def Load() -> dict:
         os.mkdir(scenarios_folder_path)
     if not os.path.exists(global_json_path):
         with open(global_json_path, 'w') as file:
-            default_global_scenario_data = {"total":0, "scenarios_names":[], "total_types":0, "types":[]}
+            default_global_scenario_data = {"total":0, "scenarios_names":[], "total_types":0, "types":[], "avg_difficulty":0.0}
             file.write(json.dumps(default_global_scenario_data, indent=3))
     
     # We first instantiate our database dictionnary and parse into it our scenarios.json file
@@ -166,9 +166,10 @@ def GetAverageDifficulty(scenarios_db : dict) -> float:
     '''
     result = 0
     s_number = 0
-    for scenario in scenarios_db['scenarios'].values():
-        s_number += 1
-        result += int(scenario.difficulty)
+    for scenario in scenarios_db['scenarios'].values():        
+        if len(scenario.difficulty) != 0:
+            s_number += 1
+            result += int(scenario.difficulty)
     result = float(result/s_number)
     return result
 
