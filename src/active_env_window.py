@@ -32,8 +32,14 @@ class ActiveEnvWindow(QDialog, BaseWindow):
         # Buttons
         self.open_shell_button = QPushButton('Attach to terminal', self)
         self.open_shell_button.move(40, 240)
-        self.open_shell_button.resize(200, 20)
-        self.open_shell_button.clicked.connect(self.AttachContainer)
+
+        self.open_shell_button.resize(120, 20)
+        self.open_shell_button.clicked.connect(self.OpenShell)
+
+        self.logs_button = QPushButton('Logs', self)
+        self.logs_button.move(180, 240)
+        self.logs_button.resize(80, 20)
+        self.logs_button.clicked.connect(self.OpenLogs)
 
         if self.parent is not None:
             self.containers = self.parent.GetRunningScenarioContainers()
@@ -42,26 +48,42 @@ class ActiveEnvWindow(QDialog, BaseWindow):
 
         # Styling and coloring
         self.ImplementTheme()
-        self.DisableButton(self.open_shell_button)
+        self.DisableButtons(self.open_shell_button, self.logs_button)
 
     # endregion
 
     # region =====Graphical Methods=====
 
     def AllowShell(self):
-        self.EnableButton(self.open_shell_button)
+        self.EnableButtons(self.open_shell_button, self.logs_button)
 
-    def AttachContainer(self):        
+    def OpenShell(self):
         selection = self.list_view.currentItem().text().split('|')[0][:-1]
+        print(selection)
         if selection is None or len(selection) == 0:
             return
         try:
             container = self.docker_client.containers.get(selection)
-            logger.info(f'Opening up a terminal for the {selection} container.')
+            logger.info(f'Opening up a logs terminal for the {selection} container.')
+            command = f"docker exec -it {container.short_id} /bin/sh"
+            misc.open_terminal(operating_system, command)
+        except Exception as ex:
+            logger.info(ex)
+
+    def OpenLogs(self):        
+        selection = self.list_view.currentItem().text().split('|')[0][:-1]
+        print(selection)
+        if selection is None or len(selection) == 0:
+            return
+        try:
+            container = self.docker_client.containers.get(selection)
+            logger.info(f'Opening up a logs terminal for the {selection} container.')
             command = f"docker logs {container.short_id};docker attach {container.short_id}"
             misc.open_terminal(operating_system, command)
         except Exception as ex:
             logger.info(ex)
+
+
 
     # endregion
 

@@ -7,16 +7,21 @@ config_file = "config.json"
 
 #  region =====Config variables=====
 
-variables_list = ['operating_system', 'docker_desktop', 'log_file', 'log_format', 'current_theme_index', 'themes']
+variables_list = ['operating_system', 'docker_desktop', 'log_file', 'log_format', 'current_mode_index', 'modes', 'current_theme_index', 'themes']
 
 configuration['operating_system'] = platform.system()
 configuration['docker_desktop'] = ""
 configuration['log_file'] = 'app.log'
 configuration['log_format'] = "%(asctime)s | %(levelname)s - %(message)s"
+
+# Education or challenge mode
+configuration['current_mode_index'] = 0
+configuration['modes'] = ['Education', 'Challenge']
+
 # UI Themes
 configuration['current_theme_index'] = 0 # Default theme
 configuration['themes'] = []
-theme1, theme2, theme3 = {}, {}, {}
+theme1, theme2, theme3, theme4, theme5 = {}, {}, {}, {}, {}
 
 # Default Theme
 theme1['name'] = 'Default'
@@ -59,6 +64,34 @@ theme3['disabled_text_color'] = '#7779CF'
 theme3['text_font'] = 'Walbaum Display'
 theme3['text_size'] = '12'
 configuration['themes'].append(theme3)
+
+# Blinding light theme
+theme4['name'] = 'Blinding Light'
+theme4['main_window_background_color'] = '#FFFFFF'
+theme4['main_window_textbox_color'] = '#FFFFFF'
+theme4['buttons_color'] = '#F8EA46'
+theme4['disabled_buttons_color'] = '#FDF69D'
+theme4['child_window_background_color'] = '#FFFFFF'
+theme4['border_color'] = "#F0D121"
+theme4['text_color'] = '#DFBE04'
+theme4['disabled_text_color'] = '#D5C463'
+theme4['text_font'] = 'Walbaum Display'
+theme4['text_size'] = '12'
+configuration['themes'].append(theme4)
+
+# Alien theme
+theme5['name'] = 'Alien'
+theme5['main_window_background_color'] = '#2B4C18'
+theme5['main_window_textbox_color'] = '#000000'
+theme5['buttons_color'] = '#293721'
+theme5['disabled_buttons_color'] = '#708E60'
+theme5['child_window_background_color'] = '#2B4C18'
+theme5['border_color'] = "#30571A"
+theme5['text_color'] = '#5CFA03'
+theme5['disabled_text_color'] = '#BEFE9A'
+theme5['text_font'] = 'Walbaum Display'
+theme5['text_size'] = '12'
+configuration['themes'].append(theme5)
 
 #logger
 
@@ -121,7 +154,7 @@ def Save(config_name : str, config_value):
     configuration[config_name] = config_value
     try:
         with open(config_file, 'w') as file:
-            file.write(json.dumps(configuration))
+            file.write(json.dumps(configuration, indent=3))
             logger.info(f'Saved {config_value} into {config_name}.')
     except Exception as ex:
         logger.error(f'An error occured when attempting to open the file {config_file}: {ex}')
@@ -132,7 +165,7 @@ def Reset():
     '''
     logger.info('Creating a new default configuration file')
     with open(config_file, 'w') as file:
-            file.write(json.dumps(configuration))
+            file.write(json.dumps(configuration, indent=3))
 
 
 def GetTheme(configuration=None) -> dict:

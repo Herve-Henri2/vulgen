@@ -52,13 +52,27 @@ class OptionsWindow(QDialog, BaseWindow):
 
         self.themes_label = QLabel('Theme', self)
         self.themes_label.move(50, 100)
-        self.themes_label.resize(80, 20)
 
         self.themes = QComboBox(self)
         self.themes.move(50, 120)
         for theme in configuration['themes']:
             self.themes.addItem(theme['name'])
         self.themes.setCurrentText(configuration['themes'][configuration['current_theme_index']]['name'])
+
+        # Mode Combobox + Label
+
+        self.modes_label = QLabel('Mode', self)
+        self.modes_label.move(50, 150)
+
+        self.modes = QComboBox(self)
+        self.modes.move(50, 170)
+        for mode in configuration['modes']:
+            self.modes.addItem(mode)
+        self.modes.setCurrentText(configuration['modes'][configuration['current_mode_index']])
+
+        # Restart label
+        self.restart_label = QLabel('(Restart the app to apply the new parameters)', self)
+        self.restart_label.move(100, 260)
 
         # Styling and coloring
         self.ImplementTheme()
@@ -98,6 +112,7 @@ class OptionsWindow(QDialog, BaseWindow):
             if operating_system == "Windows":
                 config.Save('docker_desktop', self.docker_desktop_entry.text())
             config.Save('current_theme_index', self.themes.currentIndex())
+            config.Save('current_mode_index', self.modes.currentIndex())
             self.close()
 
     #endregion

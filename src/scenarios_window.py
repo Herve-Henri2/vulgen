@@ -207,7 +207,8 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.setText(scenario.description
                     +f"\n-----------------------------\nGoal: {scenario.goal}"
                     +f"\n-----------------------------\nType: {scenario.type}"
-                    +f"\n-----------------------------\nCVE: {scenario.CVE}")
+                    +f"\n-----------------------------\nCVE: {scenario.CVE}"
+                    +f"\n-----------------------------\nDifficulty: {scenario.difficulty}")
         self.EnableButton(self.launch_button)
         self.EnableButton(self.edit_button)
     
@@ -391,7 +392,6 @@ class ScenariosWindow(QDialog, BaseWindow):
             self.scenarios = scenarios_db['scenarios']
             self.RefreshListView()
             self.DefaultMode()
-        
         
 
     # endregion
