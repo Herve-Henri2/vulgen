@@ -16,6 +16,7 @@ configuration = config.Load()
 scenarios_db = scenarios.Load()
 operating_system = configuration['operating_system']
 docker_desktop = configuration['docker_desktop']
+mode = configuration['modes'][configuration['current_mode_index']]
 theme = config.GetTheme(configuration)
 logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
 logger = logging.getLogger()

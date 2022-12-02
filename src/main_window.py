@@ -10,7 +10,6 @@ from images_window import ImagesWindow
 from containers_window import ContainersWindow
 from networks_window import NetworksWindow
 from scenarios import *
-import config
 import docker_utils as dutils
 import misc
 
@@ -27,9 +26,8 @@ class MainWindow(BaseWindow):
                     "* This application is only supported on Linux and Windows distributions (sorry Mac users!) "
                     "If you are using it on a windows machine, you need to have Docker Desktop installed. "
                     "You can check if the application properly detected the executable path in the options window.\n\n"
-                    "* You can start testing yourself by clicking on the \"Scenarios\" button, we provide a detailed "
-                    "description as well as hints to help you beat each challenge. If you are stuck, you can always check for"
-                    " the solution by clicking on the \"Instructions\" button once you have launched the scenario.\n\n"
+                    "* You can select the mode (either Education or Challenge) in the options window.\n"
+                    "Once you are ready, launch the scenario of your choice by opening the Scenarios window.\n\n"
                     "* The default shortcuts are: \n"
                     "h -> back to home (this layout)\n"
                     "o -> open up the options window\n"
@@ -155,6 +153,14 @@ class MainWindow(BaseWindow):
         self.exit_scenario_button.clicked.connect(self.ExitScenario)
         self.scenario_ui_components.append(self.exit_scenario_button)
 
+        if mode == "Education":
+            self.exit_scenario_button.move(col1 + 20, 420)
+            self.solution_button = QPushButton('Solution', self)
+            self.solution_button.move(col1 + 20, 380)
+            self.solution_button.resize(120, 20)
+            self.solution_button.clicked.connect(self.ShowSolution)
+            self.scenario_ui_components.append(self.solution_button)
+
         self.HideScenarioUI()
 
         # Styling and coloring
@@ -209,6 +215,10 @@ class MainWindow(BaseWindow):
     def ShowScenarioContainers(self):
         self.active_env_containers = ActiveEnvWindow(parent=self)
         self.active_env_containers.exec()
+
+    def ShowSolution(self):
+        running_scenario = self.GetRunningScenario()
+        self.setText(running_scenario.solution)
         
 
     # endregion
@@ -334,8 +344,7 @@ class MainWindow(BaseWindow):
         containers = self.docker_client.containers.list()
         for container in containers:
             if scenario.name in container.name:
-                container.stop()
-                container.remove()
+                container.remove(force=True)
         # We destroy the thread
         scenario_thread = self.ScenarioRunning()
         self.threads.remove(scenario_thread)
@@ -362,6 +371,11 @@ class ScenarioThread(QThread):
         for container in scenario.containers.values():
             name = f"{scenario.name}_{container.image_name.split(':')[0].split('/')[-1]}"
             if container.is_main: name += "_main"
+            try:
+                if (old_container := self.docker_client.containers.get(name)) is not None:
+                    old_container.remove(force=True)
+            except:
+                pass
             if len(container.ports) != 0:
                 self.LaunchContainer(image_name=container.image_name, dockerfile=container.dockerfile, main=container.is_main, networks_names=container.networks, ports=container.ports, name=name, stdin_open=True, tty=True)
             else:
@@ -405,16 +419,6 @@ class ScenarioThread(QThread):
         except Exception as ex:
             self.update_console.emit(f'Error: {str(ex)}')
             logger.info(ex)
-
-    def LaunchContainer2(self, image_name, main=False, **kwargs):
-        # 1. Check if the container exists, if yes, launch it
-        # 2. If container doesn't exist, check if the image exists, if yes, create a container then call the function again
-        # 3. If no image, if dockerfile exists, build it from the dockerfile then call the function again (/!\ create the network)
-        # 4. If no dockerfile, if hub name, pull the image then call the function again
-        # 5. If no hub name, we cannot do anything, log and write an error
-
-        # /!\ Some db updates will be necessary (for example if there's no image and we create one, we update the name field)
-        pass
 
 if __name__ == "__main__":
 

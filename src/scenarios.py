@@ -114,6 +114,7 @@ def Save(scenario : Scenario):
     scenarios_db['scenarios_names'] = list(scenarios_db['scenarios'].keys())
     scenarios_db['types'] = list(GetAllTypes(scenarios_db))
     scenarios_db['total_types'] = len(scenarios_db['types'])
+    scenarios_db['avg_difficulty'] = GetAverageDifficulty(scenarios_db)
     with open(global_json_path, 'w') as file:
         global_scenarios_data = {k:v for k,v in scenarios_db.items() if k != 'scenarios'}
         file.write(json.dumps(global_scenarios_data, indent=3))
@@ -157,6 +158,19 @@ def GetAllTypes(scenario_db : dict) -> set[str]:
     if "" in types:
         types.remove("")
     return types
+
+def GetAverageDifficulty(scenarios_db : dict) -> float:
+    '''
+    Returns the average difficulty level of all the scenarios
+    '''
+    result = 0
+    s_number = 0
+    for scenario in scenarios_db['scenarios'].values():
+        s_number += 1
+        result += int(scenario.difficulty)
+    result = float(result/s_number)
+    return result
+
 
 def generateReadmeContent(scenario : Scenario) -> str:
     '''
