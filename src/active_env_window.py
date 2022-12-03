@@ -37,7 +37,7 @@ class ActiveEnvWindow(QDialog, BaseWindow):
 
         self.logs_button = QPushButton('Attach to terminal', self)
         self.logs_button.move(180, 240)
-        self.logs_button.resize(80, 20)
+        self.logs_button.resize(120, 20)
         self.logs_button.clicked.connect(self.AttachToTerminal)
 
         if self.parent is not None:

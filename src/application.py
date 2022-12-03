@@ -28,6 +28,7 @@ class BaseWindow(QWidget):
         super().__init__()
         self.docker_client = None
         self.threads = []
+        self.setWindowIcon(QtGui.QIcon(src_folder_path + f"{sep}..{sep}images{sep}shield.png"))
         try: 
             self.docker_client = docker.from_env()
         except:

@@ -195,7 +195,8 @@ class ScenariosWindow(QDialog, BaseWindow):
 
         # Styling and coloring
         self.ImplementTheme()
-        self.DisableButtons(self.edit_button, self.launch_button, self.edit_container_button, self.remove_container_button)
+        self.DisableButtons(self.edit_button, self.launch_button, self.remove_button, 
+        self.edit_container_button, self.remove_container_button)
 
     # endregion
 
@@ -209,8 +210,7 @@ class ScenariosWindow(QDialog, BaseWindow):
                     +f"\n-----------------------------\nType: {scenario.type}"
                     +f"\n-----------------------------\nCVE: {scenario.CVE}"
                     +f"\n-----------------------------\nDifficulty: {scenario.difficulty}")
-        self.EnableButton(self.launch_button)
-        self.EnableButton(self.edit_button)
+        self.EnableButtons(self.launch_button, self.edit_button, self.remove_button)
     
     def AllowOpening(self):
         self.EnableButtons(self.edit_container_button, self.remove_container_button)
@@ -311,7 +311,8 @@ class ScenariosWindow(QDialog, BaseWindow):
         #TODO add unsaved changed confirmation
         self.HideUIElements(self.edit_mode_ui)
         self.ShowUIElements(self.default_mode_ui)
-        self.DisableButtons(self.edit_button, self.launch_button, self.edit_container_button, self.remove_container_button)
+        self.DisableButtons(self.edit_button, self.launch_button, self.remove_button,
+        self.edit_container_button, self.remove_container_button)
         self.current_scenario_containers.clear()
         for element in self.edit_mode_ui:
             if isinstance(element, QLineEdit) or isinstance(element, QPlainTextEdit) or isinstance(element, QListWidget):
