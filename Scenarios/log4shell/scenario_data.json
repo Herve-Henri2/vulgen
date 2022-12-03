@@ -17,7 +17,7 @@
             "bridge"
          ],
          "ports": {
-            "8080/tcp": "8080"
+            "8080": "8080"
          },
          "operating_system": "Alpine Linux-3.8.2"
       }

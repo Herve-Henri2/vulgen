@@ -178,7 +178,7 @@ class ContainersWindow(QDialog, BaseWindow):
             name = self.docker_client.containers.get(id).name
             self.setText(f'Opening up a terminal for the {name} container.')
             logger.info(f'Opening up a terminal for the {name} container.')
-            command = f"docker attach {id}"
+            command = f"docker logs {id};docker attach {id}"
             misc.open_terminal(operating_system, command)
         except Exception as ex:
             self.setText(str(ex))

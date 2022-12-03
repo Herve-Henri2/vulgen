@@ -54,6 +54,12 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.edit_button.resize(120, 20)
         self.edit_button.clicked.connect(self.EditScenarioMode)
         self.default_mode_ui.append(self.edit_button)
+        
+        self.remove_button = QPushButton('Remove Scenario', self)
+        self.remove_button.move(400, 470)
+        self.remove_button.resize(120, 20)
+        self.remove_button.clicked.connect(self.RemoveScenario)
+        self.default_mode_ui.append(self.remove_button)
 
         self.add_button = QPushButton('Add Scenario', self)
         self.add_button.move(260, 440)
@@ -61,8 +67,7 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.add_button.clicked.connect(self.AddScenarioMode)
         self.default_mode_ui.append(self.add_button)
 
-        for scenario_name in self.scenarios:
-            self.list_view.addItem(scenario_name)
+        self.RefreshListView()
 
         # Add & Edit mode UI elements
         self.edit_mode_ui = []
@@ -217,6 +222,11 @@ class ScenariosWindow(QDialog, BaseWindow):
     def ShowUIElements(self, ui_elements):
         for element in ui_elements:
             element.show()
+    
+    def RefreshListView(self):
+        self.list_view.clear()
+        for scenario_name in self.scenarios:
+            self.list_view.addItem(scenario_name)
 
     def OpenContainerAdd(self):
         window = EditContainersWindow(parent=self, addingMode=True)
@@ -231,9 +241,12 @@ class ScenariosWindow(QDialog, BaseWindow):
     def RemoveContainer(self):
         messagebox = QMessageBox(self)
         messagebox.setStyleSheet('background-color: blue')
-        messagebox.question(self, 'Removing container', 'Are you sure you want to remove that container?\n(Note: This will not delete the container but only remove it from the scenario)')
-        #messagebox.setText('This will not delete the container but only remove it from the scenario.')
-        #TODO Remove container and update view
+        remove = messagebox.question(self, 'Removing container', 'Are you sure you want to remove that container from the scenario?', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        
+        if remove == QMessageBox.StandardButton.Yes:
+            scenario_name = self.containers_list_view.currentItem().text().replace("(main) ", "")
+            self.containers_list_view.takeItem(self.containers_list_view.currentRow())
+            self.current_scenario_containers.pop(scenario_name)
 
     # endregion
 
@@ -243,6 +256,21 @@ class ScenariosWindow(QDialog, BaseWindow):
         scenario_name = self.list_view.currentItem().text()
         self.parent.LaunchScenario(scenario_name)
         self.close()
+    
+    def RemoveScenario(self):
+        messagebox = QMessageBox(self)
+        messagebox.setStyleSheet('background-color: blue')
+        remove = messagebox.question(self, 'Removing scenario', 'Are you sure you want to remove that scenario?', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        
+        if remove == QMessageBox.StandardButton.Yes:
+            scenario_name = self.list_view.currentItem().text()
+            # Remove scenario folder
+            Remove(scenario_name)
+            # Update scenarios_db and self.scenarios
+            scenarios_db = scenarios.Load()
+            self.scenarios = scenarios_db['scenarios']
+            # Update List View
+            self.RefreshListView()
 
     def EditScenarioMode(self):
         '''
@@ -308,6 +336,9 @@ class ScenariosWindow(QDialog, BaseWindow):
             if len(name) == 0:
                 result['valid_scenario'] = False
                 result['message'] += f'Name cannot be empty!' + '\n'
+            elif not name[0].isalnum():
+                result['valid_scenario'] = False
+                result['message'] += f'The first character of the name must be an alphanumeric character [a-zA-Z0-9]!'
             
             # CVE
             cve = self.cve_entry.text()
@@ -315,7 +346,7 @@ class ScenariosWindow(QDialog, BaseWindow):
                 cve_expression = "^CVE-20[0-9]{2}-[0-9]{4,6}$"
                 if regex.search(cve_expression, cve) is None:
                     result['valid_scenario'] = False
-                    result['message'] += 'Your CVE is in the wrong format or does not exist.\nA CVE must be written in the following format: CVE-YYYY-NNNN' + '\n'
+                    result['message'] += 'Your CVE is in the wrong format.\nA CVE must be written in the following format: CVE-YYYY-NNNN' + '\n'
 
             # Difficulty
             min_difficulty = 1; max_difficulty = 5
@@ -346,7 +377,7 @@ class ScenariosWindow(QDialog, BaseWindow):
             messagebox.exec()
         else:
             scenario_to_save = Scenario()
-            scenario_to_save.name = self.scenario_name.text()
+            scenario_to_save.name = self.scenario_name.text().replace(' ', '_')
             scenario_to_save.description = self.scenario_desc.toPlainText()
             scenario_to_save.goal = self.goal.toPlainText()
             scenario_to_save.solution = self.solution.toPlainText()
@@ -359,9 +390,7 @@ class ScenariosWindow(QDialog, BaseWindow):
             scenarios.Save(scenario_to_save)
             scenarios_db = scenarios.Load()
             self.scenarios = scenarios_db['scenarios']
-            self.list_view.clear()
-            for scenario_name in self.scenarios:
-                self.list_view.addItem(scenario_name)
+            self.RefreshListView()
             self.DefaultMode()
         
 
@@ -551,6 +580,10 @@ class EditContainersWindow(QDialog, BaseWindow):
                     self.networks.item(i).setSelected(True)   
         else:            
             self.networks.addItems(existing_networks)
+            for i in range(self.networks.count()):
+                if self.networks.item(i).text() == "bridge":
+                    self.networks.item(i).setSelected(True)
+                    break
 
         # Filling the other fields (or not)
         if self.addingMode is False:
@@ -584,11 +617,11 @@ class EditContainersWindow(QDialog, BaseWindow):
                 result['message'] += 'You need to have either an image or a dockerfile!' + '\n'
             
             # Ports
-            #ports = (self.container_port.text(), self.host_port.text())
-            #if len(ports[0]) != 0 or len(ports[1]) != 0:
-            #    if not ports[0].isdigit() or not ports[1].isdigit():
-            #        result['is_valid'] = False
-            #        result['message'] += 'If specified, the ports number must be positive integers!' + '\n'
+            ports = (self.container_port.text(), self.host_port.text())
+            if len(ports[0]) != 0 or len(ports[1]) != 0:
+                if not ports[0].isdigit() or not ports[1].isdigit():
+                    result['is_valid'] = False
+                    result['message'] += 'If specified, the ports number must be positive integers!' + '\n'
 
             return result
 
