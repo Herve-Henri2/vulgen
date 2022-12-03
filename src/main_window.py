@@ -324,7 +324,7 @@ class MainWindow(BaseWindow):
         '''
         logger.info(f'Launching the {scenario_name} environment.')
         self.Clear()
-        worker = ScenarioThread(scenario_name)
+        worker = ScenarioThread(scenario_name, window=self)
         worker.update_console.connect(self.Write)
         worker.started.connect(self.DisableAllButtons)
         worker.finished.connect(self.ShowScenarioUI)
@@ -354,17 +354,19 @@ class MainWindow(BaseWindow):
         self.HideScenarioUI()
         
 
-class ScenarioThread(QThread):
+class ScenarioThread(BaseThread):
 
     update_console = pyqtSignal(str)
 
-    def __init__(self, scenario_name):
+    def __init__(self, scenario_name, window : BaseWindow=None):
         super(ScenarioThread, self).__init__()
         self.scenario_name = scenario_name
+        self.window = window
         self.docker_client = docker.from_env()
 
     def run(self):
         scenario = LoadScenario(self.scenario_name)
+        self.window.LaunchWaitingHandler()
         self.update_console.emit(f'Launched the {scenario.name} scenario.')
         logger.info(f'Launched the {scenario.name} environment.')
 
@@ -384,6 +386,7 @@ class ScenarioThread(QThread):
         self.update_console.emit('------------------------------------------------------------------------------------\n'
                                  '* Click on the Instructions button to get a better scope of what needs to be done.\n'
                                  '* You can interact with all the environment containers by clicking on the Containers button.')
+        self.window.RemoveWaitingHandler()
         self.finished.emit()
 
     def LaunchContainer(self, image_name, dockerfile, main, networks_names, **kwargs):     

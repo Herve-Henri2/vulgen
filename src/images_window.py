@@ -155,7 +155,7 @@ class ImagesWindow(QDialog, BaseWindow):
                 self.threads.remove(self.threads[index])
 
         self.Clear()
-        worker = BuildImageThread(dockerfiles_path)
+        worker = BuildImageThread(dockerfiles_path, window=self)
         worker.update_console.connect(self.Write)
         worker.update_table.connect(self.updateTable)
         worker.finished.connect(ClearThreads)  
@@ -164,17 +164,18 @@ class ImagesWindow(QDialog, BaseWindow):
             
     # endregion
 
-class BuildImageThread(QThread):
+class BuildImageThread(BaseThread):
 
     update_console = pyqtSignal(str)
     update_table = pyqtSignal()
 
-    def __init__(self, dockerfiles_path : list[str]):
+    def __init__(self, dockerfiles_path : list[str], window : BaseWindow=None):
         super(BuildImageThread, self).__init__()
         self.dockerfiles_path = dockerfiles_path
-        self.docker_client = docker.from_env()
+        self.window = window
 
     def run(self):
+        self.window.LaunchWaitingHandler()
         sep = '/' if operating_system == "Linux" else '\\'
         main_image = self.dockerfiles_path[-1].split(sep)[-1]
         self.update_console.emit(f'Started building the {main_image} image.')
@@ -195,8 +196,8 @@ class BuildImageThread(QThread):
             self.update_console.emit(f'Error: {str(ex)}')
             logger.info(ex)
         finally:
+            self.window.RemoveWaitingHandler()
             self.finished.emit()
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

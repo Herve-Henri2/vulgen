@@ -4,6 +4,7 @@ import docker
 import logging
 import os
 import platform
+import time
 
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
@@ -89,6 +90,30 @@ class BaseWindow(QWidget):
     def Clear(self):
         self.textbox.clear()
 
+    def GetText(self):
+        return self.textbox.toPlainText()
+
+    def BorderColorBlink(self):
+
+        border_color = theme['border_color']
+        textbox_color = theme['main_window_textbox_color']
+
+        textbox_stylesheet = self.textbox.styleSheet()
+        stylesheet_no_border = ';'.join(textbox_stylesheet.split(';')[:-1])
+        
+        current_border_color = textbox_stylesheet.split(';')[-1].strip()[-8:].replace("'", "")
+        if current_border_color == border_color:
+            new_border_color = textbox_color
+        else:
+            new_border_color = border_color
+        textbox_stylesheet = f"{stylesheet_no_border}; border: 1px solid '{new_border_color}'"
+        self.textbox.setStyleSheet(textbox_stylesheet)
+
+    def OriginalTextboxStyle(self): 
+        stylesheet_no_border = ';'.join(self.textbox.styleSheet().split(';')[:-1])
+        original_stylesheet = f"{stylesheet_no_border}; border: 1px solid '{theme['border_color']}'"
+        self.textbox.setStyleSheet(original_stylesheet)
+
     def ImplementTheme(self, *exceptions, main_window=True):
 
         if main_window:
@@ -128,7 +153,53 @@ class BaseWindow(QWidget):
                 element.horizontalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
                 element.verticalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
 
+    def LaunchWaitingHandler(self):
+        waiting_handler = WaitingHandler(window=self)
+        waiting_handler.blink.connect(self.BorderColorBlink)
+        waiting_handler.finished.connect(self.RemoveWaitingHandlerThread)
+        waiting_handler.finished.connect(self.OriginalTextboxStyle)
+        self.threads.append(waiting_handler)
+        self.threads[-1].start()
+
+    def RemoveWaitingHandler(self):
+        for thread in self.threads:
+            if isinstance(thread, WaitingHandler):
+                thread.stop = True
+
+    def RemoveWaitingHandlerThread(self):
+        for thread in self.threads:
+            if isinstance(thread, WaitingHandler):
+                self.threads.remove(thread)
     # endregion
+
+class BaseThread(QThread):
+
+    def __init__(self, window : BaseWindow=None):
+
+        super().__init__()
+        self.window = window
+        self.docker_client = docker.from_env()
+
+class WaitingHandler(BaseThread):
+
+    blink = pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+
+        super(WaitingHandler, self).__init__(*args, **kwargs)
+        self.stop = False
+
+    def run(self):
+        if isinstance(self.window, BaseWindow):
+            self.Waiting()
+
+    def Waiting(self):
+        if self.stop is False:
+            self.blink.emit()
+            time.sleep(0.5)
+            self.Waiting()
+        else:
+            self.finished.emit()
 
 
 def DetectDockerDesktopPath():
