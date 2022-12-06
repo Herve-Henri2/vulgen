@@ -13,6 +13,7 @@ from PyQt6 import QtGui
 # Our wide application variables, that are shared between all the windows within our app
 sep = '/' if platform.system() == "Linux" else '\\'
 src_folder_path = os.path.realpath(os.path.dirname(__file__))
+
 configuration = config.Load()
 scenarios_db = scenarios.Load()
 operating_system = configuration['operating_system']
@@ -21,6 +22,8 @@ mode = configuration['modes'][configuration['current_mode_index']]
 theme = config.GetTheme(configuration)
 logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
 logger = logging.getLogger()
+
+# region =====Base Classes=====
 
 class BaseWindow(QWidget):
 
@@ -153,6 +156,14 @@ class BaseWindow(QWidget):
                 element.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
                 element.horizontalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
                 element.verticalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
+            elif isinstance(element, QCheckBox):
+                element.setStyleSheet("QCheckBox::indicator:checked {"
+                                      f"background-color: {text_color}; color: #FFFFFF"
+                                      "}"
+                                      "QCheckBox::indicator {"
+                                      f"background-color: {textbox_color};"
+                                      "}")
+                # element.setStyleSheet("background-color: rgba(255, 90, 90, 0.7);")
 
     def LaunchWaitingHandler(self):
         waiting_handler = WaitingHandler(window=self)
@@ -202,6 +213,9 @@ class WaitingHandler(BaseThread):
         else:
             self.finished.emit()
 
+# endregion
+
+# region =====Initializing functions=====
 
 def DetectDockerDesktopPath():
     '''
@@ -215,8 +229,13 @@ def DetectDockerDesktopPath():
             docker_desktop = path
             config.Save('docker_desktop', path)
 
-if operating_system == "Windows":
-    if not configuration['docker_desktop'] or configuration['docker_desktop'] == "":
-        DetectDockerDesktopPath()
-    else:
-        docker_desktop = configuration['docker_desktop']
+def InitializeApp():
+    if operating_system == "Windows":
+        if not configuration['docker_desktop'] or configuration['docker_desktop'] == "":
+            DetectDockerDesktopPath()
+        else:
+            docker_desktop = configuration['docker_desktop']
+
+# endregion
+
+InitializeApp()

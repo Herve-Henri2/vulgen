@@ -34,7 +34,6 @@ class OptionsWindow(QDialog, BaseWindow):
         if operating_system != "Windows":
             self.docker_desktop_entry.setEnabled(False)
         
-
         # Buttons
         self.save_button = QPushButton('Save', self)
         self.save_button.move(370, 260)
@@ -45,8 +44,7 @@ class OptionsWindow(QDialog, BaseWindow):
         self.browse_button.move(50, 70)
         self.browse_button.resize(80, 20)
         self.browse_button.clicked.connect(self.FileDialog)
-        if operating_system != "Windows":
-            self.docker_desktop_entry.setEnabled(False)
+
 
         # Theme Combobox + Label
 
@@ -55,9 +53,6 @@ class OptionsWindow(QDialog, BaseWindow):
 
         self.themes = QComboBox(self)
         self.themes.move(50, 120)
-        for theme in configuration['themes']:
-            self.themes.addItem(theme['name'])
-        self.themes.setCurrentText(configuration['themes'][configuration['current_theme_index']]['name'])
 
         # Mode Combobox + Label
 
@@ -66,13 +61,21 @@ class OptionsWindow(QDialog, BaseWindow):
 
         self.modes = QComboBox(self)
         self.modes.move(50, 170)
-        for mode in configuration['modes']:
-            self.modes.addItem(mode)
-        self.modes.setCurrentText(configuration['modes'][configuration['current_mode_index']])
+
+        # Shell opening upon scenario launch
+
+        self.auto_attach_label = QLabel('Auto attach container to terminal', self)
+        self.auto_attach_label.move(50, 200)
+
+        self.auto_attach_checkbox = QCheckBox(self)
+        self.auto_attach_checkbox.move(50, 220)
 
         # Restart label
         self.restart_label = QLabel('(Restart the app to apply the new parameters)', self)
-        self.restart_label.move(100, 260)
+        self.restart_label.move(100, 263)
+
+        # Initializing
+        self.Initialize()
 
         # Styling and coloring
         self.ImplementTheme()
@@ -88,6 +91,21 @@ class OptionsWindow(QDialog, BaseWindow):
     # endregion
 
     # region =====General Methods=====
+
+    def Initialize(self):
+        if operating_system != "Windows":
+            self.docker_desktop_entry.setEnabled(False)
+
+        for theme in configuration['themes']:
+            self.themes.addItem(theme['name'])
+        self.themes.setCurrentText(configuration['themes'][configuration['current_theme_index']]['name'])
+
+        for mode in configuration['modes']:
+            self.modes.addItem(mode)
+        self.modes.setCurrentText(configuration['modes'][configuration['current_mode_index']])
+
+        if configuration['auto_attach'] is True:
+            self.auto_attach_checkbox.setChecked(True)
 
     def FileDialog(self):
         fname = QFileDialog.getOpenFileName(self, "Select the Docker Desktop.exe file", "", 'All Files (*Desktop.exe)')
@@ -113,6 +131,10 @@ class OptionsWindow(QDialog, BaseWindow):
                 config.Save('docker_desktop', self.docker_desktop_entry.text())
             config.Save('current_theme_index', self.themes.currentIndex())
             config.Save('current_mode_index', self.modes.currentIndex())
+            if self.auto_attach_checkbox.isChecked():
+                config.Save('auto_attach', True)
+            else:
+                config.Save('auto_attach', False)
             self.close()
 
     #endregion

@@ -7,7 +7,7 @@ config_file = "config.json"
 
 #  region =====Config variables=====
 
-variables_list = ['operating_system', 'docker_desktop', 'log_file', 'log_format', 'current_mode_index', 'modes', 'current_theme_index', 'themes']
+variables_list = ['operating_system', 'docker_desktop', 'log_file', 'log_format', 'current_mode_index', 'modes', 'auto_attach', 'current_theme_index', 'themes']
 
 configuration['operating_system'] = platform.system()
 configuration['docker_desktop'] = ""
@@ -17,6 +17,10 @@ configuration['log_format'] = "%(asctime)s | %(levelname)s - %(message)s"
 # Education or challenge mode
 configuration['current_mode_index'] = 0
 configuration['modes'] = ['Education', 'Challenge']
+
+# Attaching container to terminal upon scenario launch
+
+configuration['auto_attach'] = True
 
 # UI Themes
 configuration['current_theme_index'] = 0 # Default theme
