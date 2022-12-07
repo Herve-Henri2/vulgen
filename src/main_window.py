@@ -203,11 +203,6 @@ class MainWindow(BaseWindow):
         self.scenarios_window = ScenariosWindow(parent=self)
         self.scenarios_window.exec()
 
-    def Test(self):
-        self.Clear()
-        for container in self.GetRunningScenarioContainers():
-            self.Write(container.name)
-
     def ShowGoal(self):
         running_scenario = self.GetRunningScenario()
         self.setText(running_scenario.goal)
@@ -341,10 +336,8 @@ class MainWindow(BaseWindow):
         logger.info(f'Terminated the {scenario.name} environment.')
         
         # We stop the containers
-        containers = self.docker_client.containers.list()
-        for container in containers:
-            if scenario.name in container.name:
-                container.remove(force=True)
+        for container in self.GetRunningScenarioContainers():
+            container.remove(force=True)
         # We destroy the thread
         scenario_thread = self.ScenarioRunning()
         self.threads.remove(scenario_thread)
