@@ -4,6 +4,7 @@ from application import *
 import docker_utils as dutils
 from scenarios import *
 
+# region =====Scenario Window=====
 
 class ScenariosWindow(QDialog, BaseWindow):
     # region =====Initializing=====
@@ -393,9 +394,14 @@ class ScenariosWindow(QDialog, BaseWindow):
             self.scenarios = scenarios_db['scenarios']
             self.RefreshListView()
             self.DefaultMode()
+            self.Clear()
         
 
     # endregion
+
+# endregion
+
+# region =====EditContainersWindow=====
 
 class EditContainersWindow(QDialog, BaseWindow):
     
@@ -672,6 +678,7 @@ class EditContainersWindow(QDialog, BaseWindow):
 
     # endregion
 
+# endregion
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

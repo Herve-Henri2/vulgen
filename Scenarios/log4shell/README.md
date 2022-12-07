@@ -4,7 +4,7 @@
 <p>In December 2021, Apache had to release up to 4 corrective patches to fully close the breach. It is believed that malicious actors likely knew about the vulnerability and exploited it before experts did, hence why it is considered zero-day.</p>
 
 <h2>Goal</h2>
-<p>Find a way to remotely execute commands within the system (container).</p>
+<p>With the help of JNDI lookups, perform admin privilege actions upon the system (main container).</p>
 
 <h2>Solution</h2>
 <details>

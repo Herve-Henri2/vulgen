@@ -203,11 +203,6 @@ class MainWindow(BaseWindow):
         self.scenarios_window = ScenariosWindow(parent=self)
         self.scenarios_window.exec()
 
-    def Test(self):
-        self.Clear()
-        for container in self.GetRunningScenarioContainers():
-            self.Write(container.name)
-
     def ShowGoal(self):
         running_scenario = self.GetRunningScenario()
         self.setText(running_scenario.goal)
@@ -341,10 +336,8 @@ class MainWindow(BaseWindow):
         logger.info(f'Terminated the {scenario.name} environment.')
         
         # We stop the containers
-        containers = self.docker_client.containers.list()
-        for container in containers:
-            if scenario.name in container.name:
-                container.remove(force=True)
+        for container in self.GetRunningScenarioContainers():
+            container.remove(force=True)
         # We destroy the thread
         scenario_thread = self.ScenarioRunning()
         self.threads.remove(scenario_thread)
@@ -384,8 +377,10 @@ class ScenarioThread(BaseThread):
                 self.LaunchContainer(image_name=container.image_name, dockerfile=container.dockerfile, main=container.is_main, networks_names=container.networks, name=name, stdin_open=True, tty=True)
 
         self.update_console.emit('------------------------------------------------------------------------------------\n'
-                                 '* Click on the Instructions button to get a better scope of what needs to be done.\n'
+                                 '* Click on the Goal button to get a better scope of what needs to be done.\n'
                                  '* You can interact with all the environment containers by clicking on the Containers button.')
+        if mode == "Education":
+            self.update_console.emit('* You can click on the Solution button to get access to the exploit steps')
         self.window.RemoveWaitingHandler()
         self.finished.emit()
 

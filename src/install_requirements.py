@@ -1,5 +1,23 @@
-import sys, subprocess, platform
+import sys, subprocess, platform, os
 operating_system = platform.system()
+
+# if any issue, please type in 'python -m pip install --upgrade pip' in a shell
+
+if operating_system == "Windows":
+    try:
+        import curses
+    except ModuleNotFoundError:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'windows-curses'])
+    try:
+        import win32gui
+    except:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pywin32'])
+
+elif operating_system == "Linux":
+    try:
+        import curses
+    except ModuleNotFoundError:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'curses'])
 
 try:
     from PyQt6.QtCore import *
@@ -22,18 +40,3 @@ try:
 except ModuleNotFoundError:
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'regex'])
 
-if operating_system == "Windows":
-    try:
-        import curses
-    except ModuleNotFoundError:
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'windows-curses'])
-    try:
-        import win32gui
-    except:
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'pywin32'])
-
-elif operating_system == "Linux":
-    try:
-        import curses
-    except ModuleNotFoundError:
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'curses'])
