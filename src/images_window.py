@@ -63,10 +63,12 @@ class ImagesWindow(QDialog, BaseWindow):
         
         
         # Button
-        self.refresh_button = QPushButton('R.', self)
+        self.refresh_button = QPushButton('', self)
+        self.refresh_button.setIcon(QtGui.QIcon(src_folder_path + f"{sep}..{sep}images{sep}refresh.png"))
+        self.refresh_button.setIconSize(QSize(24,24))
         self.refresh_button.move(10, 20)
-        self.refresh_button.resize(20, 20)
-        self.refresh_button.clicked.connect(self.updateTable)           
+        self.refresh_button.resize(24, 24)
+        self.refresh_button.clicked.connect(self.updateTable)    
         
         # Fill the table
         self.updateTable()
