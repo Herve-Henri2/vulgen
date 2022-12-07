@@ -13,7 +13,7 @@
          "dockerfile": "../docker_images/base_images/kalilinux",
          "is_main": true,
          "networks": [
-            "network_demo"
+            "network_metasploitable"
          ],
          "ports": {},
          "operating_system": "Kali Linux"
@@ -23,7 +23,7 @@
          "dockerfile": "N/A",
          "is_main": false,
          "networks": [
-            "network_demo"
+            "network_metasploitable"
          ],
          "ports": {},
          "operating_system": "Linux"

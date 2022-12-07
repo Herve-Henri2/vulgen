@@ -4,4 +4,6 @@ RUN apt-get update && apt-get install -y \
     net-tools \
     ftp \
     netdiscover \
-    nmap
+    nmap \
+    hashcat \
+    ssh
