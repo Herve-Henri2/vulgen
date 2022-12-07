@@ -118,12 +118,6 @@ class MainWindow(BaseWindow):
         self.scenarios_button.clicked.connect(self.OpenScenarios)
         self.scenarios_button.setShortcut('s')
 
-        self.test_button = QPushButton('Test', self)
-        self.test_button.move(col1 + 20, 200)
-        self.test_button.resize(120, 20)
-        self.test_button.clicked.connect(self.Test)
-        self.test_button.hide()
-
         # Scenario UI
         self.scenario_label = QLabel('Active scenario', self)
         self.scenario_label.move(col1 + 40, 240)

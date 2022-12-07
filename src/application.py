@@ -158,7 +158,7 @@ class BaseWindow(QWidget):
                 element.verticalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
             elif isinstance(element, QCheckBox):
                 element.setStyleSheet("QCheckBox::indicator:checked {"
-                                      f"background-color: {text_color}; color: #FFFFFF"
+                                      f"background-color: #00FF00; color: #FFFFFF"
                                       "}"
                                       "QCheckBox::indicator {"
                                       f"background-color: {textbox_color};"
