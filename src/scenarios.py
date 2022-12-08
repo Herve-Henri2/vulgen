@@ -2,6 +2,7 @@ import platform
 import os
 import shutil # for recursive removal of folder
 import json
+from application import *
 
 
 # This file is used to work around the scenarios database declared as scenario_db in the file application.py
@@ -15,7 +16,6 @@ import json
 
 
 # Defining the main paths
-sep = '/' if platform.system() == "Linux" else '\\'
 scenarios_folder_path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}Scenarios"
 global_json_path = scenarios_folder_path + f"{sep}scenarios.json"
 
@@ -212,10 +212,10 @@ def Remove(scenario_name : str):
     '''
     scenario_folder_path = scenarios_folder_path + f"{sep}{scenario_name}"
     try:
+        logger.info(f'Removing the scenario: {scenario_name}')
         shutil.rmtree(scenario_folder_path)
-    except:
-        # TODO logger
-        pass
+    except Exception as ex:
+        logger.error(f'Error while trying to remove the scenario {scenario_name}: {ex}')
 
 
 def LoadScenario(name : str) -> Scenario:

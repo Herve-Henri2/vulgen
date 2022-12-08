@@ -272,6 +272,8 @@ class ScenariosWindow(QDialog, BaseWindow):
             self.scenarios = scenarios_db['scenarios']
             # Update List View
             self.RefreshListView()
+            # Clear the textbox
+            self.Clear()
 
     def EditScenarioMode(self):
         '''
@@ -662,7 +664,7 @@ class EditContainersWindow(QDialog, BaseWindow):
             
             if self.dockerfile_checkbox.isChecked():
                 container_to_save.dockerfile = self.dockerfile_entry.text()
-                container_to_save.image_name = f"{container_to_save.dockerfile.split(sep)[-1]}:custom"
+                container_to_save.image_name = f"{container_to_save.dockerfile.split('/')[-1]}:custom"
             else:
                 container_to_save.image_name = self.image_entry.text()
                 
