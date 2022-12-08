@@ -1,8 +1,9 @@
 import platform
+import config
+import logging
 import os
 import shutil # for recursive removal of folder
 import json
-from application import *
 
 
 # This file is used to work around the scenarios database declared as scenario_db in the file application.py
@@ -14,8 +15,13 @@ from application import *
 #       -> key 'types' : list of strings
 #       -> key 'scenarios' : dictionnary that associates a string (name of the scenario) with a Scenario object
 
+# logger
+configuration = config.Load()
+logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
+logger = logging.getLogger()
 
 # Defining the main paths
+sep = '/' if platform.system() == "Linux" else '\\'
 scenarios_folder_path = os.path.realpath(os.path.dirname(__file__)) + f"{sep}..{sep}Scenarios"
 global_json_path = scenarios_folder_path + f"{sep}scenarios.json"
 
