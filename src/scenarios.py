@@ -98,8 +98,7 @@ def retrieveScenarioDataFromFolder(folder_path : str, scenarios_db : dict):
         with open(json_path, 'r') as file:
             scenario_json_data = json.load(file)
     except Exception as ex:
-        # TODO logger
-        return
+        logger.error(f'Error while trying to retrieve the scenario data from {folder_path}: {ex}')
         
     scenarios_db['scenarios'][scenario_json_data['name']] = Parse(scenario_json_data, readme_path)
 
@@ -246,8 +245,7 @@ def Parse(scenario_json_data : dict, readme_path = "") -> Scenario:
             try:
                 setattr(scenario, attribute_name, scenario_json_data[attribute_name])
             except Exception as ex:
-                # TODO logger
-                pass
+                logger.error(f'Error while parsing the scenario: {ex}')
     
     desc = ""; goal = ""; sol = ""
     if len(readme_path) != 0:
@@ -265,8 +263,7 @@ def Parse(scenario_json_data : dict, readme_path = "") -> Scenario:
             try:
                 setattr(container, attribute_name, container_data[attribute_name])
             except Exception as ex:
-                # TODO logger
-                pass
+                logger.error(f'Error while parsing the container: {ex}')
         
         containers[container.image_name] = container
     scenario.containers = containers
@@ -307,8 +304,7 @@ def ParseReadme(readme_file_path : str) -> tuple[str, str, str]:
                 sol += split_buffer[:-1]
             index += 1
     except Exception as ex:
-        # TODO logger
-        pass
+        logger.error(f'An error occured while trying to parse {readme_file_path}: {ex}')
     
     return (desc, goal, sol)
 
