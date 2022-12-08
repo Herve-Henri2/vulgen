@@ -57,6 +57,9 @@ class ActiveEnvWindow(QDialog, BaseWindow):
         self.EnableButtons(self.open_shell_button, self.logs_button)
 
     def OpenShell(self):
+        '''
+        Allows you to open a shell in the container's home folder.
+        '''
         selection = self.list_view.currentItem().text().split('|')[0][:-1]
         print(selection)
         if selection is None or len(selection) == 0:
@@ -69,7 +72,10 @@ class ActiveEnvWindow(QDialog, BaseWindow):
         except Exception as ex:
             logger.info(ex)
 
-    def AttachToTerminal(self):        
+    def AttachToTerminal(self):
+        '''
+        Opens up a shell corresponding to the container's latest command. For example, if the container launches a script on start, this shell will lead you to it.
+        '''        
         selection = self.list_view.currentItem().text().split('|')[0][:-1]
         print(selection)
         if selection is None or len(selection) == 0:

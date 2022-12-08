@@ -272,6 +272,8 @@ class ScenariosWindow(QDialog, BaseWindow):
             self.scenarios = scenarios_db['scenarios']
             # Update List View
             self.RefreshListView()
+            # Clear the textbox
+            self.Clear()
 
     def EditScenarioMode(self):
         '''
@@ -457,26 +459,26 @@ class EditContainersWindow(QDialog, BaseWindow):
         
         # Container port
         self.container_port_label = QLabel('Container port', self)
-        self.container_port_label.move(350, 160)
+        self.container_port_label.move(280, 160)
 
         self.container_port = QLineEdit(self)
-        self.container_port.move(350, 180)
+        self.container_port.move(280, 180)
         self.container_port.resize(100, 20)
         
         # Host port
         self.host_port_label = QLabel('Host port', self)
-        self.host_port_label.move(470, 160)
+        self.host_port_label.move(400, 160)
 
         self.host_port = QLineEdit(self)
-        self.host_port.move(470, 180)
+        self.host_port.move(400, 180)
         self.host_port.resize(100, 20)
         
         # Operating System
         self.container_os_label = QLabel('Operating system', self)
-        self.container_os_label.move(350, 210)
+        self.container_os_label.move(280, 210)
 
         self.container_os = QLineEdit(self)
-        self.container_os.move(350, 230)
+        self.container_os.move(280, 230)
         self.container_os.resize(150, 20)
         
         # Buttons
@@ -504,7 +506,7 @@ class EditContainersWindow(QDialog, BaseWindow):
         self.image_checkbox_label = QLabel("Image", self)
         self.image_checkbox_label.move(360, 40)  
         self.image_checkbox = QCheckBox(self)
-        self.image_checkbox.move(415, 40)
+        self.image_checkbox.move(405, 38)
         self.image_checkbox.resize(20, 20)
         self.image_checkbox.setChecked(True)
         self.image_checkbox.stateChanged.connect(self.onCheck)
@@ -512,15 +514,21 @@ class EditContainersWindow(QDialog, BaseWindow):
         self.dockerfile_checkbox_label = QLabel("Dockerfile", self)
         self.dockerfile_checkbox_label.move(460, 40)
         self.dockerfile_checkbox = QCheckBox(self)
-        self.dockerfile_checkbox.move(540, 40)
+        self.dockerfile_checkbox.move(520, 38)
         self.dockerfile_checkbox.resize(20, 20)
         self.dockerfile_checkbox.stateChanged.connect(self.onCheck)        
 
         self.is_main_checkbox_label = QLabel('Main Container', self)
-        self.is_main_checkbox_label.move(350, 130)
+        self.is_main_checkbox_label.move(280, 130)
         self.is_main_checkbox = QCheckBox(self)
-        self.is_main_checkbox.move(470, 130)
+        self.is_main_checkbox.move(370, 128)
         self.is_main_checkbox.resize(20, 20)
+
+        self.requires_it_label = QLabel('Requires Interaction', self)
+        self.requires_it_label.move(400, 130)
+        self.requires_it_checkbox = QCheckBox(self)
+        self.requires_it_checkbox.move(520, 128)
+        self.requires_it_checkbox.resize(20, 20)
 
         self.ImplementTheme()
 
@@ -604,6 +612,9 @@ class EditContainersWindow(QDialog, BaseWindow):
             
             if self.container_to_edit.is_main is True:
                 self.is_main_checkbox.setChecked(True)
+
+            if self.container_to_edit.requires_it is True:
+                self.requires_it_checkbox.setChecked(True)
                 
             for key, value in self.container_to_edit.ports.items():
                 self.container_port.setText(key)
@@ -621,14 +632,23 @@ class EditContainersWindow(QDialog, BaseWindow):
             dockerfile = self.dockerfile_entry.text()
             if len(image_name) == 0 and len(dockerfile) == 0:
                 result['is_valid'] = False
-                result['message'] += 'You need to have either an image or a dockerfile!' + '\n'
+                result['message'] += 'You need to have either an image or a dockerfile!\n' 
             
             # Ports
             ports = (self.container_port.text(), self.host_port.text())
             if len(ports[0]) != 0 or len(ports[1]) != 0:
                 if not ports[0].isdigit() or not ports[1].isdigit():
                     result['is_valid'] = False
-                    result['message'] += 'If specified, the ports number must be positive integers!' + '\n'
+                    result['message'] += 'If specified, the ports number must be positive integers!\n' 
+
+            # Only one main
+            if self.is_main_checkbox.isChecked():
+                for container in self.parent.current_scenario_containers:
+                    container = self.parent.current_scenario_containers[container]
+                    if container.is_main is True and container.image_name != image_name and container.dockerfile != dockerfile :
+                        result['is_valid'] = False
+                        result['message'] += 'There can only be one main container within a scenario!\n'
+                    
 
             return result
 
@@ -644,11 +664,12 @@ class EditContainersWindow(QDialog, BaseWindow):
             
             if self.dockerfile_checkbox.isChecked():
                 container_to_save.dockerfile = self.dockerfile_entry.text()
-                container_to_save.image_name = f"{container_to_save.dockerfile.split(sep)[-1]}:custom"
+                container_to_save.image_name = f"{container_to_save.dockerfile.split('/')[-1]}:custom"
             else:
                 container_to_save.image_name = self.image_entry.text()
                 
             container_to_save.is_main = self.is_main_checkbox.isChecked()
+            container_to_save.requires_it = self.requires_it_checkbox.isChecked()
             container_to_save.networks = [selection.text() for selection in self.networks.selectedItems()]
             if len(self.container_port.text()) != 0 and len(self.host_port.text()) != 0:
                 container_to_save.ports = {self.container_port.text() : self.host_port.text()}

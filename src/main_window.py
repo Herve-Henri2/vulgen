@@ -366,9 +366,11 @@ class ScenarioThread(BaseThread):
             except:
                 pass
             if len(container.ports) != 0:
-                self.LaunchContainer(image_name=container.image_name, dockerfile=container.dockerfile, main=container.is_main, networks_names=container.networks, ports=container.ports, name=name, stdin_open=True, tty=True)
+                self.LaunchContainer(image_name=container.image_name, dockerfile=container.dockerfile, 
+                                    requires_it=container.requires_it, networks_names=container.networks, ports=container.ports, name=name, stdin_open=True, tty=True)
             else:
-                self.LaunchContainer(image_name=container.image_name, dockerfile=container.dockerfile, main=container.is_main, networks_names=container.networks, name=name, stdin_open=True, tty=True)
+                self.LaunchContainer(image_name=container.image_name, dockerfile=container.dockerfile, 
+                                    requires_it=container.requires_it, networks_names=container.networks, name=name, stdin_open=True, tty=True)
 
         self.update_console.emit('------------------------------------------------------------------------------------\n'
                                  '* Click on the Goal button to get a better scope of what needs to be done.\n'
@@ -378,7 +380,7 @@ class ScenarioThread(BaseThread):
         self.window.RemoveWaitingHandler()
         self.finished.emit()
 
-    def LaunchContainer(self, image_name, dockerfile, main, networks_names, **kwargs):     
+    def LaunchContainer(self, image_name, dockerfile, requires_it, networks_names, **kwargs):     
         if len(dockerfile) != 0:
             try:
                 self.update_console.emit(f'Building the {image_name} image...')
@@ -406,6 +408,10 @@ class ScenarioThread(BaseThread):
                     networks = [network for network in self.docker_client.networks.list() if network.name in networks_names[1:]]
                     for network in networks:
                         network.connect(container.short_id)
+            if requires_it is True:
+                logger.info(f'Attaching the {image_name} container to a new terminal.')
+                command = f"docker logs {container.short_id};docker attach {container.short_id}"
+                misc.open_terminal(operating_system, command)
             self.update_console.emit(f"Done!")
             logger.info(f"Done!")
         except Exception as ex:
