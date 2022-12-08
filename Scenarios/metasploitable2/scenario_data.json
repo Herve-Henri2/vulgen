@@ -12,6 +12,7 @@
          "image_name": "kalilinux:custom",
          "dockerfile": "../docker_images/base_images/kalilinux",
          "is_main": true,
+         "requires_it": true,
          "networks": [
             "network_demo"
          ],
@@ -22,6 +23,7 @@
          "image_name": "tleemcjr/metasploitable2:latest",
          "dockerfile": "N/A",
          "is_main": false,
+         "requires_it": false,
          "networks": [
             "network_demo"
          ],

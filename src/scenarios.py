@@ -23,10 +23,11 @@ global_json_path = scenarios_folder_path + f"{sep}scenarios.json"
 # region =====Container Class=====
 
 class Container:
-    def __init__(self, image_name="", dockerfile="", is_main=False, networks : list[str] = [], ports : dict[str,str] = {}, operating_system=""):
+    def __init__(self, image_name="", dockerfile="", is_main=False, requires_it=False, networks : list[str] = [], ports : dict[str,str] = {}, operating_system=""):
         self.image_name = image_name
         self.dockerfile = dockerfile
         self.is_main = is_main
+        self.requires_it = requires_it
         self.networks = networks
         self.ports = ports
         self.operating_system = operating_system

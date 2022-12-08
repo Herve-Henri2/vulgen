@@ -23,6 +23,7 @@ theme = config.GetTheme(configuration)
 logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
 logger = logging.getLogger()
 
+
 # region =====Base Classes=====
 
 class BaseWindow(QWidget):
@@ -156,14 +157,6 @@ class BaseWindow(QWidget):
                 element.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
                 element.horizontalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
                 element.verticalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
-            elif isinstance(element, QCheckBox):
-                element.setStyleSheet("QCheckBox::indicator:checked {"
-                                      f"background-color: {text_color}; color: #FFFFFF"
-                                      "}"
-                                      "QCheckBox::indicator {"
-                                      f"background-color: {textbox_color};"
-                                      "}")
-                # element.setStyleSheet("background-color: rgba(255, 90, 90, 0.7);")
 
     def LaunchWaitingHandler(self):
         waiting_handler = WaitingHandler(window=self)
