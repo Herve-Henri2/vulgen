@@ -6,4 +6,6 @@ RUN apt-get update && apt-get install -y \
     netdiscover \
     nmap \
     hashcat \
-    ssh
+    ssh \
+    binwalk \
+    iproute2
