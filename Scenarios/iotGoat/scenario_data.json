@@ -9,24 +9,26 @@
    ],
    "containers": [
       {
-         "image_name": "kalilinux-iot_goat:custom",
-         "dockerfile": "../docker_images/kalilinux-iot_goat",
-         "is_main": true,
-         "networks": [
-            "network_iotGoat"
-         ],
-         "ports": {},
-         "operating_system": "Kali Linux"
-      },
-      {
-         "image_name": "iot_goat:custom",
-         "dockerfile": "../docker_images/iot_goat",
+         "image_name": "iot-goat:custom",
+         "dockerfile": "../docker_images/iot-goat",
          "is_main": false,
+         "requires_it": false,
          "networks": [
             "network_iotGoat"
          ],
          "ports": {},
          "operating_system": "Ubuntu 20"
+      },
+      {
+         "image_name": "kalilinux_iot-goat:custom",
+         "dockerfile": "../docker_images/kalilinux_iot-goat",
+         "is_main": true,
+         "requires_it": false,
+         "networks": [
+            "network_iotGoat"
+         ],
+         "ports": {},
+         "operating_system": "Kali Linux"
       }
    ]
 }

@@ -1,4 +1,4 @@
-#! /usr/bin/bash
+#! /bin/bash
 
 # Retrieve this script directory
 DIR_NAME=$(dirname ${BASH_SOURCE:-$0})

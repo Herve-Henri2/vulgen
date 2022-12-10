@@ -639,16 +639,7 @@ class EditContainersWindow(QDialog, BaseWindow):
             if len(ports[0]) != 0 or len(ports[1]) != 0:
                 if not ports[0].isdigit() or not ports[1].isdigit():
                     result['is_valid'] = False
-                    result['message'] += 'If specified, the ports number must be positive integers!\n' 
-
-            # Only one main
-            if self.is_main_checkbox.isChecked():
-                for container in self.parent.current_scenario_containers:
-                    container = self.parent.current_scenario_containers[container]
-                    if container.is_main is True and container.image_name != image_name and container.dockerfile != dockerfile :
-                        result['is_valid'] = False
-                        result['message'] += 'There can only be one main container within a scenario!\n'
-                    
+                    result['message'] += 'If specified, the ports number must be positive integers!\n'                    
 
             return result
 

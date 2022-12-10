@@ -2,7 +2,7 @@
 <p>The IoTGoat Project is a deliberately insecure firmware based on OpenWrt and maintained by OWASP as a platform to educate software developers and security professionals with testing commonly found vulnerabilities in IoT devices.</p>
 <p></p>
 <p>An IoTGoat machine is currently being emulated in a machine deployed on the network. The ssh port of IoTGoat is open and has been forwarded to the port 8022 of its host machine through NAT.</p>
-<p>The filesystem of IoTGoat has already been extracted on your machine with binwalk.</p>
+<p>You have access to the firmware image of IoTGoat.</p>
 
 <h2>Goal</h2>
 <p>Access to the IoTGoat machine using a ssh connection.</p>
