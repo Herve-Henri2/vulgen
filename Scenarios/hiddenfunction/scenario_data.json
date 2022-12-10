@@ -1,0 +1,21 @@
+{
+   "name": "hiddenfunction",
+   "CVE": "N/A",
+   "difficulty": "2",
+   "type": "Buffer Overflow",
+   "sources": [],
+   "containers": [
+      {
+         "image_name": "binary exploitation:custom",
+         "dockerfile": "C:/Users/clare/Documents/GitHub/vulgen/docker_images/binary exploitation",
+         "is_main": false,
+         "requires_it": false,
+         "networks": [
+            "host",
+            "none"
+         ],
+         "ports": {},
+         "operating_system": "N/A"
+      }
+   ]
+}
