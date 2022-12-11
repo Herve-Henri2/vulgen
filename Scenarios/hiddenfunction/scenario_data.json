@@ -6,13 +6,12 @@
    "sources": [],
    "containers": [
       {
-         "image_name": "binary exploitation:custom",
-         "dockerfile": "C:/Users/clare/Documents/GitHub/vulgen/docker_images/binary exploitation",
-         "is_main": false,
+         "image_name": "binary_exploitation:custom",
+         "dockerfile": "../docker_images/binary_exploitation",
+         "is_main": true,
          "requires_it": false,
          "networks": [
-            "host",
-            "none"
+            "bridge"
          ],
          "ports": {},
          "operating_system": "N/A"
