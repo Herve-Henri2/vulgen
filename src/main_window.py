@@ -13,8 +13,6 @@ from scenarios import *
 import docker_utils as dutils
 import misc
 
-# TODO Delete all scenario containers after an update
-
 class MainWindow(BaseWindow):
 
     # region =====Initializing=====
@@ -339,6 +337,8 @@ class MainWindow(BaseWindow):
         self.EnableAllButtons()
         # We hide the scenario UI
         self.HideScenarioUI()
+
+    # endregion
         
 
 class ScenarioThread(BaseThread):

@@ -2,7 +2,7 @@
    "name": "iotGoat",
    "CVE": "N/A",
    "difficulty": "N/A",
-   "type": "Weak password",
+   "type": "Brute Force",
    "sources": [
       "https://github.com/OWASP/IoTGoat",
       "https://github.com/danielmiessler/SecLists"

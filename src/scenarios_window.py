@@ -206,11 +206,14 @@ class ScenariosWindow(QDialog, BaseWindow):
     def showDetails(self):
         scenario_name = self.list_view.currentItem().text()
         scenario = self.scenarios[scenario_name]
-        self.setText(scenario.description
-                    +f"\n-----------------------------\nGoal: {scenario.goal}"
-                    +f"\n-----------------------------\nType: {scenario.type}"
-                    +f"\n-----------------------------\nCVE: {scenario.CVE}"
-                    +f"\n-----------------------------\nDifficulty: {scenario.difficulty}")
+        text = f"{scenario.description}\n-----------------------------\nGoal: {scenario.goal}"
+        if scenario.type is not None and len(scenario.type) > 0:
+            text += f"\n-----------------------------\nType: {scenario.type}"
+        if scenario.CVE is not None and len(scenario.CVE) > 0:
+            text += f"\n-----------------------------\nCVE: {scenario.CVE}"
+        if scenario.difficulty is not None and len(scenario.difficulty) > 0:
+            text += f"\n-----------------------------\nDifficulty: {scenario.difficulty}"
+        self.setText(text)
         self.EnableButtons(self.launch_button, self.edit_button, self.remove_button)
     
     def AllowOpening(self):
