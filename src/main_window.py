@@ -337,9 +337,8 @@ class MainWindow(BaseWindow):
         self.EnableAllButtons()
         # We hide the scenario UI
         self.HideScenarioUI()
-
-    # endregion
-        
+    
+    #endregion        
 
 class ScenarioThread(BaseThread):
 
@@ -383,12 +382,21 @@ class ScenarioThread(BaseThread):
     def LaunchContainer(self, image_name, dockerfile, requires_it, networks_names, **kwargs):     
         if len(dockerfile) != 0:
             try:
-                self.update_console.emit(f'Building the {image_name} image...')
-                logger.info(f'Building the {image_name} image...')
-                dockerfile = src_folder_path + sep + dockerfile
-                self.docker_client.images.build(path=dockerfile, tag=image_name, rm=True)
-                self.update_console.emit(f'Done!')
-                logger.info(f'Done!')
+                dockerfiles_path = dutils.GetImageRequirements(image_name.split(':')[0])
+                main_image = dockerfiles_path[-1].split(sep)[-1]
+                
+                self.update_console.emit(f'Started building the {main_image} image.')
+                logger.info(f'Started building the {main_image} image.')
+                
+                for dockerfile_path in dockerfiles_path:
+                    image = dockerfile_path.split(sep)[-1]
+                    self.update_console.emit(f'Building the {image} image...')
+                    logger.info(f'Building the {image} image...')
+                    self.docker_client.images.build(path=dockerfile_path, tag=f"{image}:custom", rm=True)
+                    self.update_console.emit(f'Done!')
+                    logger.info(f'Done!')
+
+                self.update_console.emit('Done building the image!')
             except Exception as ex:
                 self.update_console.emit(f'Error: {str(ex)}')
                 logger.info(ex)
