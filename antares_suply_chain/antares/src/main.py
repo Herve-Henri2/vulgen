@@ -2,12 +2,12 @@
 # Author: Hervé-Henri Houzard
 # https://psutil.readthedocs.io/en/latest/
 
-import os, platform, psutil, json
+import os, socket, platform, psutil, json
 
 
 def get_system_info():
     '''
-    Gathers information about the current machine such as the os, the process number or cpu usage.
+    Gathers global information about the current machine such as the os, the process number or cpu usage.
     '''
     sys_info = {}
     sys_info['operating_system'] = f"{os.name} - {platform.system()} {platform.release()}"
@@ -24,11 +24,13 @@ def get_system_info():
 
 def get_network_info():
     '''
-    Gathers information about the current machine's network connections and traffic.
+    Gathers global information about the current machine's network interfaces and connections.
     '''
     net_info = {}
     connections = psutil.net_connections()
     interfaces = psutil.net_if_addrs()
+
+    net_info['IP Address'] = socket.gethostbyname(socket.gethostname()) 
 
     net_info['Interfaces'] = {}
     for interface in interfaces:
@@ -50,7 +52,52 @@ def get_network_info():
         interface_dict['IPv6'] = ipv6
         interface_dict['netmask'] = netmask
 
+    alive_connections = 0
+    open_local_ports = []
+    remote_connections_IPs = []
+    for conn in connections:
+        if conn[-2] != "NONE": # conn[-2] refers to the connection status
+            alive_connections += 1
+            open_local_ports.append(conn[3][1])
+            try:
+                if conn[4][0] != "127.0.0.1":
+                    remote_connections_IPs.append(conn[4][0])
+            except:
+                pass
+    net_info['Alive Connections'] = alive_connections
+    net_info['Open local ports'] = open_local_ports
+    net_info['Remote Ips'] = remote_connections_IPs
+    net_info['Remote connections'] = len(remote_connections_IPs)
+
     return net_info
+
+
+def get_connections_details():
+    '''
+    Provides details about the current machine's network interfaces and connections.
+    '''
+    conn_details = {}
+    connections = psutil.net_connections()
+
+    conn_details['Active connections'] = []
+    for conn in connections:
+        connection_details = {}
+
+        if conn[-2] != "NONE": # conn[-2] refers to the connection status
+            connection_details['pid'] = conn[-1]
+            connection_details['local_address'] = conn[3][0]
+            connection_details['local_port'] = conn[3][1]
+            try:
+                connection_details['remote_address'] = conn[4][0]
+                connection_details['remote_port'] = conn[4][1]
+            except:
+                pass
+            connection_details['status'] = conn[-2].lower()
+        if connection_details:
+            conn_details['Active connections'].append(connection_details)
+
+
+    return conn_details
 
 def clear():
     '''
@@ -70,10 +117,13 @@ def AppendDict(_dict : dict, text=""):
     '''
     for key, value in _dict.items():
         if isinstance(key, str):
-            if isinstance(value, str):
+            if isinstance(value, (str, int, float)):
                 text += f"{key.replace('_', ' ').capitalize()}: {value}\n"
-            elif isinstance(value, dict):
-                text += f"{key.replace('_', ' ').capitalize()}: {json.dumps(value, indent=3, ensure_ascii=False)}\n"
+            elif isinstance(value, (dict, list)):
+                try:
+                    text += f"{key.replace('_', ' ').capitalize()}: {json.dumps(value, indent=3, ensure_ascii=False)}\n"
+                except: 
+                    text += f"{key.replace('_', ' ').capitalize()}: {value}\n"
     return text
 
 def main():
@@ -87,9 +137,11 @@ def main():
         """)
 
     def mainmenu():
-        print("Select one of the following by entering the corresponding number:\n"
+        print("-----------------------------------------------------------------\n"
+        "Select one of the following by entering the corresponding number:\n"
         "1. Display System Information\n"
-        "2. Display Network Information")
+        "2. Display Network Information\n"
+        "(type q to exit)")
         choice = str(input("Your choice: "))
         if choice == "1":
             sys_info = get_system_info()
@@ -103,6 +155,8 @@ def main():
             text = AppendDict(net_info, text)
             print(text)
             mainmenu()
+        elif choice == "q":
+            exit()
         else:
             print("Incorrect input")
             mainmenu()
