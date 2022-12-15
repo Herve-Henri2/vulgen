@@ -1,0 +1,11 @@
+1. Infiltrate the update server of enterprise X
+2. Inject malicious code into the software (the malicious code is premade on the kali machine)
+3. Push an update and let enterprise Y download it
+4. Retreive the info you need from enterprise Y
+
+
+---------------------------------------------
+1. Through fishing, you managed to install a RAT on a developper's desktop, from there you need to find the access credentials to the update server.
+2. Within the update server, find where the distributed application is, modify it then compile it again.
+3. Push an update, by modifing the necessary files.
+4. Go back to your machine and read the info you got :-)
