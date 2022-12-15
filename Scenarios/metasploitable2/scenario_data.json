@@ -9,26 +9,26 @@
    ],
    "containers": [
       {
-         "image_name": "kalilinux:custom",
-         "dockerfile": "../docker_images/base_images/kalilinux",
-         "is_main": true,
-         "requires_it": true,
-         "networks": [
-            "network_demo"
-         ],
-         "ports": {},
-         "operating_system": "Kali Linux"
-      },
-      {
          "image_name": "tleemcjr/metasploitable2:latest",
          "dockerfile": "N/A",
          "is_main": false,
          "requires_it": false,
          "networks": [
-            "network_demo"
+            "network_metasploitable"
          ],
          "ports": {},
          "operating_system": "Linux"
+      },
+      {
+         "image_name": "kalilinux_metasploitable:custom",
+         "dockerfile": "../docker_images/kalilinux_metasploitable",
+         "is_main": true,
+         "requires_it": true,
+         "networks": [
+            "network_metasploitable"
+         ],
+         "ports": {},
+         "operating_system": "Kali Linux"
       }
    ]
 }

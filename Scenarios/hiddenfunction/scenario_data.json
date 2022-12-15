@@ -1,0 +1,20 @@
+{
+   "name": "hiddenfunction",
+   "CVE": "N/A",
+   "difficulty": "2",
+   "type": "Buffer Overflow",
+   "sources": [],
+   "containers": [
+      {
+         "image_name": "binary_exploitation:custom",
+         "dockerfile": "../docker_images/binary_exploitation",
+         "is_main": true,
+         "requires_it": false,
+         "networks": [
+            "bridge"
+         ],
+         "ports": {},
+         "operating_system": "N/A"
+      }
+   ]
+}

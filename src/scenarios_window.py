@@ -206,11 +206,14 @@ class ScenariosWindow(QDialog, BaseWindow):
     def showDetails(self):
         scenario_name = self.list_view.currentItem().text()
         scenario = self.scenarios[scenario_name]
-        self.setText(scenario.description
-                    +f"\n-----------------------------\nGoal: {scenario.goal}"
-                    +f"\n-----------------------------\nType: {scenario.type}"
-                    +f"\n-----------------------------\nCVE: {scenario.CVE}"
-                    +f"\n-----------------------------\nDifficulty: {scenario.difficulty}")
+        text = f"{scenario.description}\n-----------------------------\nGoal: {scenario.goal}"
+        if scenario.type is not None and len(scenario.type) > 0:
+            text += f"\n-----------------------------\nType: {scenario.type}"
+        if scenario.CVE is not None and len(scenario.CVE) > 0:
+            text += f"\n-----------------------------\nCVE: {scenario.CVE}"
+        if scenario.difficulty is not None and len(scenario.difficulty) > 0:
+            text += f"\n-----------------------------\nDifficulty: {scenario.difficulty}"
+        self.setText(text)
         self.EnableButtons(self.launch_button, self.edit_button, self.remove_button)
     
     def AllowOpening(self):
@@ -272,6 +275,8 @@ class ScenariosWindow(QDialog, BaseWindow):
             self.scenarios = scenarios_db['scenarios']
             # Update List View
             self.RefreshListView()
+            # Clear the textbox
+            self.Clear()
 
     def EditScenarioMode(self):
         '''
@@ -637,16 +642,7 @@ class EditContainersWindow(QDialog, BaseWindow):
             if len(ports[0]) != 0 or len(ports[1]) != 0:
                 if not ports[0].isdigit() or not ports[1].isdigit():
                     result['is_valid'] = False
-                    result['message'] += 'If specified, the ports number must be positive integers!\n' 
-
-            # Only one main
-            if self.is_main_checkbox.isChecked():
-                for container in self.parent.current_scenario_containers:
-                    container = self.parent.current_scenario_containers[container]
-                    if container.is_main is True and container.image_name != image_name and container.dockerfile != dockerfile :
-                        result['is_valid'] = False
-                        result['message'] += 'There can only be one main container within a scenario!\n'
-                    
+                    result['message'] += 'If specified, the ports number must be positive integers!\n'                    
 
             return result
 
@@ -662,7 +658,7 @@ class EditContainersWindow(QDialog, BaseWindow):
             
             if self.dockerfile_checkbox.isChecked():
                 container_to_save.dockerfile = self.dockerfile_entry.text()
-                container_to_save.image_name = f"{container_to_save.dockerfile.split(sep)[-1]}:custom"
+                container_to_save.image_name = f"{container_to_save.dockerfile.split('/')[-1]}:custom"
             else:
                 container_to_save.image_name = self.image_entry.text()
                 

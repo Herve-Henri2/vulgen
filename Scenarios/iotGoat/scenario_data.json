@@ -1,0 +1,34 @@
+{
+   "name": "iotGoat",
+   "CVE": "N/A",
+   "difficulty": "N/A",
+   "type": "Brute Force",
+   "sources": [
+      "https://github.com/OWASP/IoTGoat",
+      "https://github.com/danielmiessler/SecLists"
+   ],
+   "containers": [
+      {
+         "image_name": "iot-goat:custom",
+         "dockerfile": "../docker_images/iot-goat",
+         "is_main": false,
+         "requires_it": false,
+         "networks": [
+            "network_iotGoat"
+         ],
+         "ports": {},
+         "operating_system": "Ubuntu 20"
+      },
+      {
+         "image_name": "kalilinux_iot-goat:custom",
+         "dockerfile": "../docker_images/kalilinux_iot-goat",
+         "is_main": true,
+         "requires_it": false,
+         "networks": [
+            "network_iotGoat"
+         ],
+         "ports": {},
+         "operating_system": "Kali Linux"
+      }
+   ]
+}

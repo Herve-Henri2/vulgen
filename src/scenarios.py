@@ -1,4 +1,6 @@
 import platform
+import config
+import logging
 import os
 import shutil # for recursive removal of folder
 import json
@@ -13,6 +15,10 @@ import json
 #       -> key 'types' : list of strings
 #       -> key 'scenarios' : dictionnary that associates a string (name of the scenario) with a Scenario object
 
+# logger
+configuration = config.Load()
+logging.basicConfig(filename=configuration['log_file'], level=logging.INFO, format=configuration['log_format'])
+logger = logging.getLogger()
 
 # Defining the main paths
 sep = '/' if platform.system() == "Linux" else '\\'
@@ -98,8 +104,7 @@ def retrieveScenarioDataFromFolder(folder_path : str, scenarios_db : dict):
         with open(json_path, 'r') as file:
             scenario_json_data = json.load(file)
     except Exception as ex:
-        # TODO logger
-        return
+        logger.error(f'Error while trying to retrieve the scenario data from {folder_path}: {ex}')
         
     scenarios_db['scenarios'][scenario_json_data['name']] = Parse(scenario_json_data, readme_path)
 
@@ -212,10 +217,10 @@ def Remove(scenario_name : str):
     '''
     scenario_folder_path = scenarios_folder_path + f"{sep}{scenario_name}"
     try:
+        logger.info(f'Removing the scenario: {scenario_name}')
         shutil.rmtree(scenario_folder_path)
-    except:
-        # TODO logger
-        pass
+    except Exception as ex:
+        logger.error(f'Error while trying to remove the scenario {scenario_name}: {ex}')
 
 
 def LoadScenario(name : str) -> Scenario:
@@ -246,8 +251,7 @@ def Parse(scenario_json_data : dict, readme_path = "") -> Scenario:
             try:
                 setattr(scenario, attribute_name, scenario_json_data[attribute_name])
             except Exception as ex:
-                # TODO logger
-                pass
+                logger.error(f'Error while parsing the scenario: {ex}')
     
     desc = ""; goal = ""; sol = ""
     if len(readme_path) != 0:
@@ -265,8 +269,7 @@ def Parse(scenario_json_data : dict, readme_path = "") -> Scenario:
             try:
                 setattr(container, attribute_name, container_data[attribute_name])
             except Exception as ex:
-                # TODO logger
-                pass
+                logger.error(f'Error while parsing the container: {ex}')
         
         containers[container.image_name] = container
     scenario.containers = containers
@@ -307,8 +310,7 @@ def ParseReadme(readme_file_path : str) -> tuple[str, str, str]:
                 sol += split_buffer[:-1]
             index += 1
     except Exception as ex:
-        # TODO logger
-        pass
+        logger.error(f'An error occured while trying to parse {readme_file_path}: {ex}')
     
     return (desc, goal, sol)
 
