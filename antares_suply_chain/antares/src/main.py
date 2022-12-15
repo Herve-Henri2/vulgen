@@ -2,7 +2,7 @@
 # Author: Hervé-Henri Houzard
 # https://psutil.readthedocs.io/en/latest/
 
-import time, os, socket, platform, psutil, uuid, json
+import os, platform, psutil, json
 
 
 def get_system_info():
@@ -13,7 +13,6 @@ def get_system_info():
     sys_info['operating_system'] = f"{os.name} - {platform.system()} {platform.release()}"
     sys_info['machine_name'] = f"{platform.node()}"
     sys_info['machine_type'] = f"{platform.machine()}"
-    #sys_info['mac_address'] = f"{':'.join(['{:02x}'.format((uuid.getnode() >> ele) & 0xff) for ele in range(0,8*6,8)][::-1])}"
     sys_info['process_number'] = len([proc for proc in psutil.process_iter()])
     sys_info['cpu_cores'] = psutil.cpu_count(logical=False)
     sys_info['cpu_freq'] = f"{psutil.cpu_freq()[0] / 1000} GHz (max: {psutil.cpu_freq()[2] / 1000} GHz)"
@@ -31,10 +30,10 @@ def get_network_info():
     connections = psutil.net_connections()
     interfaces = psutil.net_if_addrs()
 
-    net_info['interfaces'] = {}
+    net_info['Interfaces'] = {}
     for interface in interfaces:
         if_info = interfaces[interface]
-        interface_dict = net_info['interfaces'][interface] = {}
+        interface_dict = net_info['Interfaces'][interface] = {}
 
         mac_address, ipv4, ipv6, netmask = None, None, None, None
         for nic in if_info:
@@ -74,33 +73,43 @@ def AppendDict(_dict : dict, text=""):
             if isinstance(value, str):
                 text += f"{key.replace('_', ' ').capitalize()}: {value}\n"
             elif isinstance(value, dict):
-                #text = AppendDict(value, text)
-                text += json.dumps(value, indent=3, ensure_ascii=False)
+                text += f"{key.replace('_', ' ').capitalize()}: {json.dumps(value, indent=3, ensure_ascii=False)}\n"
     return text
 
 def main():
 
-    def mainloop():
-        clear()
-        sys_info = get_system_info()
-        net_info = get_network_info()
-
-        text = ("""
+    logo = ("""
             ___            __                          
            /   |   ____   / /_ ____ _ _____ ___   _____ Tm
           / /| |  / __ \ / __// __ `// ___// _ \ / ___/
          / ___ | / / / // /_ / /_/ // /   /  __/(__  ) 
         /_/  |_|/_/ /_/ \__/ \__,_//_/    \___//____/ 
         """)
-        text += "\n----------------------------System Information----------------------------\n"
-        text = AppendDict(sys_info, text)
-        text += "----------------------------Network Information----------------------------\n"
-        text = AppendDict(net_info, text)
-        print(text)
 
-    while True:
-        mainloop()
-        time.sleep(300) # repeat every 5 minutes
+    def mainmenu():
+        print("Select one of the following by entering the corresponding number:\n"
+        "1. Display System Information\n"
+        "2. Display Network Information")
+        choice = str(input("Your choice: "))
+        if choice == "1":
+            sys_info = get_system_info()
+            text = "----------------------------System Information----------------------------\n"
+            text = AppendDict(sys_info, text)
+            print(text)
+            mainmenu()
+        elif choice == "2":
+            net_info = get_network_info()
+            text = "----------------------------Network Information----------------------------\n"
+            text = AppendDict(net_info, text)
+            print(text)
+            mainmenu()
+        else:
+            print("Incorrect input")
+            mainmenu()
+
+    print(logo)
+    mainmenu()
+
 
 if __name__ == "__main__":
     main()

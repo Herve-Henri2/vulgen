@@ -6,6 +6,7 @@ pid=2160), sconn(fd=-1, family=<AddressFamily.AF_INET6: 23>, type=<SocketKind.SO
 family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='127.0.0.1', port=49681), raddr=addr(ip='127.0.0.1', port=49682), status='ESTABLISHED', pid=5708), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='10.1.174.8', port=52429), raddr=addr(ip='2.21.35.233', port=443), status='CLOSE_WAIT', pid=2272), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_DGRAM: 2>, laddr=addr(ip='0.0.0.0', port=4500), raddr=(), status='NONE', pid=5364), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='192.168.56.1', port=139), raddr=(), status='LISTEN', pid=4), sconn(fd=-1, family=<AddressFamily.AF_INET6: 23>, type=<SocketKind.SOCK_DGRAM: 2>, laddr=addr(ip='::1', port=59920), raddr=(), status='NONE', pid=7268), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='10.1.174.8', port=62556), raddr=addr(ip='188.65.124.90', port=443), status='CLOSE_WAIT', pid=12832), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='10.1.174.8', port=62541), raddr=addr(ip='13.249.9.30', port=443), status='ESTABLISHED', pid=12832), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_DGRAM: 2>, laddr=addr(ip='127.0.0.1', port=56310), raddr=(), status='NONE', pid=6624), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='0.0.0.0', port=49666), raddr=(), status='LISTEN', pid=1792), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_DGRAM: 2>, laddr=addr(ip='127.0.0.1', port=1900), raddr=(), status='NONE', pid=3760), sconn(fd=-1, family=<AddressFamily.AF_INET6: 23>, type=<SocketKind.SOCK_DGRAM: 2>, laddr=addr(ip='fe80::afea:84da:efde:f64d', port=1900), raddr=(), status='NONE', pid=3760), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_DGRAM: 2>, laddr=addr(ip='0.0.0.0', port=5353), raddr=(), status='NONE', pid=2304), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='10.1.174.8', port=62542), raddr=addr(ip='172.217.18.205', port=443), status='ESTABLISHED', pid=12832), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='0.0.0.0', port=49664), raddr=(), status='LISTEN', pid=932), sconn(fd=-1, family=<AddressFamily.AF_INET6: 23>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='::', port=49665), raddr=(), 
 status='LISTEN', pid=828), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='0.0.0.0', port=49671), raddr=(), status='LISTEN', pid=4888), sconn(fd=-1, family=<AddressFamily.AF_INET6: 23>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='::', port=49668), raddr=(), status='LISTEN', pid=4280), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_DGRAM: 2>, laddr=addr(ip='10.1.174.8', port=138), raddr=(), status='NONE', pid=4), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='10.1.174.8', port=62538), raddr=addr(ip='104.18.24.201', port=443), status='ESTABLISHED', pid=12832), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='10.1.174.8', port=62549), raddr=addr(ip='188.65.124.90', port=443), status='CLOSE_WAIT', pid=12832), sconn(fd=-1, family=<AddressFamily.AF_INET6: 23>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='::', port=49664), raddr=(), status='LISTEN', pid=932), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='10.1.174.8', port=56157), raddr=addr(ip='216.58.214.170', port=443), status='ESTABLISHED', pid=12832), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='10.1.174.8', port=62552), raddr=addr(ip='142.250.201.170', port=443), status='ESTABLISHED', pid=12832), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_DGRAM: 2>, laddr=addr(ip='0.0.0.0', port=62607), raddr=(), status='NONE', pid=9672), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='0.0.0.0', port=8080), raddr=(), status='LISTEN', pid=5708), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='127.0.0.1', port=6463), raddr=(), status='LISTEN', pid=15684), sconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketKind.SOCK_STREAM: 1>, laddr=addr(ip='127.0.0.1', port=60382), raddr=addr(ip='127.0.0.1', port=60383), status='ESTABLISHED', pid=16548)]
 <AddressFamily.AF_LINK: -1>
+
 Interfaces: {'VirtualBox Host-Only Network': [snicaddr(family=, address='0A-00-27-00-00-0D', 
 netmask=None, broadcast=None, ptp=None), snicaddr(family=<AddressFamily.AF_INET: 2>, address='192.168.56.1', netmask='255.255.255.0', 
 broadcast=None, ptp=None), snicaddr(family=<AddressFamily.AF_INET6: 23>, address='fe80::6bad:1abb:b6e2:c802', netmask=None, 
@@ -24,3 +25,57 @@ broadcast=None, ptp=None), snicaddr(family=<AddressFamily.AF_INET6: 23>, address
 broadcast=None, ptp=None)], 'Loopback Pseudo-Interface 1': [snicaddr(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', 
 netmask='255.0.0.0', broadcast=None, ptp=None), snicaddr(family=<AddressFamily.AF_INET6: 23>, address='::1', netmask=None, 
 broadcast=None, ptp=None)]}
+
+
+def get_network_info2():
+    '''
+    Gathers information about the current machine's network connections and traffic.
+    '''
+    net_info = {}
+    connections = psutil.net_connections()
+    interfaces = psutil.net_if_addrs()
+
+    net_info['Interfaces'] = {}
+    for interface in interfaces:
+        if_info = interfaces[interface]
+        interface_dict = net_info['Interfaces'][interface] = {}
+
+        interface_dict['MAC'] = None
+        interface_dict['IPv4'] = None
+        interface_dict['IPv6'] = None
+        interface_dict['netmask'] = None
+
+        for nic in if_info:
+            address = nic[1]
+            if '-' in address:
+                interface_dict['MAC'] = address
+            elif '.' in address:
+                try:
+                    ipv4_address = ipaddress.IPv4Address(address)
+                    interface_dict['IPv4'] = str(ipv4_address)
+                    interface_dict['netmask'] = nic[2]
+                except ValueError:
+                    pass
+            elif ':' in address:
+                interface_dict['IPv6'] = address
+
+    return net_info
+
+
+def mainloop():
+    clear()
+    sys_info = get_system_info()
+    net_info = get_network_info()
+
+    text = ("""
+         ___            __                          
+        /   |   ____   / /_ ____ _ _____ ___   _____ Tm
+       / /| |  / __ \ / __// __ `// ___// _ \ / ___/
+      / ___ | / / / // /_ / /_/ // /   /  __/(__  ) 
+     /_/  |_|/_/ /_/ \__/ \__,_//_/    \___//____/ 
+    """)
+    text += "\n----------------------------System Information----------------------------\n"
+    text = AppendDict(sys_info, text)
+    text += "----------------------------Network Information----------------------------\n"
+    text = AppendDict(net_info, text)
+    print(text)
