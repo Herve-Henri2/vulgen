@@ -2,7 +2,7 @@
 # Author: Hervé-Henri Houzard
 # https://psutil.readthedocs.io/en/latest/
 
-import os, socket, platform, psutil, json, requests, asyncio
+import os, socket, platform, psutil, json, requests
 
 # region =====System Information=====
 
@@ -24,7 +24,7 @@ def get_system_info():
 
     return sys_info
 
-async def process_details():
+def process_details():
 
     proc_details = {}
     active_procs = []
@@ -50,6 +50,25 @@ async def process_details():
     proc_details['Stopped Processes'] = stopped_procs
 
     return proc_details
+
+def ShowProcessesDetails():
+    '''
+    Prints the details for all the running processes on the current compurter.
+    '''
+    for proc in psutil.process_iter():
+        proc = proc.as_dict()
+        if not proc['status'] == 'running':
+            continue
+
+        text = (f"Pid: {proc['pid']}\n"
+                f"Name: {proc['name']}\n"
+                f"User: {proc['username']}\n"
+                f"Thread Number: {proc['num_threads']}\n"
+                f"Cpu Usage: {round(proc['cpu_percent'], 2)} %\n"
+                f"Memory Usage: {round(proc['memory_percent'], 2)} %\n")
+        if proc['exe'] is not None:
+            text += f"Exe: {proc['exe']}\n"
+        print(text)
 
 
 # endregion
@@ -177,12 +196,6 @@ def AppendDict(_dict : dict, text=""):
                     text += f"{key.replace('_', ' ').capitalize()}: {value}\n"
     return text
 
-async def WaitingDots(task : asyncio.Task):
-    
-    while not task.done():
-        print('.', end="")
-        await asyncio.sleep(0.5)
-
 
 # endregion
 
@@ -196,7 +209,7 @@ def main():
         /_/  |_|/_/ /_/ \__/ \__,_//_/    \___//____/ 
         """)
 
-    async def mainmenu():
+    def mainmenu():
         print("-----------------------------------------------------------------\n"
         "Select one of the following by entering the corresponding number:\n"
         "1. Display System Information\n"
@@ -210,13 +223,10 @@ def main():
             print(text)
             choice = str(input("Do you want to see the processes' details? (Y/N): "))
             if choice.lower().strip() not in ['y', 'ye', 'yes', 'yeah']:
-                await mainmenu()
+                mainmenu()
             else:
-                task = asyncio.create_task(process_details())
-                await WaitingDots(task)
-                text = AppendDict(task.result())
-                print(text)
-                await mainmenu()
+                ShowProcessesDetails()
+                mainmenu()
         elif choice == "2":
             net_info = get_network_info()
             text = "----------------------------Network Information----------------------------\n"
@@ -224,20 +234,20 @@ def main():
             print(text)
             choice = str(input("Do you want to see the connections' details? (Y/N): "))
             if choice.lower().strip() not in ['y', 'ye', 'yes', 'yeah']:
-                await mainmenu()
+                mainmenu()
             else:
                 conn_details = get_connections_details()
                 text = AppendDict(conn_details)
                 print(text)
-                await mainmenu()
+                mainmenu()
         elif choice == "q":
             exit()
         else:
             print("Incorrect input")
-            await mainmenu()
+            mainmenu()
 
     print(logo)
-    asyncio.run(mainmenu())
+    mainmenu()
 
 
 if __name__ == "__main__":

@@ -79,3 +79,31 @@ def mainloop():
     text += "----------------------------Network Information----------------------------\n"
     text = AppendDict(net_info, text)
     print(text)
+
+
+def process_details():
+
+    proc_details = {}
+    active_procs = []
+    stopped_procs = []
+
+    for proc in psutil.process_iter():
+        proc = proc.as_dict()
+        details = {}
+        details['pid'] = proc['pid']
+        details['name'] = proc['name']
+        details['user'] = proc['username']
+        details['thread_number'] = proc['num_threads']
+        details['cpu'] = f"{round(proc['cpu_percent'], 2)} %"
+        details['memory'] = f"{round(proc['memory_percent'], 2)} %"
+        if proc['exe'] is not None:
+            details['exe'] = proc['exe']
+        if proc['status'] == 'running':
+            active_procs.append(details)
+        elif proc['status'] == 'stopped':
+            stopped_procs.append(details)
+
+    proc_details['Running Processes'] = active_procs
+    proc_details['Stopped Processes'] = stopped_procs
+
+    return proc_details
