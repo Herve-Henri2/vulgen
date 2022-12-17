@@ -2,8 +2,9 @@
 # Author: Hervé-Henri Houzard
 # https://psutil.readthedocs.io/en/latest/
 
-import os, socket, platform, psutil, json
+import os, socket, platform, psutil, json, requests, asyncio
 
+# region =====System Information=====
 
 def get_system_info():
     '''
@@ -11,9 +12,10 @@ def get_system_info():
     '''
     sys_info = {}
     sys_info['operating_system'] = f"{os.name} - {platform.system()} {platform.release()}"
-    sys_info['machine_name'] = f"{platform.node()}"
-    sys_info['machine_type'] = f"{platform.machine()}"
+    sys_info['machine_name'] = platform.node()
+    sys_info['machine_type'] = platform.machine()
     sys_info['process_number'] = len([proc for proc in psutil.process_iter()])
+    sys_info['processor'] = platform.uname().processor
     sys_info['cpu_cores'] = psutil.cpu_count(logical=False)
     sys_info['cpu_freq'] = f"{psutil.cpu_freq()[0] / 1000} GHz (max: {psutil.cpu_freq()[2] / 1000} GHz)"
     sys_info['cpu_usage'] = f"{psutil.cpu_percent()} %"
@@ -22,20 +24,52 @@ def get_system_info():
 
     return sys_info
 
+async def process_details():
+
+    proc_details = {}
+    active_procs = []
+    stopped_procs = []
+
+    for proc in psutil.process_iter():
+        proc = proc.as_dict()
+        details = {}
+        details['pid'] = proc['pid']
+        details['name'] = proc['name']
+        details['user'] = proc['username']
+        details['thread_number'] = proc['num_threads']
+        details['cpu'] = f"{round(proc['cpu_percent'], 2)} %"
+        details['memory'] = f"{round(proc['memory_percent'], 2)} %"
+        if proc['exe'] is not None:
+            details['exe'] = proc['exe']
+        if proc['status'] == 'running':
+            active_procs.append(details)
+        elif proc['status'] == 'stopped':
+            stopped_procs.append(details)
+
+    proc_details['Running Processes'] = active_procs
+    proc_details['Stopped Processes'] = stopped_procs
+
+    return proc_details
+
+
+# endregion
+
+# region =====Network Information=====
+
 def get_network_info():
     '''
     Gathers global information about the current machine's network interfaces and connections.
     '''
+
     net_info = {}
     connections = psutil.net_connections()
     interfaces = psutil.net_if_addrs()
 
-    net_info['IP Address'] = socket.gethostbyname(socket.gethostname()) 
-
-    net_info['Interfaces'] = {}
+    net_info['internet'] = get_internet_info()
+    net_info['interfaces'] = {}
     for interface in interfaces:
         if_info = interfaces[interface]
-        interface_dict = net_info['Interfaces'][interface] = {}
+        interface_dict = net_info['interfaces'][interface] = {}
 
         mac_address, ipv4, ipv6, netmask = None, None, None, None
         for nic in if_info:
@@ -71,6 +105,32 @@ def get_network_info():
 
     return net_info
 
+def get_internet_info():
+
+    def is_connected():
+        try:
+            socket.create_connection(("www.google.com", 80))
+            return True
+        except OSError:
+            pass
+        return False
+
+    if not is_connected():
+        return "No Internet connection."
+
+    int_info = {}
+    int_info['Public IPv4'] = requests.get("https://api.ipify.org").text
+    int_info['Public IPv6'] = requests.get("https://api6.ipify.org").text
+
+    ip_info = requests.get("https://ipapi.co/json").json()
+    int_info['Using'] = ip_info['version']
+    int_info['Network'] = ip_info['network']
+    int_info['Internet Service Provider'] = f"{ip_info['org']} {ip_info['country']}"
+    int_info['Device Location'] = f"{ip_info['city']}, {ip_info['region']}, {ip_info['postal']}"
+    int_info['GPS coordinates'] = f"{ip_info['latitude']}, {ip_info['longitude']}"
+
+    return int_info
+
 
 def get_connections_details():
     '''
@@ -96,20 +156,11 @@ def get_connections_details():
         if connection_details:
             conn_details['Active connections'].append(connection_details)
 
-
     return conn_details
 
-def clear():
-    '''
-    Clears the console.
-    '''
-    os.system('cls' if os.name=='nt' else 'clear')
+# endregion
 
-def clear2():
-    '''
-    Clears the console.
-    '''
-    print("\033[H\033[3J", end="")
+# region =====Misc Functions=====
 
 def AppendDict(_dict : dict, text=""):
     '''
@@ -126,6 +177,15 @@ def AppendDict(_dict : dict, text=""):
                     text += f"{key.replace('_', ' ').capitalize()}: {value}\n"
     return text
 
+async def WaitingDots(task : asyncio.Task):
+    
+    while not task.done():
+        print('.', end="")
+        await asyncio.sleep(0.5)
+
+
+# endregion
+
 def main():
 
     logo = ("""
@@ -136,7 +196,7 @@ def main():
         /_/  |_|/_/ /_/ \__/ \__,_//_/    \___//____/ 
         """)
 
-    def mainmenu():
+    async def mainmenu():
         print("-----------------------------------------------------------------\n"
         "Select one of the following by entering the corresponding number:\n"
         "1. Display System Information\n"
@@ -148,23 +208,44 @@ def main():
             text = "----------------------------System Information----------------------------\n"
             text = AppendDict(sys_info, text)
             print(text)
-            mainmenu()
+            choice = str(input("Do you want to see the processes' details? (Y/N): "))
+            if choice.lower().strip() not in ['y', 'ye', 'yes', 'yeah']:
+                await mainmenu()
+            else:
+                task = asyncio.create_task(process_details())
+                await WaitingDots(task)
+                text = AppendDict(task.result())
+                print(text)
+                await mainmenu()
         elif choice == "2":
             net_info = get_network_info()
             text = "----------------------------Network Information----------------------------\n"
             text = AppendDict(net_info, text)
             print(text)
-            mainmenu()
+            choice = str(input("Do you want to see the connections' details? (Y/N): "))
+            if choice.lower().strip() not in ['y', 'ye', 'yes', 'yeah']:
+                await mainmenu()
+            else:
+                conn_details = get_connections_details()
+                text = AppendDict(conn_details)
+                print(text)
+                await mainmenu()
         elif choice == "q":
             exit()
         else:
             print("Incorrect input")
-            mainmenu()
+            await mainmenu()
 
     print(logo)
-    mainmenu()
+    asyncio.run(mainmenu())
 
 
 if __name__ == "__main__":
     main()
-    
+    #for index, proc in enumerate(psutil.process_iter()):
+        #print(proc)
+        #print(proc.as_dict())
+        #print()
+        #if index > 2:
+            #break
+        #print(type(proc))
