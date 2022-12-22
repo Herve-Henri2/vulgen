@@ -405,7 +405,7 @@ class ScenarioThread(BaseThread):
             self.update_console.emit(f"Setting up the \"{image_name}\" container...")
             logger.info(f"Setting up the \"{image_name}\" container...")
             if len(networks_names) == 0:
-                self.docker_client.containers.run(image_name, detach=True, network_disabled=True, **kwargs)
+                container = self.docker_client.containers.run(image_name, detach=True, network_disabled=True, **kwargs)
             else:
                 for network_name in networks_names:
                     if not dutils.network_in(self.docker_client.networks.list(), network_name):

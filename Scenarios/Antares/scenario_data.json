@@ -1,0 +1,18 @@
+{
+   "name": "Antares",
+   "CVE": "N/A",
+   "difficulty": "3",
+   "type": "Supply Chain Attack",
+   "sources": [],
+   "containers": [
+      {
+         "image_name": "kalilinux_antares:custom",
+         "dockerfile": "../docker_images/kalilinux_antares",
+         "is_main": true,
+         "requires_it": true,
+         "networks": [],
+         "ports": {},
+         "operating_system": "Kali Linux"
+      }
+   ]
+}
