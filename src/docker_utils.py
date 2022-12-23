@@ -159,7 +159,7 @@ def GetImageRequirements(image_name : str, docker_client=None):
     try:
         with open(f"{dockerfile_path}{sep}req.txt", 'r') as requirements:
             for line in requirements:
-                if ':' in line and (req := line[:-1].split(':'))[0] == "Image":
+                if ':' in line and (req := line.strip().split(':'))[0] == "Image":
                     alreadyBuilt = False
                     for built_image in built_images:
                         if req[1] == built_image.tags[0].split(':')[0]:
