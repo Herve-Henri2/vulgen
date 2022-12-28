@@ -3,6 +3,7 @@ FROM skysider/pwndocker
 WORKDIR /usr/app/src
 
 COPY format_vuln.c ./
+COPY flag.txt ./
 
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
@@ -14,4 +15,6 @@ RUN apt-get update && \
     chown root:root flag.txt && \
     chmod 600 flag.txt && \  
     chown root:root format_vuln && \
-    chmod 4655 format_vuln
+    chmod 4655 format_vuln && \
+
+
