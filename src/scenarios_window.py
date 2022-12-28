@@ -538,7 +538,7 @@ class EditContainersWindow(QDialog, BaseWindow):
         self.checkBoxGroup = QButtonGroup(self)
         self.checkBoxGroup.addButton(self.image_checkbox); self.checkBoxGroup.addButton(self.dockerfile_checkbox)
         
-        self.dockerfile_label.hide(); self.dockerfile_entry.hide(); self.dockerfile_browse_button.hide()
+        self.HideElements(self.dockerfile_label, self.dockerfile_entry, self.dockerfile_browse_button)
 
         self.FillFields()
 
@@ -578,10 +578,11 @@ class EditContainersWindow(QDialog, BaseWindow):
             messagebox.exec()
     
     def FileDialog(self):
-        custom_images_path = src_folder_path + f"{sep}..{sep}docker_images"
+        custom_images_path = src_folder_path.replace('\\', '/') + f"/../docker_images"
+        print(custom_images_path)
         fname = QFileDialog.getExistingDirectory(self, caption="Select the DockerFile folder", directory=custom_images_path)
         if fname:
-            project_folder_path = src_folder_path[:src_folder_path.rfind(sep)]
+            project_folder_path = src_folder_path[:src_folder_path.rfind(sep)].replace('\\', '/')
             fname = fname.replace(project_folder_path, "..")
             self.dockerfile_entry.setText(fname)
 

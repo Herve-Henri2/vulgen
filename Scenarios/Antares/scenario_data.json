@@ -13,6 +13,15 @@
          "networks": [],
          "ports": {},
          "operating_system": "Kali Linux"
+      },
+      {
+         "image_name": "ubuntu_1_antares:custom",
+         "dockerfile": "../docker_images/ubuntu_1_antares",
+         "is_main": false,
+         "requires_it": false,
+         "networks": [],
+         "ports": {},
+         "operating_system": "Ubuntu"
       }
    ]
 }
