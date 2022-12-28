@@ -15,4 +15,4 @@ RUN apt-get update && \
     chown root:root flag.txt && \
     chmod 600 flag.txt && \  
     chown root:root format_vuln && \
-    chmod 4655 format_vuln &&
+    chmod 4655 format_vuln
