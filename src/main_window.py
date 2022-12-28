@@ -393,10 +393,8 @@ class ScenarioThread(BaseThread):
                     self.update_console.emit(f'Building the {image} image...')
                     logger.info(f'Building the {image} image...')
                     self.docker_client.images.build(path=dockerfile_path, tag=f"{image}:custom", rm=True)
-                    self.update_console.emit(f'Done!')
                     logger.info(f'Done!')
 
-                self.update_console.emit('Done building the image!')
             except Exception as ex:
                 self.update_console.emit(f'Error: {str(ex)}')
                 logger.info(ex)
@@ -420,7 +418,6 @@ class ScenarioThread(BaseThread):
                 logger.info(f'Attaching the {image_name} container to a new terminal.')
                 command = f"docker logs {container.short_id};docker attach {container.short_id}"
                 misc.open_terminal(operating_system, command)
-            self.update_console.emit(f"Done!")
             logger.info(f"Done!")
         except Exception as ex:
             self.update_console.emit(f'Error: {str(ex)}')
