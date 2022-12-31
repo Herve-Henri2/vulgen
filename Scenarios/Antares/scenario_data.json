@@ -10,7 +10,9 @@
          "dockerfile": "../docker_images/kalilinux_antares",
          "is_main": true,
          "requires_it": true,
-         "networks": [],
+         "networks": [
+            "bridge"
+         ],
          "ports": {},
          "operating_system": "Kali Linux"
       },
@@ -19,7 +21,9 @@
          "dockerfile": "../docker_images/ubuntu_1_antares",
          "is_main": false,
          "requires_it": false,
-         "networks": [],
+         "networks": [
+            "bridge"
+         ],
          "ports": {},
          "operating_system": "Ubuntu"
       }

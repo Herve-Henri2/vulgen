@@ -558,6 +558,13 @@ class EditContainersWindow(QDialog, BaseWindow):
         new_choice = self.networks_entry.text()
         if not self.networks.findItems(new_choice, Qt.MatchFlag.MatchFixedString | Qt.MatchFlag.MatchCaseSensitive):
             self.networks.addItem(new_choice)
+            self.networks.item(self.networks.count()-1).setSelected(True)
+
+    def Highlight(self):
+        selection = self.networks.selectedItems()
+        #print(selection)
+        for item in selection:
+            print(item.text())
     
     # endregion
 

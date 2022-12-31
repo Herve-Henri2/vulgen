@@ -152,7 +152,13 @@ class BaseWindow(QWidget):
             elif isinstance(element, QPlainTextEdit):
                 element.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}'")
             elif isinstance(element, QListWidget):
-                element.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
+                #element.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
+                element.setStyleSheet("QListWidget:item:selected{"
+                                      f"background-color: {buttons_color}; color: {text_color}; font-family: {text_font};  border: 1px solid '{border_color}'"
+                                      "}"
+                                      "QListWidget{"
+                                      f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';"
+                                      "}")
             elif isinstance(element, QTableWidget):
                 element.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
                 element.horizontalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
