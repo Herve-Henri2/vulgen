@@ -205,12 +205,19 @@ class WaitingHandler(BaseThread):
             self.Waiting()
 
     def Waiting(self):
+        """
         if self.stop is False:
             self.blink.emit()
             time.sleep(0.5)
             self.Waiting()
         else:
             self.finished.emit()
+        """
+        while self.stop is False:
+            self.blink.emit()
+            time.sleep(0.5)
+        self.finished.emit()
+        
 
 # endregion
 

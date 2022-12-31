@@ -370,7 +370,12 @@ class ScenarioThread(BaseThread):
             else:
                 self.LaunchContainer(image_name=container.image_name, dockerfile=container.dockerfile, 
                                     requires_it=container.requires_it, networks_names=container.networks, name=name, stdin_open=True, tty=True)
-
+        for image_name, container in self.window.GetRunningScenario().containers.items():
+            if container.requires_it is True:
+                container = dutils.get_container(image_name)[0]
+                logger.info(f'Attaching the {container.name} container to a new terminal.')
+                command = f"docker logs {container.short_id};docker attach {container.short_id}"
+                misc.open_terminal(operating_system, command)
         self.update_console.emit('------------------------------------------------------------------------------------\n'
                                  '* Click on the Goal button to get a better scope of what needs to be done.\n'
                                  '* You can interact with all the environment containers by clicking on the Containers button.')
@@ -414,10 +419,6 @@ class ScenarioThread(BaseThread):
                     networks = [network for network in self.docker_client.networks.list() if network.name in networks_names[1:]]
                     for network in networks:
                         network.connect(container.short_id)
-            if requires_it is True:
-                logger.info(f'Attaching the {image_name} container to a new terminal.')
-                command = f"docker logs {container.short_id};docker attach {container.short_id}"
-                misc.open_terminal(operating_system, command)
             logger.info(f"Done!")
         except Exception as ex:
             self.update_console.emit(f'Error: {str(ex)}')

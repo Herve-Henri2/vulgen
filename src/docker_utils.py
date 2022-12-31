@@ -50,12 +50,15 @@ def get_image(images, image_name):
             return image, index
     #print(f"There is no image corresponding to {image_name}")
 
-def get_container(containers, container_image_name):
+def get_container(container_image_name, containers=None):
     '''
     Searches for a container object in a container list based on the container's image name.
 
     Returns: docker.container object, index of container
     '''
+    if containers is None:
+        docker_client = docker.from_env()
+        containers = docker_client.containers.list()
     for index, container in enumerate(containers):
         if container_image_name in container.image.tags[0]:
             return container, index
