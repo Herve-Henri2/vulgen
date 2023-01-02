@@ -50,12 +50,15 @@ def get_image(images, image_name):
             return image, index
     #print(f"There is no image corresponding to {image_name}")
 
-def get_container(containers, container_image_name):
+def get_container(container_image_name, containers=None):
     '''
     Searches for a container object in a container list based on the container's image name.
 
     Returns: docker.container object, index of container
     '''
+    if containers is None:
+        docker_client = docker.from_env()
+        containers = docker_client.containers.list()
     for index, container in enumerate(containers):
         if container_image_name in container.image.tags[0]:
             return container, index
@@ -115,20 +118,20 @@ def GetContainers(docker_client=None):
     
     return cont_dict
 
-
-def GetCustomImages():
+def GetCustomImages() -> list[list]:
     '''
     Retrieves all custom images names from the docker_images folder.
     '''
-    to_exclude = ['README.md', 'base_images']
-    
     custom_images_path = src_folder_path + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
     base_images_path = custom_images_path + f"{sep}base_images"
-    
-    custom_images = [folder for folder in os.listdir(custom_images_path) if folder not in to_exclude]
-    custom_images.extend([f"base_images{sep}{folder}" for folder in os.listdir(base_images_path) if folder not in to_exclude])
-        
-    return custom_images
+    scenario_images_path = custom_images_path + f"{sep}scenario_images"
+    misc_images_path = custom_images_path + f"{sep}misc_images"
+
+    base_images = [folder for folder in os.listdir(base_images_path)] 
+    scenario_images = [folder for folder in os.listdir(scenario_images_path)]
+    misc_images = [folder for folder in os.listdir(misc_images_path)]
+
+    return base_images, scenario_images, misc_images
 
 
 def GetNetworks(docker_client=None):
@@ -145,21 +148,28 @@ def GetNetworks(docker_client=None):
     
     return network_dict
 
-
-def GetImageRequirements(image_name : str, docker_client=None):
+def GetImageRequirements(image_name : str, type : str, docker_client=None):
     if docker_client is None:
         docker_client = docker.from_env()
     
     # Get Dockerfile path
     custom_images_path = src_folder_path + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
-    dockerfile_path = f'{custom_images_path}{sep}{image_name}'
+    if type == "scenario":
+        dockerfile_path = f'{custom_images_path}{sep}scenario_images{sep}{image_name}'
+    elif type == "misc":
+        dockerfile_path = f'{custom_images_path}{sep}misc_images{sep}{image_name}'
+    elif type == "base":
+        dockerfile_path = f'{custom_images_path}{sep}base_images{sep}{image_name}'
+    else:
+        dockerfile_path = f'{custom_images_path}{sep}{image_name}'
+
     # Get custom image requirements
     built_images = docker_client.images.list()
     required_images = []
     try:
         with open(f"{dockerfile_path}{sep}req.txt", 'r') as requirements:
             for line in requirements:
-                if ':' in line and (req := line[:-1].split(':'))[0] == "Image":
+                if ':' in line and (req := line.strip().split(':'))[0] == "Image":
                     alreadyBuilt = False
                     for built_image in built_images:
                         if req[1] == built_image.tags[0].split(':')[0]:

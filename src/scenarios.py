@@ -29,8 +29,9 @@ global_json_path = scenarios_folder_path + f"{sep}scenarios.json"
 # region =====Container Class=====
 
 class Container:
-    def __init__(self, image_name="", dockerfile="", is_main=False, requires_it=False, networks : list[str] = [], ports : dict[str,str] = {}, operating_system=""):
+    def __init__(self, image_name="", name="", dockerfile="", is_main=False, requires_it=False, networks : list[str] = [], ports : dict[str,str] = {}, operating_system=""):
         self.image_name = image_name
+        self.name = name
         self.dockerfile = dockerfile
         self.is_main = is_main
         self.requires_it = requires_it
@@ -47,7 +48,6 @@ class Container:
 
 class Scenario:
     
-    # /!\ Whenever you add a new field to the scenario object, make sure you update all the fields in __init__, __str__, CreateDefault() and Parse()
     def __init__(self, name="", CVE="", difficulty="", type="", sources : list[str] = [], description="", goal="", solution="", containers : dict[str, Container] = {}):
         self.name = name
         self.CVE = CVE
@@ -87,13 +87,13 @@ def Load() -> dict:
     # We then complete our variable with all the existing scenarios
     for scenario_name in scenarios_list:
         folder_path = scenarios_folder_path + f"{sep}{scenario_name}"
-        retrieveScenarioDataFromFolder(folder_path, scenarios_db)
+        RetrieveScenarioDataFromFolder(folder_path, scenarios_db)
     
     return scenarios_db
 
-def retrieveScenarioDataFromFolder(folder_path : str, scenarios_db : dict):
+def RetrieveScenarioDataFromFolder(folder_path : str, scenarios_db : dict):
     '''
-    Instantiate a scenario in the database from the data in the specified folder
+    Instantiates a scenario in the database from the data in the specified folder
     '''
     json_path = folder_path + f"{sep}scenario_data.json"
     readme_path = folder_path + f"{sep}README.md"
@@ -108,6 +108,88 @@ def retrieveScenarioDataFromFolder(folder_path : str, scenarios_db : dict):
         
     scenarios_db['scenarios'][scenario_json_data['name']] = Parse(scenario_json_data, readme_path)
 
+def Parse(scenario_json_data : dict, readme_path = "") -> Scenario:
+    '''
+    Instantiates a Scenario object from a given scenario dictionnary.
+    ---------------
+    Parameters:
+
+    scenario_json_data: The dictionnary we are going to read to instantiate the scenario
+    readme_path: Path of the README.md file in order to recover description, goal and solution data
+    '''
+    for key in scenario_json_data:
+        if scenario_json_data[key] == "N/A":
+            scenario_json_data[key] = ""
+    
+    scenario = Scenario()    
+    to_exclude = ["description", "goal", "solution", "containers"]
+    for attribute_name in scenario.__dict__:
+        if attribute_name not in to_exclude:
+            try:
+                setattr(scenario, attribute_name, scenario_json_data[attribute_name])
+            except Exception as ex:
+                logger.error(f'Error while parsing the scenario: {ex}')
+    
+    desc = ""; goal = ""; sol = ""
+    if len(readme_path) != 0:
+        desc, goal, sol = ParseReadme(readme_path)
+        scenario.description = desc; scenario.goal = goal; scenario.solution = sol
+    
+    containers = dict[str,Container]()
+    for container_data in scenario_json_data['containers']:
+        for key in container_data:
+            if container_data[key] == "N/A":
+                container_data[key] = ""
+        
+        container = Container()
+        for attribute_name in container.__dict__:
+            try:
+                setattr(container, attribute_name, container_data[attribute_name])
+            except Exception as ex:
+                logger.error(f'Error while parsing the container: {ex}')
+        
+        containers[container.image_name] = container
+    scenario.containers = containers
+
+    return scenario
+
+def ParseReadme(readme_file_path : str) -> tuple[str, str, str]:
+    '''
+    Return a scenario description, goal and solution from a README.md file
+    '''
+    desc = ""; goal = ""; sol = ""
+    
+    try:
+        readme = open(readme_file_path, 'r')
+        buffer = readme.read()
+        readme.close()
+        
+        h2split = buffer.split('<h2>')
+        h2split.remove('')
+        for index,split in enumerate(h2split):
+            split_buffer = ""
+            lastPIndex = 0
+            noMoreParagraphs = False
+            while not noMoreParagraphs:
+                pStartIndex = split.find('<p>', lastPIndex)
+                pEndIndex = split.find('</p>', lastPIndex)
+                if pStartIndex == -1 or pEndIndex == -1:
+                    noMoreParagraphs = True
+                else:
+                    split_buffer += split[pStartIndex + 3 : pEndIndex] + '\n'
+                    lastPIndex = pEndIndex + 4
+            
+            if index == 0:
+                desc += split_buffer[:-1]
+            elif index == 1:
+                goal += split_buffer[:-1]
+            elif index == 2:
+                sol += split_buffer[:-1]
+            index += 1
+    except Exception as ex:
+        logger.error(f'An error occured while trying to parse {readme_file_path}: {ex}')
+    
+    return (desc, goal, sol)
 
 def Save(scenario : Scenario):
     '''
@@ -229,90 +311,6 @@ def LoadScenario(name : str) -> Scenario:
     '''
     scenarios_db = Load()
     return scenarios_db['scenarios'][name]
-
-
-def Parse(scenario_json_data : dict, readme_path = "") -> Scenario:
-    '''
-    Instantiates a Scenario object from a given scenario dictionnary.
-    ---------------
-    Parameters:
-
-    scenario_json_data: The dictionnary we are going to read to instantiate the scenario
-    readme_path: Path of the README.md file in order to recover description, goal and solution data
-    '''
-    for key in scenario_json_data:
-        if scenario_json_data[key] == "N/A":
-            scenario_json_data[key] = ""
-    
-    scenario = Scenario()    
-    to_exclude = ["description", "goal", "solution", "containers"]
-    for attribute_name in scenario.__dict__:
-        if attribute_name not in to_exclude:
-            try:
-                setattr(scenario, attribute_name, scenario_json_data[attribute_name])
-            except Exception as ex:
-                logger.error(f'Error while parsing the scenario: {ex}')
-    
-    desc = ""; goal = ""; sol = ""
-    if len(readme_path) != 0:
-        desc, goal, sol = ParseReadme(readme_path)
-        scenario.description = desc; scenario.goal = goal; scenario.solution = sol
-    
-    containers = dict[str,Container]()
-    for container_data in scenario_json_data['containers']:
-        for key in container_data:
-            if container_data[key] == "N/A":
-                container_data[key] = ""
-        
-        container = Container()
-        for attribute_name in container.__dict__:
-            try:
-                setattr(container, attribute_name, container_data[attribute_name])
-            except Exception as ex:
-                logger.error(f'Error while parsing the container: {ex}')
-        
-        containers[container.image_name] = container
-    scenario.containers = containers
-
-    return scenario
-
-def ParseReadme(readme_file_path : str) -> tuple[str, str, str]:
-    '''
-    Return a scenario description, goal and solution from a README.md file
-    '''
-    desc = ""; goal = ""; sol = ""
-    
-    try:
-        readme = open(readme_file_path, 'r')
-        buffer = readme.read()
-        readme.close()
-        
-        h2split = buffer.split('<h2>')
-        h2split.remove('')
-        for index,split in enumerate(h2split):
-            split_buffer = ""
-            lastPIndex = 0
-            noMoreParagraphs = False
-            while not noMoreParagraphs:
-                pStartIndex = split.find('<p>', lastPIndex)
-                pEndIndex = split.find('</p>', lastPIndex)
-                if pStartIndex == -1 or pEndIndex == -1:
-                    noMoreParagraphs = True
-                else:
-                    split_buffer += split[pStartIndex + 3 : pEndIndex] + '\n'
-                    lastPIndex = pEndIndex + 4
-            
-            if index == 0:
-                desc += split_buffer[:-1]
-            elif index == 1:
-                goal += split_buffer[:-1]
-            elif index == 2:
-                sol += split_buffer[:-1]
-            index += 1
-    except Exception as ex:
-        logger.error(f'An error occured while trying to parse {readme_file_path}: {ex}')
-    
-    return (desc, goal, sol)
 
 
 if __name__ == "__main__":

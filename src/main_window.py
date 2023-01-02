@@ -356,20 +356,22 @@ class ScenarioThread(BaseThread):
         self.update_console.emit(f'Launched the {scenario.name} scenario.')
         logger.info(f'Launched the {scenario.name} environment.')
 
+        # Launching all the scenario containers
         for container in scenario.containers.values():
-            name = f"{scenario.name}_{container.image_name.split(':')[0].split('/')[-1]}"
-            if container.is_main: name += "_main"
-            try:
-                if (old_container := self.docker_client.containers.get(name)) is not None:
-                    old_container.remove(force=True)
-            except:
-                pass
-            if len(container.ports) != 0:
-                self.LaunchContainer(image_name=container.image_name, dockerfile=container.dockerfile, 
-                                    requires_it=container.requires_it, networks_names=container.networks, ports=container.ports, name=name, stdin_open=True, tty=True)
-            else:
-                self.LaunchContainer(image_name=container.image_name, dockerfile=container.dockerfile, 
-                                    requires_it=container.requires_it, networks_names=container.networks, name=name, stdin_open=True, tty=True)
+            self.LaunchContainer(container, stdin_open=True, tty=True)
+
+        # Attaching to a terminal if allowed and necessary
+        if configuration['auto_attach'] is True:
+            for image_name, container in self.window.GetRunningScenario().containers.items():
+                if container.requires_it is False:
+                    continue
+                try:
+                    container = dutils.get_container(image_name)[0]
+                except TypeError:
+                    container = dutils.get_container(container.name)[0]
+                logger.info(f'Attaching the {container.name} container to a new terminal.')
+                command = f"docker logs {container.short_id};docker attach {container.short_id}"
+                misc.open_terminal(operating_system, command)
 
         self.update_console.emit('------------------------------------------------------------------------------------\n'
                                  '* Click on the Goal button to get a better scope of what needs to be done.\n'
@@ -379,52 +381,67 @@ class ScenarioThread(BaseThread):
         self.window.RemoveWaitingHandler()
         self.finished.emit()
 
-    def LaunchContainer(self, image_name, dockerfile, requires_it, networks_names, **kwargs):     
-        if len(dockerfile) != 0:
+    def LaunchContainer(self, container : Container, **kwargs):
+        # Setting up the container name
+        if container.name != "":
+            name = container.name
+        else:
+            name = f"{container.image_name.split(':')[0].split('/')[-1].capitalize()}"
+        if self.scenario_name.lower() not in name.lower():
+            name = f"{self.scenario_name}_{name}"
+        if container.is_main: name += "_main"
+
+        # Forcefully deleting containers with that name to leave room for the new ones
+        try:
+            if (old_container := self.docker_client.containers.get(name)) is not None:
+                old_container.remove(force=True)
+        except:
+            pass
+
+        # Building the images if necessary
+        if len(container.dockerfile) !=0:
             try:
-                dockerfiles_path = dutils.GetImageRequirements(image_name.split(':')[0])
+                dockerfiles_path = dutils.GetImageRequirements(container.image_name.split(':')[0], type="scenario")
                 main_image = dockerfiles_path[-1].split(sep)[-1]
-                
-                self.update_console.emit(f'Started building the {main_image} image.')
+
                 logger.info(f'Started building the {main_image} image.')
-                
+
                 for dockerfile_path in dockerfiles_path:
-                    image = dockerfile_path.split(sep)[-1]
+                    if 'scenario' in dockerfile_path:
+                        image = container.image_name.split(':')[0]
+                    else:
+                        image = dockerfile_path.split(sep)[-1]
                     self.update_console.emit(f'Building the {image} image...')
                     logger.info(f'Building the {image} image...')
                     self.docker_client.images.build(path=dockerfile_path, tag=f"{image}:custom", rm=True)
-                    self.update_console.emit(f'Done!')
                     logger.info(f'Done!')
-
-                self.update_console.emit('Done building the image!')
             except Exception as ex:
                 self.update_console.emit(f'Error: {str(ex)}')
                 logger.info(ex)
-        
+
+        # Running the container (if no image was built, downloads it from the container image name)
         try:
-            self.update_console.emit(f"Setting up the \"{image_name}\" container...")
-            logger.info(f"Setting up the \"{image_name}\" container...")
-            if len(networks_names) == 0:
-                self.docker_client.containers.run(image_name, detach=True, network_disabled=True, **kwargs)
+            self.update_console.emit(f"Setting up the \"{container.image_name}\" container...")
+            logger.info(f"Setting up the \"{container.image_name}\" container...")
+            if len(container.networks) == 0:
+                _container = self.docker_client.containers.run(image=container.image_name, name=name, ports=container.ports,
+                detach=True, network_disabled=True, **kwargs)
             else:
-                for network_name in networks_names:
+                for network_name in container.networks:
                     if not dutils.network_in(self.docker_client.networks.list(), network_name):
                         self.docker_client.networks.create(network_name, driver="bridge")
-                
-                container = self.docker_client.containers.run(image_name, detach=True, network=networks_names[0], **kwargs)
-                if len(networks_names) > 1:
-                    networks = [network for network in self.docker_client.networks.list() if network.name in networks_names[1:]]
+                # TODO: Redo network connection with Network.connect instead
+                _container = self.docker_client.containers.run(container.image_name, name=name, ports=container.ports, 
+                detach=True, network=container.networks[0], **kwargs)
+                if len(container.networks) > 1:
+                    networks = [network for network in self.docker_client.networks.list() if network.name in container.networks[1:]]
                     for network in networks:
-                        network.connect(container.short_id)
-            if requires_it is True:
-                logger.info(f'Attaching the {image_name} container to a new terminal.')
-                command = f"docker logs {container.short_id};docker attach {container.short_id}"
-                misc.open_terminal(operating_system, command)
-            self.update_console.emit(f"Done!")
+                        network.connect(_container.short_id)
             logger.info(f"Done!")
         except Exception as ex:
             self.update_console.emit(f'Error: {str(ex)}')
             logger.info(ex)
+
 
 if __name__ == "__main__":
 

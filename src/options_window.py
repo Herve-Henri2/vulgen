@@ -33,6 +33,7 @@ class OptionsWindow(QDialog, BaseWindow):
         self.docker_desktop_entry.resize(400, 20)
         if operating_system != "Windows":
             self.docker_desktop_entry.setEnabled(False)
+            self.DisableButton(self.browse_button)
         
         # Buttons
         self.save_button = QPushButton('Save', self)

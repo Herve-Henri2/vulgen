@@ -8,4 +8,5 @@ RUN apt-get update && apt-get install -y \
     hashcat \
     ssh \
     binwalk \
-    iproute2
+    iproute2 \
+    iputils-ping
