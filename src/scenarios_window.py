@@ -249,11 +249,15 @@ class ScenariosWindow(QDialog, BaseWindow):
         window.exec()
 
     def RemoveContainer(self):
-        messagebox = QMessageBox(self)
-        messagebox.setStyleSheet('background-color: blue')
-        remove = messagebox.question(self, 'Removing container', 'Are you sure you want to remove that container from the scenario?', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        messagebox = QMessageBox(QMessageBox.Icon.Question,
+                                'Removing container',
+                                'Are you sure you want to remove that container from the scenario?',
+                                 buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                 parent=self)
+        messagebox.setStyleSheet(f'background-color: {theme["main_window_background_color"]}; color: {theme["text_color"]}')
+        messagebox.exec()
         
-        if remove == QMessageBox.StandardButton.Yes:
+        if messagebox.standardButton(messagebox.clickedButton()) == QMessageBox.StandardButton.Yes:
             scenario_name = self.containers_list_view.currentItem().text().replace("(main) ", "")
             self.containers_list_view.takeItem(self.containers_list_view.currentRow())
             self.current_scenario_containers.pop(scenario_name)
@@ -275,11 +279,16 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.close()
     
     def RemoveScenario(self):
-        messagebox = QMessageBox(self)
-        messagebox.setStyleSheet('background-color: blue')
-        remove = messagebox.question(self, 'Removing scenario', 'Are you sure you want to remove that scenario?', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        
-        if remove == QMessageBox.StandardButton.Yes:
+        messagebox = QMessageBox(QMessageBox.Icon.Question,
+                                'Removing Scenario',
+                                'Are you sure you want to remove that scenario?',
+                                buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                parent=self)
+        messagebox.setDefaultButton(QMessageBox.StandardButton.No)
+        messagebox.setStyleSheet(f'background-color: {theme["main_window_background_color"]}; color: {theme["text_color"]}')
+        messagebox.exec()
+
+        if messagebox.standardButton(messagebox.clickedButton()) == QMessageBox.StandardButton.Yes:
             scenario_name = self.list_view.currentItem().text()
             # Remove scenario folder
             Remove(scenario_name)
@@ -390,9 +399,10 @@ class ScenariosWindow(QDialog, BaseWindow):
         
         is_valid = CheckValid()
         if is_valid['valid_scenario'] is False:
-            messagebox = QMessageBox(self)
-            messagebox.setWindowTitle("Invalid parameters!")
-            messagebox.setText(is_valid['message'])
+            messagebox = QMessageBox(QMessageBox.Icon.Critical,
+                                    "Invalid parameters!",
+                                    is_valid['message'],
+                                    parent=self)
             messagebox.setStyleSheet('background-color: white; color: black')
             messagebox.exec()
         else:
@@ -589,14 +599,14 @@ class EditContainersWindow(QDialog, BaseWindow):
         non_custom_images = [image for image in images if image.split(':')[1] != "custom"]
         
         if len(non_custom_images) != 0:
-            # TODO implement style on it
-            image, ok = QInputDialog.getItem(self, "Image input", "List of non custom images:", non_custom_images, 0, False)
+            dialog_model = BaseWindow()
+            dialog_model.setStyleSheet(f'background-color: {theme["main_window_background_color"]}; color: {theme["text_color"]}')
+            image, ok = QInputDialog.getItem(dialog_model, "Image input", "List of non custom images:", non_custom_images, 0, False)
             if ok and image:            
                 self.image_entry.setText(image)
         else:
-            messagebox = QMessageBox(self)
-            messagebox.setWindowTitle("Error")
-            messagebox.setText("No images available!")
+            messagebox = QMessageBox(QMessageBox.Icon.Critical, "Error", "No images available", parent=self)
+            messagebox.setStyleSheet('background-color: white; color: black')
             messagebox.exec()
     
     def FileDialog(self):
@@ -646,7 +656,6 @@ class EditContainersWindow(QDialog, BaseWindow):
                 self.host_port.setText(value)
 
     def SaveContainer(self):
-        # TODO: add container name saving 
         
         def CheckValid():
             result = {}
@@ -671,9 +680,10 @@ class EditContainersWindow(QDialog, BaseWindow):
 
         is_valid = CheckValid()
         if is_valid['is_valid'] is False:
-            messagebox = QMessageBox(self)
-            messagebox.setWindowTitle("Invalid parameters!")
-            messagebox.setText(is_valid['message'])
+            messagebox = QMessageBox(QMessageBox.Icon.Critical,
+                                    "Invalid parameters!",
+                                    is_valid['message'],
+                                    parent=self)
             messagebox.setStyleSheet('background-color: white; color: black')
             messagebox.exec()
         else:
