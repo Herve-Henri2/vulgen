@@ -388,7 +388,7 @@ class ScenarioThread(BaseThread):
         else:
             name = f"{container.image_name.split(':')[0].split('/')[-1].capitalize()}"
         if self.scenario_name.lower() not in name.lower():
-            name = f"{self.scenario_name}_{name}"
+            name = f"{self.scenario_name}-{name}"
         if container.is_main: name += "_main"
 
         # Forcefully deleting containers with that name to leave room for the new ones
@@ -442,8 +442,29 @@ class ScenarioThread(BaseThread):
             self.update_console.emit(f'Error: {str(ex)}')
             logger.info(ex)
 
+def excepthook(exc_type, exc_value, exc_traceback):
+
+    import traceback
+
+    '''
+    Allows us to log any exception that will cause the application to crash.
+    '''
+    # logging
+    logger.error("Unhandled exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+    # console printing
+    type = str(exc_type).replace("<class '", "").replace("'>", "")
+    print(f"Unhandled exception: ")
+    traceback.print_tb(exc_traceback, file=sys.stdout)
+    print(f"{type}: {exc_value}")
+
+    # closing the app
+    sys.exit()
+
 
 if __name__ == "__main__":
+
+    sys.excepthook = excepthook
 
     app = QApplication(sys.argv)
     ex = MainWindow()
