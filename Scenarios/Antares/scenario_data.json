@@ -7,7 +7,7 @@
    "containers": [
       {
          "image_name": "antares-kalilinux:custom",
-         "name": "attaquer",
+         "name": "attacker",
          "dockerfile": "../docker_images/scenario_images/antares-kalilinux",
          "is_main": true,
          "requires_it": true,

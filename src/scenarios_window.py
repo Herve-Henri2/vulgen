@@ -277,8 +277,8 @@ class ScenariosWindow(QDialog, BaseWindow):
             messagebox.setStyleSheet('background-color: white; color: black')
             messagebox.exec()
         else:
-            json_file = f"{src_folder_path}{sep}..{sep}Scenarios{sep}{scenario_name}{sep}scenario_data.json"
-            os.system(json_file)
+            json_file_path = f'"{src_folder_path}{sep}..{sep}Scenarios{sep}{scenario_name.text()}{sep}scenario_data.json"'
+            os.system(json_file_path)
 
     def LaunchScenario(self):
         scenario_name = self.list_view.currentItem().text()
@@ -286,9 +286,9 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.close()
     
     def RemoveScenario(self):
-        messagebox = QMessageBox(QMessageBox.Icon.Question,
+        messagebox = QMessageBox(QMessageBox.Icon.Warning,
                                 'Removing Scenario',
-                                'Are you sure you want to remove that scenario?',
+                                'This is an irreversible action.\nAre you sure you want to remove that scenario?',
                                 buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                 parent=self)
         messagebox.setDefaultButton(QMessageBox.StandardButton.No)
@@ -338,6 +338,11 @@ class ScenariosWindow(QDialog, BaseWindow):
         # Setting up the UI
         self.HideUIElements(self.default_mode_ui)
         self.ShowUIElements(self.edit_mode_ui)
+        # Resetting the default ui selections
+        self.list_view.clearSelection()
+        self.textbox.clear()
+
+        
 
     def DefaultMode(self):
         '''
@@ -644,6 +649,8 @@ class EditContainersWindow(QDialog, BaseWindow):
 
         # Filling the other fields (or not)
         if self.addingMode is False:
+            self.container_name.setText(self.container_to_edit.name)
+
             self.container_os.setText(self.container_to_edit.operating_system)
             
             if len(self.container_to_edit.dockerfile) != 0:
