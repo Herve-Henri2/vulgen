@@ -6,8 +6,9 @@
    "sources": [],
    "containers": [
       {
-         "image_name": "kalilinux_antares:custom",
-         "dockerfile": "../docker_images/kalilinux_antares",
+         "image_name": "antares-kalilinux:custom",
+         "name": "attaquer",
+         "dockerfile": "../docker_images/scenario_images/antares-kalilinux",
          "is_main": true,
          "requires_it": true,
          "networks": [
@@ -17,8 +18,9 @@
          "operating_system": "Kali Linux"
       },
       {
-         "image_name": "ubuntu_1_antares:custom",
-         "dockerfile": "../docker_images/ubuntu_1_antares",
+         "image_name": "antares-ubuntu_1:custom",
+         "name": "employee",
+         "dockerfile": "../docker_images/scenario_images/antares-ubuntu_1",
          "is_main": false,
          "requires_it": false,
          "networks": [

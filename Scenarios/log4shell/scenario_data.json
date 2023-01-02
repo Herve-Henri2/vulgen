@@ -1,5 +1,5 @@
 {
-   "name": "log4shell",
+   "name": "Log4shell",
    "CVE": "CVE-2021-44228",
    "difficulty": "2",
    "type": "Remote Code Execution",
@@ -11,8 +11,10 @@
    "containers": [
       {
          "image_name": "ghcr.io/christophetd/log4shell-vulnerable-app",
+         "name": "N/A",
          "dockerfile": "N/A",
          "is_main": true,
+         "requires_it": false,
          "networks": [
             "bridge"
          ],

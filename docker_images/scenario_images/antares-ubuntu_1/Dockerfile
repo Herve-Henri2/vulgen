@@ -1,8 +1,7 @@
 FROM ubuntu20-python-c:custom
 
 RUN useradd -ms /bin/bash diego 
-RUN ufw allow 22 
-RUN ufw reload 
+RUN service ssh start
 
 USER diego
 WORKDIR /home/diego

@@ -118,20 +118,20 @@ def GetContainers(docker_client=None):
     
     return cont_dict
 
-
-def GetCustomImages():
+def GetCustomImages() -> list[list]:
     '''
     Retrieves all custom images names from the docker_images folder.
     '''
-    to_exclude = ['README.md', 'base_images']
-    
     custom_images_path = src_folder_path + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
     base_images_path = custom_images_path + f"{sep}base_images"
-    
-    custom_images = [folder for folder in os.listdir(custom_images_path) if folder not in to_exclude]
-    custom_images.extend([f"base_images{sep}{folder}" for folder in os.listdir(base_images_path) if folder not in to_exclude])
-        
-    return custom_images
+    scenario_images_path = custom_images_path + f"{sep}scenario_images"
+    misc_images_path = custom_images_path + f"{sep}misc_images"
+
+    base_images = [folder for folder in os.listdir(base_images_path)] 
+    scenario_images = [folder for folder in os.listdir(scenario_images_path)]
+    misc_images = [folder for folder in os.listdir(misc_images_path)]
+
+    return base_images, scenario_images, misc_images
 
 
 def GetNetworks(docker_client=None):
@@ -148,14 +148,21 @@ def GetNetworks(docker_client=None):
     
     return network_dict
 
-
-def GetImageRequirements(image_name : str, docker_client=None):
+def GetImageRequirements(image_name : str, type : str, docker_client=None):
     if docker_client is None:
         docker_client = docker.from_env()
     
     # Get Dockerfile path
     custom_images_path = src_folder_path + f"{sep}..{sep}docker_images"  # src folder absolute path + path to docker_images from src folder
-    dockerfile_path = f'{custom_images_path}{sep}{image_name}'
+    if type == "scenario":
+        dockerfile_path = f'{custom_images_path}{sep}scenario_images{sep}{image_name}'
+    elif type == "misc":
+        dockerfile_path = f'{custom_images_path}{sep}misc_images{sep}{image_name}'
+    elif type == "base":
+        dockerfile_path = f'{custom_images_path}{sep}base_images{sep}{image_name}'
+    else:
+        dockerfile_path = f'{custom_images_path}{sep}{image_name}'
+
     # Get custom image requirements
     built_images = docker_client.images.list()
     required_images = []

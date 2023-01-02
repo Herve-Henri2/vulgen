@@ -86,6 +86,12 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.save_button.clicked.connect(self.SaveScenario)
         self.edit_mode_ui.append(self.save_button)
 
+        self.json_button = QPushButton('Open Json', self)
+        self.json_button.move(220, 440)
+        self.json_button.resize(100, 20)
+        self.json_button.clicked.connect(self.OpenJson)
+        self.edit_mode_ui.append(self.json_button)
+
         self.add_container_button = QPushButton('Add', self)
         self.add_container_button.move(600, 290)
         self.add_container_button.clicked.connect(self.OpenContainerAdd)
@@ -255,6 +261,13 @@ class ScenariosWindow(QDialog, BaseWindow):
     # endregion
 
     # region =====Main Methods=====
+
+    def OpenJson(self):
+        json_file = f"{src_folder_path}{sep}..{sep}Scenarios{sep}{self.scenario_name.text()}{sep}scenario_data.json"
+        try:
+            os.system(json_file)
+        except:
+            pass
 
     def LaunchScenario(self):
         scenario_name = self.list_view.currentItem().text()
@@ -458,30 +471,38 @@ class EditContainersWindow(QDialog, BaseWindow):
         self.networks = QListWidget(self)
         self.networks.move(20, 160)
         self.networks.resize(210, 150)
-        self.networks.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)        
+        self.networks.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)  
+
+        # Container name
+        self.container_name_label = QLabel('Container name', self)
+        self.container_name_label.move(280, 160)
+
+        self.container_name = QLineEdit(self)
+        self.container_name.move(280, 180)
+        self.container_name.resize(200, 20)      
         
         # Container port
         self.container_port_label = QLabel('Container port', self)
-        self.container_port_label.move(280, 160)
+        self.container_port_label.move(280, 210)
 
         self.container_port = QLineEdit(self)
-        self.container_port.move(280, 180)
+        self.container_port.move(280, 230)
         self.container_port.resize(100, 20)
         
         # Host port
         self.host_port_label = QLabel('Host port', self)
-        self.host_port_label.move(400, 160)
+        self.host_port_label.move(400, 210)
 
         self.host_port = QLineEdit(self)
-        self.host_port.move(400, 180)
+        self.host_port.move(400, 230)
         self.host_port.resize(100, 20)
         
         # Operating System
         self.container_os_label = QLabel('Operating system', self)
-        self.container_os_label.move(280, 210)
+        self.container_os_label.move(280, 260)
 
         self.container_os = QLineEdit(self)
-        self.container_os.move(280, 230)
+        self.container_os.move(280, 280)
         self.container_os.resize(150, 20)
         
         # Buttons
@@ -559,12 +580,6 @@ class EditContainersWindow(QDialog, BaseWindow):
         if not self.networks.findItems(new_choice, Qt.MatchFlag.MatchFixedString | Qt.MatchFlag.MatchCaseSensitive):
             self.networks.addItem(new_choice)
             self.networks.item(self.networks.count()-1).setSelected(True)
-
-    def Highlight(self):
-        selection = self.networks.selectedItems()
-        #print(selection)
-        for item in selection:
-            print(item.text())
     
     # endregion
 
@@ -586,7 +601,6 @@ class EditContainersWindow(QDialog, BaseWindow):
     
     def FileDialog(self):
         custom_images_path = src_folder_path.replace('\\', '/') + f"/../docker_images"
-        print(custom_images_path)
         fname = QFileDialog.getExistingDirectory(self, caption="Select the DockerFile folder", directory=custom_images_path)
         if fname:
             project_folder_path = src_folder_path[:src_folder_path.rfind(sep)].replace('\\', '/')
@@ -632,6 +646,7 @@ class EditContainersWindow(QDialog, BaseWindow):
                 self.host_port.setText(value)
 
     def SaveContainer(self):
+        # TODO: add container name saving 
         
         def CheckValid():
             result = {}
@@ -668,8 +683,9 @@ class EditContainersWindow(QDialog, BaseWindow):
                 container_to_save.dockerfile = self.dockerfile_entry.text()
                 container_to_save.image_name = f"{container_to_save.dockerfile.split('/')[-1]}:custom"
             else:
-                container_to_save.image_name = self.image_entry.text()
+                container_to_save.image_name = self.image_entry.text().strip()
                 
+            container_to_save.name = self.container_name.text().strip()
             container_to_save.is_main = self.is_main_checkbox.isChecked()
             container_to_save.requires_it = self.requires_it_checkbox.isChecked()
             container_to_save.networks = [selection.text() for selection in self.networks.selectedItems()]

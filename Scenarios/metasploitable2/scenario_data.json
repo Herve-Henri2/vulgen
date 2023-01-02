@@ -1,5 +1,5 @@
 {
-   "name": "metasploitable2",
+   "name": "Metasploitable2",
    "CVE": "N/A",
    "difficulty": "2",
    "type": "Misc",
@@ -10,6 +10,7 @@
    "containers": [
       {
          "image_name": "tleemcjr/metasploitable2:latest",
+         "name": "N/A",
          "dockerfile": "N/A",
          "is_main": false,
          "requires_it": false,
@@ -20,8 +21,9 @@
          "operating_system": "Linux"
       },
       {
-         "image_name": "kalilinux_metasploitable:custom",
-         "dockerfile": "../docker_images/kalilinux_metasploitable",
+         "image_name": "metaspoiltable-kalilinux:custom",
+         "name": "N/A",
+         "dockerfile": "../docker_images/scenario_images/metaspoiltable-kalilinux",
          "is_main": true,
          "requires_it": true,
          "networks": [

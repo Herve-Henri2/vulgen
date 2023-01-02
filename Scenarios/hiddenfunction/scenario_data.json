@@ -1,13 +1,14 @@
 {
-   "name": "hiddenfunction",
+   "name": "Hiddenfunction",
    "CVE": "N/A",
    "difficulty": "2",
    "type": "Buffer Overflow",
    "sources": [],
    "containers": [
       {
-         "image_name": "binary_exploitation:custom",
-         "dockerfile": "../docker_images/binary_exploitation",
+         "image_name": "hiddenfunction-binary_exploitation:custom",
+         "name": "N/A",
+         "dockerfile": "../docker_images/scenario_images/hiddenfunction-binary_exploitation",
          "is_main": true,
          "requires_it": false,
          "networks": [

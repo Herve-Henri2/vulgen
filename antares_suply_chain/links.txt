@@ -1,1 +1,0 @@
-How RATs work (remote access trojans): https://www.proofpoint.com/fr/threat-reference/remote-access-trojan

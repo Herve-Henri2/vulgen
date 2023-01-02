@@ -1,5 +1,5 @@
 {
-   "name": "iotGoat",
+   "name": "IotGoat",
    "CVE": "N/A",
    "difficulty": "N/A",
    "type": "Brute Force",
@@ -9,8 +9,9 @@
    ],
    "containers": [
       {
-         "image_name": "iot-goat:custom",
-         "dockerfile": "../docker_images/iot-goat",
+         "image_name": "iotgoat-goat:custom",
+         "name": "N/A",
+         "dockerfile": "../docker_images/scenario_images/iot_goat-goat",
          "is_main": false,
          "requires_it": false,
          "networks": [
@@ -20,8 +21,9 @@
          "operating_system": "Ubuntu 20"
       },
       {
-         "image_name": "kalilinux_iot-goat:custom",
-         "dockerfile": "../docker_images/kalilinux_iot-goat",
+         "image_name": "iotgoat-kalilinux:custom",
+         "name": "N/A",
+         "dockerfile": "../docker_images/scenario_images/iot_goat-kalilinux",
          "is_main": true,
          "requires_it": false,
          "networks": [

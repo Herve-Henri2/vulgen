@@ -185,11 +185,13 @@ class BuildImageThread(BaseThread):
 
         try:
             for dockerfile_path in self.dockerfiles_path:
-                image = dockerfile_path.split(sep)[-1]
+                if 'scenario' in dockerfile_path:
+                    image = f"{dockerfile_path.split(sep)[-1]}:custom"
+                else:
+                    image = dockerfile_path.split(sep)[-1]
                 self.update_console.emit(f'Building the {image} image...')
                 logger.info(f'Building the {image} image...')
-                self.docker_client.images.build(path=dockerfile_path, tag=f"{image}:custom", rm=True)
-                self.update_console.emit(f'Done!')
+                self.docker_client.images.build(path=dockerfile_path, tag=image, rm=True)
                 self.update_table.emit()
                 logger.info(f'Done!')
 
