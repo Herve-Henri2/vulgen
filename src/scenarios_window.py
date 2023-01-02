@@ -267,11 +267,18 @@ class ScenariosWindow(QDialog, BaseWindow):
     # region =====Main Methods=====
 
     def OpenJson(self):
-        json_file = f"{src_folder_path}{sep}..{sep}Scenarios{sep}{self.scenario_name.text()}{sep}scenario_data.json"
-        try:
+        # We first check if it's a new scenario
+        scenario_name = self.list_view.selectedItems()[0] if len(self.list_view.selectedItems()) != 0 else None
+        if not scenario_name:
+            messagebox = QMessageBox(QMessageBox.Icon.Critical,
+                                'Error',
+                                'You need to save the scenario first.',
+                                parent=self)
+            messagebox.setStyleSheet('background-color: white; color: black')
+            messagebox.exec()
+        else:
+            json_file = f"{src_folder_path}{sep}..{sep}Scenarios{sep}{scenario_name}{sep}scenario_data.json"
             os.system(json_file)
-        except:
-            pass
 
     def LaunchScenario(self):
         scenario_name = self.list_view.currentItem().text()

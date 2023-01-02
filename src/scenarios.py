@@ -206,7 +206,7 @@ def Save(scenario : Scenario):
     scenarios_db['avg_difficulty'] = GetAverageDifficulty(scenarios_db)
     with open(global_json_path, 'w') as file:
         global_scenarios_data = {k:v for k,v in scenarios_db.items() if k != 'scenarios'}
-        file.write(json.dumps(global_scenarios_data, indent=3))
+        file.write(json.dumps(global_scenarios_data, indent=3, ensure_ascii=False))
     
     # Update specific scenario data
     scenario_folder_path = scenarios_folder_path + f"{sep}{scenario.name}"
@@ -230,7 +230,7 @@ def Save(scenario : Scenario):
                     container[key] = "N/A"
         scenario_data["containers"] = containers
         
-        file.write(json.dumps(scenario_data, indent=3))
+        file.write(json.dumps(scenario_data, indent=3, ensure_ascii=False))
     
     readme_path = scenario_folder_path + f"{sep}README.md"
     with open(readme_path, 'w') as file:
