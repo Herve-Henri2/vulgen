@@ -1,10 +1,12 @@
 import config
+import misc
 import scenarios
 import docker
 import logging
 import os
 import platform
 import time
+import sys
 
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
@@ -30,6 +32,9 @@ class BaseWindow(QWidget):
 
     def __init__(self):
         super().__init__()
+
+        self.window_type = str(type(self)).replace("<class '", "").replace("'>", "")
+        logger.info(f'Instanciating a {self.window_type} object.')
         self.docker_client = None
         self.threads = []
         self.setWindowIcon(QtGui.QIcon(src_folder_path + f"{sep}..{sep}images{sep}shield.png"))
@@ -37,6 +42,10 @@ class BaseWindow(QWidget):
             self.docker_client = docker.from_env()
         except:
             pass
+
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        logger.info(f'Collapsing the {self.window_type} object.')
+        return super().closeEvent(a0)
 
     # region =====Graphical Methods=====
 
@@ -120,7 +129,9 @@ class BaseWindow(QWidget):
         self.textbox.setStyleSheet(original_stylesheet)
 
     def ImplementTheme(self, *exceptions, main_window=True):
-
+        '''
+        Colors all the window's elements according to the selected theme.
+        '''
         if main_window:
             background_color = theme['main_window_background_color']
             self.setStyleSheet(f'background-color: {background_color}')
@@ -152,7 +163,6 @@ class BaseWindow(QWidget):
             elif isinstance(element, QPlainTextEdit):
                 element.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}'")
             elif isinstance(element, QListWidget):
-                #element.setStyleSheet(f"background-color: {textbox_color}; color: {text_color}; font-family: {text_font}; font-size: {text_size};  border: 1px solid '{border_color}';")
                 element.setStyleSheet("QListWidget:item:selected{"
                                       f"background-color: {buttons_color}; color: {text_color}; font-family: {text_font};  border: 1px solid '{border_color}'"
                                       "}"
@@ -165,6 +175,10 @@ class BaseWindow(QWidget):
                 element.verticalHeader().setStyleSheet("::section{Background-color:" + str(textbox_color) + "}")
 
     def LaunchWaitingHandler(self):
+        '''
+        Makes the window's textbox blink, to signal the user that a time consuming process is running.
+        /!\ Only use on a window that has a self.texbox : QPlainTextEdit attribute.
+        '''
         waiting_handler = WaitingHandler(window=self)
         waiting_handler.blink.connect(self.BorderColorBlink)
         waiting_handler.finished.connect(self.RemoveWaitingHandlerThread)
@@ -173,6 +187,9 @@ class BaseWindow(QWidget):
         self.threads[-1].start()
 
     def RemoveWaitingHandler(self):
+        '''
+        Triggers the finished signal of the running WaitingHandler thread.
+        '''
         for thread in self.threads:
             if isinstance(thread, WaitingHandler):
                 thread.stop = True
@@ -205,14 +222,6 @@ class WaitingHandler(BaseThread):
             self.Waiting()
 
     def Waiting(self):
-        """
-        if self.stop is False:
-            self.blink.emit()
-            time.sleep(0.5)
-            self.Waiting()
-        else:
-            self.finished.emit()
-        """
         while self.stop is False:
             self.blink.emit()
             time.sleep(0.5)
@@ -235,12 +244,75 @@ def DetectDockerDesktopPath():
             docker_desktop = path
             config.Save('docker_desktop', path)
 
+def StartDocker():
+    if operating_system == "Windows":
+        if docker_desktop != "":
+            try:
+                logger.info('Starting Docker Desktop')
+                os.popen(f'{docker_desktop}')
+                misc.unallowWindowOpening('Docker Desktop')
+            except Exception as ex:
+                logger.error(ex)
+    elif operating_system == "Linux":
+        try:
+            logger.info('Starting docker')
+            os.popen('systemctl start docker')
+        except Exception as ex:
+            logger.error(ex)
+
+def DockerServiceRunning():
+    '''
+    Checks if docker is running on the local computer.
+    '''
+    service_running = False
+
+    if operating_system == "Darwin":
+        logger.error('This program is not supported on Mac OS.')
+        return service_running
+
+    try:
+        docker.from_env()
+        service_running = True
+    except:
+        pass
+    finally:
+        logger.info(f'Docker service up and running : {service_running}')
+        return service_running
+
+def excepthook(exc_type, exc_value, exc_traceback):
+    '''
+    Allows us to log any exception that will cause the application to crash.
+    '''
+    import traceback
+
+    # logging
+    logger.error("Unhandled exception -> Application Shutdown", exc_info=(exc_type, exc_value, exc_traceback))
+
+    # console printing
+    type = str(exc_type).replace("<class '", "").replace("'>", "")
+    print(f"Unhandled exception: ")
+    traceback.print_tb(exc_traceback, file=sys.stdout)
+    print(f"{type}: {exc_value}")
+
+    # closing the app
+    sys.exit()
+
 def InitializeApp():
+    '''
+    Performs all the necessary initializing before launching the main window.
+    '''
+    sys.excepthook = excepthook
+
+    logger.info('------------------------Application Startup------------------------')
+
     if operating_system == "Windows":
         if not configuration['docker_desktop'] or configuration['docker_desktop'] == "":
             DetectDockerDesktopPath()
         else:
             docker_desktop = configuration['docker_desktop']
+
+    if not DockerServiceRunning():
+        StartDocker()
 
 # endregion
 
