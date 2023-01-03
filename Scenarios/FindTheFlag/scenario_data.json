@@ -1,0 +1,21 @@
+{
+   "name": "FindTheFlag",
+   "CVE": "N/A",
+   "difficulty": "2",
+   "type": "Format String",
+   "sources": [],
+   "containers": [
+      {
+         "image_name": "findtheflag-format_string:custom",
+         "name": "N/A",
+         "dockerfile": "../docker_images/scenario_images/findtheflag-format_string",
+         "is_main": true,
+         "requires_it": false,
+         "networks": [
+            "bridge"
+         ],
+         "ports": {},
+         "operating_system": "N/A"
+      }
+   ]
+}
