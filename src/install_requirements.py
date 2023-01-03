@@ -1,7 +1,7 @@
 import sys, subprocess, platform, os
 operating_system = platform.system()
 
-# if any issue, please type in 'python -m pip install --upgrade pip' in a shell
+# if any issue, please upgrade pip by typing 'python -m pip install --upgrade pip' in a shell
 
 if operating_system == "Windows":
     try:

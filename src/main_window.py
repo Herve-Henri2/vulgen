@@ -48,8 +48,6 @@ class MainWindow(BaseWindow):
         super().__init__()
         self.initUI(width, height, col1, col2, col3)
 
-        if not self.DockerServiceRunning():
-            self.StartDocker()
         self.Write(self.welcome_text)
 
 
@@ -273,22 +271,6 @@ class MainWindow(BaseWindow):
                     func(self, *args, **kwargs)
         return wrapper
 
-    def StartDocker(self):
-        if operating_system == "Windows":
-            if docker_desktop != "":
-                try:
-                    logger.info('Starting Docker Desktop')
-                    os.popen(f'{docker_desktop}')
-                    misc.unallowWindowOpening('Docker Desktop')
-                except Exception as ex:
-                    logger.error(ex)
-        elif operating_system == "Linux":
-            try:
-                logger.info('Starting docker')
-                os.popen('systemctl start docker')
-            except Exception as ex:
-                logger.error(ex)
-
     @CheckForDocker
     def ManageImages(self):
         self.images_window = ImagesWindow(parent=self)
@@ -398,14 +380,14 @@ class ScenarioThread(BaseThread):
         except:
             pass
 
-        # Building the images if necessary
+        # Building all the prerequisite images that don't exist
         if len(container.dockerfile) !=0:
             try:
                 dockerfiles_path = dutils.GetImageRequirements(container.image_name.split(':')[0], type="scenario")
                 main_image = dockerfiles_path[-1].split(sep)[-1]
 
                 logger.info(f'Started building the {main_image} image.')
-
+              
                 for dockerfile_path in dockerfiles_path:
                     if 'scenario' in dockerfile_path:
                         image = container.image_name.split(':')[0]
@@ -427,46 +409,29 @@ class ScenarioThread(BaseThread):
                 _container = self.docker_client.containers.run(image=container.image_name, name=name, ports=container.ports,
                 detach=True, network_disabled=True, **kwargs)
             else:
+                # Creating all the container networks that don't exist
                 for network_name in container.networks:
                     if not dutils.network_in(self.docker_client.networks.list(), network_name):
+                        logger.info(f'Creating the network {network_name}')
                         self.docker_client.networks.create(network_name, driver="bridge")
-                # TODO: Redo network connection with Network.connect instead
+                # Running the docker container
                 _container = self.docker_client.containers.run(container.image_name, name=name, ports=container.ports, 
                 detach=True, network=container.networks[0], **kwargs)
+                # Connecting the container to all its other networks
                 if len(container.networks) > 1:
                     networks = [network for network in self.docker_client.networks.list() if network.name in container.networks[1:]]
                     for network in networks:
+                        logger.info(f'Connecting the container {container.name} to the network {network.name}')
                         network.connect(_container.short_id)
             logger.info(f"Done!")
         except Exception as ex:
             self.update_console.emit(f'Error: {str(ex)}')
             logger.info(ex)
 
-def excepthook(exc_type, exc_value, exc_traceback):
-
-    import traceback
-
-    '''
-    Allows us to log any exception that will cause the application to crash.
-    '''
-    # logging
-    logger.error("Unhandled exception", exc_info=(exc_type, exc_value, exc_traceback))
-
-    # console printing
-    type = str(exc_type).replace("<class '", "").replace("'>", "")
-    print(f"Unhandled exception: ")
-    traceback.print_tb(exc_traceback, file=sys.stdout)
-    print(f"{type}: {exc_value}")
-
-    # closing the app
-    sys.exit()
-
 
 if __name__ == "__main__":
 
-    sys.excepthook = excepthook
-
     app = QApplication(sys.argv)
-    ex = MainWindow()
-    ex.show()
+    main_window = MainWindow()
+    main_window.show()
     sys.exit(app.exec())

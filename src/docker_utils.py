@@ -187,3 +187,5 @@ def GetImageRequirements(image_name : str, type : str, docker_client=None):
     dockerfiles_path.append(dockerfile_path)
     
     return dockerfiles_path
+
+    
