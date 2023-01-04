@@ -12,6 +12,8 @@ class CustomImagesWindow(QDialog, BaseWindow):
     def __init__(self, parent=None):
 
         self.parent = parent
+        self.selected_image = None
+        self.selected_image_type = None
 
         # Defining our layout variables
         width = 700
@@ -19,9 +21,6 @@ class CustomImagesWindow(QDialog, BaseWindow):
 
         super().__init__()
         self.initUI(width, height)
-
-        self.selected_image = None
-        self.selected_image_type = None
 
 
     def initUI(self, width, height):
@@ -66,7 +65,7 @@ class CustomImagesWindow(QDialog, BaseWindow):
         self.build_button.clicked.connect(self.BuildImage)
         
         # Fill the table
-        self.updateList()
+        self.updateLists()
         # Styling and coloring
         self.ImplementTheme()
         self.DisableButton(self.build_button)
@@ -81,13 +80,8 @@ class CustomImagesWindow(QDialog, BaseWindow):
         self.selected_image_type = "base"
 
         # Updating the selection (deselecting from other list views)
-        for i in range(self.scenario_images.count()):
-            if (item:=self.scenario_images.item(i)).isSelected():
-                item.setSelected(False)
-
-        for i in range(self.misc_images.count()):
-            if (item:=self.misc_images.item(i)).isSelected():
-                item.setSelected(False)
+        self.scenario_images.clearSelection()
+        self.misc_images.clearSelection()
         
     def ScenImageClicked(self):
         self.EnableButton(self.build_button)
@@ -95,13 +89,8 @@ class CustomImagesWindow(QDialog, BaseWindow):
         self.selected_image_type = "scenario"
 
         # Updating the selection (deselecting from other list views)
-        for i in range(self.base_images.count()):
-            if (item:=self.base_images.item(i)).isSelected():
-                item.setSelected(False)
-
-        for i in range(self.misc_images.count()):
-            if (item:=self.misc_images.item(i)).isSelected():
-                item.setSelected(False)
+        self.base_images.clearSelection()
+        self.misc_images.clearSelection()
 
     def MiscImageClicked(self):
         self.EnableButton(self.build_button)
@@ -109,18 +98,14 @@ class CustomImagesWindow(QDialog, BaseWindow):
         self.selected_image_type = "misc"
 
         # Updating the selection (deselecting from other list views)
-        for i in range(self.scenario_images.count()):
-            if (item:=self.scenario_images.item(i)).isSelected():
-                item.setSelected(False)
+        self.base_images.clearSelection()
+        self.scenario_images.clearSelection()
 
-        for i in range(self.base_images.count()):
-            if (item:=self.base_images.item(i)).isSelected():
-                item.setSelected(False)
-
-
-        
-    
-    def updateList(self):
+  
+    def updateLists(self):
+        '''
+        Fills in all of our list views with the adequate images.
+        '''
         custom_images = dutils.GetCustomImages()  
 
         base_img_list = custom_images[0]     
@@ -136,7 +121,9 @@ class CustomImagesWindow(QDialog, BaseWindow):
     # region =====Main Methods=====
 
     def BuildImage(self):
-               
+        '''
+        Closes this window to call the BuildCustomImage() function of its parent.
+        '''
         dockerfiles_path = dutils.GetImageRequirements(self.selected_image, self.selected_image_type)
         self.parent.BuildCustomImage(dockerfiles_path)
         self.close()

@@ -14,7 +14,7 @@ logger = logging.getLogger()
 
 def image_in(images, wanted_image_name):
     '''
-    Checks whether or not an image list contains a specific image.
+    Checks whether or not an image list contains a specific image, different from docker_client.images.get(name).
     '''
     for image in images:
         if wanted_image_name in image.tags[0]:
@@ -24,6 +24,7 @@ def image_in(images, wanted_image_name):
 def container_in(containers, wanted_container_image_name):
     '''
     Checks whether or not a container list contains a specific container based on the container's image name.
+    This function is different from docker_client.containers.get(name) 
     '''
     for container in containers:
         if wanted_container_image_name in container.image.tags[0]:
@@ -33,18 +34,22 @@ def container_in(containers, wanted_container_image_name):
 def network_in(networks, wanted_network_name):
     '''
     Checks whether or not a network list contains a specific network based on the network's name.
+    This function is different from docker_client.networks.get(name)
     '''
     for network in networks:
         if wanted_network_name in network.name:
             return True
     return False
 
-def get_image(images, image_name):
+def get_image(image_name, images=None):
     '''
     Searches for an image in an image list based on the image's name.
 
     Returns: docker.image object, index of image
     '''
+    if images is None:
+        docker_client = docker.from_env()
+        images = docker_client.images.list()
     for index, image in enumerate(images):
         if image_name in image.tags[0]:
             return image, index
@@ -76,6 +81,9 @@ def get_network(networks, network_name):
 
 
 def GetImages(docker_client=None):
+    '''
+    Returns a dictionnary listing all the existing docker images on the machine.
+    '''
     if docker_client is None:
         docker_client = docker.from_env()
 
@@ -96,6 +104,9 @@ def GetImages(docker_client=None):
         
 
 def GetContainers(docker_client=None):
+    '''
+    Returns a dictionnary listing all the docker containers (running or not) on the machine.
+    '''
     if docker_client is None:
         docker_client = docker.from_env()
     
@@ -135,6 +146,9 @@ def GetCustomImages() -> list[list]:
 
 
 def GetNetworks(docker_client=None):
+    '''
+    Returns a dictionnary listing all the docker networks created on the host machine.
+    '''
     if docker_client is None:
         docker_client = docker.from_env()
     
@@ -149,6 +163,15 @@ def GetNetworks(docker_client=None):
     return network_dict
 
 def GetImageRequirements(image_name : str, type : str, docker_client=None):
+    '''
+    Returns a list of paths leading to all the dockerfiles necessary to build the image passed as a parameter.
+    ------------
+    Parameters:
+
+    image_name : The name of the image we want to build
+
+    type : The image type (either "base", "scenario" or "misc"), used to search the image in the appropriate folder
+    '''
     if docker_client is None:
         docker_client = docker.from_env()
     
@@ -178,7 +201,7 @@ def GetImageRequirements(image_name : str, type : str, docker_client=None):
                     if not alreadyBuilt:
                         required_images.append(req[1])
     except Exception as ex:
-        logger.info(ex)
+        logger.error(ex)
     # Create Dockerfiles path list
     dockerfiles_path = []
     for req_image in required_images:
