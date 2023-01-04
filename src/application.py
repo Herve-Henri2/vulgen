@@ -257,7 +257,7 @@ class WaitingHandler(BaseThread):
     def run(self):
         if isinstance(self.window, BaseWindow):
             for attribute in self.window.__dict__:
-                if "textbox" not in attribute:
+                if attribute != "textbox":
                     continue
                 attribute = getattr(self.window, attribute)
                 if isinstance(attribute, QPlainTextEdit): 
