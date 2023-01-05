@@ -377,7 +377,7 @@ class ScenarioThread(BaseThread):
                         image = container.image_name.split(':')[0]
                     else:
                         image = dockerfile_path.split(sep)[-1]
-                    self.update_console.emit(f'Building the {image} image...')
+                    self.update_console.emit(f'Building the {image} image... (May take some time)')
                     logger.info(f'Building the {image} image...')
                     self.docker_client.images.build(path=dockerfile_path, tag=f"{image}:custom", rm=True)
                     logger.info(f'Done!')
