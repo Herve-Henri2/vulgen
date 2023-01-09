@@ -314,7 +314,5 @@ def LoadScenario(name : str) -> Scenario:
 
 
 if __name__ == "__main__":
-    #test_saving_scenarios()
-    #test_retrieving_scenario()
     scen = Load()
     print(json.dumps(scen, indent=3))
