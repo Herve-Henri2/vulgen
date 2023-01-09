@@ -258,9 +258,11 @@ class ScenariosWindow(QDialog, BaseWindow):
         messagebox.exec()
         
         if messagebox.standardButton(messagebox.clickedButton()) == QMessageBox.StandardButton.Yes:
-            scenario_name = self.containers_list_view.currentItem().text().replace("(main) ", "")
+            container = self.containers_list_view.currentItem().text().replace("(main) ", "")
             self.containers_list_view.takeItem(self.containers_list_view.currentRow())
-            self.current_scenario_containers.pop(scenario_name)
+            self.current_scenario_containers.pop(container)
+            if self.containers_list_view.count() == 0:
+                self.DisableButtons(self.edit_container_button, self.remove_container_button)
 
     # endregion
 
@@ -406,7 +408,17 @@ class ScenariosWindow(QDialog, BaseWindow):
             if self.containers_list_view.count() == 0:
                 result['valid_scenario'] = False
                 result['message'] += 'You need at least one container in your scenario!' + '\n'
-            
+            elif self.containers_list_view.count() >= 2:
+                main_set = False
+                for i in range(self.containers_list_view.count()):
+                    item = self.containers_list_view.item(i)
+                    if "main" in item.text():
+                        main_set = True
+                        break
+                if not main_set:
+                    result['valid_scenario'] = False
+                    result['message'] += 'Please specify which container is the main one!' + '\n'
+     
             return result
         
         is_valid = CheckValid()
@@ -428,6 +440,10 @@ class ScenariosWindow(QDialog, BaseWindow):
             scenario_to_save.type = self.type_entry.text()
             scenario_to_save.sources = [str(source) for source in self.sources.toPlainText().split('\n') if len(source) > 0]
             scenario_to_save.containers = self.current_scenario_containers
+            # If there is only one container, it is the main one
+            if len(scenario_to_save.containers) == 1:
+                container_img_name = next(iter(scenario_to_save.containers))
+                scenario_to_save.containers[container_img_name].is_main = True
             
             scenarios.Save(scenario_to_save)
             scenarios_db = scenarios.Load()
@@ -622,7 +638,7 @@ class EditContainersWindow(QDialog, BaseWindow):
             messagebox.exec()
     
     def FileDialog(self):
-        custom_images_path = src_folder_path.replace('\\', '/') + f"/../docker_images"
+        custom_images_path = src_folder_path.replace('\\', '/') + f"/../docker_images/scenario_images"
         fname = QFileDialog.getExistingDirectory(self, caption="Select the DockerFile folder", directory=custom_images_path)
         if fname:
             project_folder_path = src_folder_path[:src_folder_path.rfind(sep)].replace('\\', '/')
@@ -686,9 +702,19 @@ class EditContainersWindow(QDialog, BaseWindow):
             # Ports
             ports = (self.container_port.text(), self.host_port.text())
             if len(ports[0]) != 0 or len(ports[1]) != 0:
+                #TODO use REGEX instead
                 if not ports[0].isdigit() or not ports[1].isdigit():
                     result['is_valid'] = False
-                    result['message'] += 'If specified, the ports number must be positive integers!\n'                    
+                    result['message'] += 'If specified, the ports number must be positive integers!\n'                   
+
+            # Other containers
+            for container_img_name, container in self.parent.current_scenario_containers.items():
+                if container_img_name == image_name or (container.dockerfile != "" and container.dockerfile == dockerfile):
+                    result['is_valid'] = False
+                    result['message'] += 'That container already exists!\n'  
+                elif container.is_main is True:
+                    result['is_valid'] = False
+                    result['message'] += 'The main container has already been defined!\n'  
 
             return result
 

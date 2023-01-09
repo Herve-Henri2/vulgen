@@ -34,14 +34,16 @@ This program was designed so you can run it on both Linux and Windows machines. 
     python -m pip install --upgrade pip
 
 ## 3) Using the program
-To launch the program, run the [main_window.py](src/main_window.py) file. 
-![main_window_img](https://i.imgur.com/HmiYOeT.png) The program automatically starts docker or Docker Desktop if necessary before showing the window. If you are running it on a Windows machine, it will try to locate Docker Desktop based on its default installation path. If you have it installed in another path, you will need to set it through the options window. ![options_window_img](https://i.imgur.com/7XLWSOV.png)
+To launch the program, run the [main_window.py](src/main_window.py) file.<br>
+![main_window_img](https://i.imgur.com/HmiYOeT.png)<br>
+The program automatically starts docker or Docker Desktop if necessary before showing the window. If you are running it on a Windows machine, it will try to locate Docker Desktop based on its default installation path. If you have it installed in another path, you will need to set it through the options window.<br>
+![options_window_img](https://i.imgur.com/7XLWSOV.png)<br>
 You may also change the theme, mode, and turn the auto attach feature on/off. The mode is either Education or Challenge. In Education mode, you will be able to view the scenario's attack solution after launching it, which will not be the case in Challenge mode. The auto attach feature will automatically attach a specific container to a terminal shell if it has the "requires_it" (requires interaction) attribute set to True. It is recommended that you leave that option enabled.<br>
 Note that <b>you need to restart the application</b> to apply the changes.<br><br>
 
 To Launch a scenario, first click on the Scenarios Button, select the scenario you want to launch and then simply click on the Launch Scenario button.
 ![launch_scenario_img](https://i.imgur.com/uUe5Ovm.png)
-![active_scenario_img](https://i.imgur.com/KYkljYX.png)
+![active_scenario_img](https://i.imgur.com/KYkljYX.png)<br>
 Adding, editing and removing scenarios will be covered in the next section.<br><br>
 
 Although this program was not created for the following purpose, you may also manage docker images, containers and networks with it.
