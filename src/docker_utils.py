@@ -138,9 +138,9 @@ def GetCustomImages() -> list[list]:
     scenario_images_path = custom_images_path + f"{sep}scenario_images"
     misc_images_path = custom_images_path + f"{sep}misc_images"
 
-    base_images = [folder for folder in os.listdir(base_images_path)] 
-    scenario_images = [folder for folder in os.listdir(scenario_images_path)]
-    misc_images = [folder for folder in os.listdir(misc_images_path)]
+    base_images = [folder for folder in os.listdir(base_images_path) if os.path.isdir(os.path.join(base_images_path, folder))] 
+    scenario_images = [folder for folder in os.listdir(scenario_images_path) if os.path.isdir(os.path.join(scenario_images_path, folder))]
+    misc_images = [folder for folder in os.listdir(misc_images_path) if os.path.isdir(os.path.join(misc_images_path, folder))]
 
     return base_images, scenario_images, misc_images
 
