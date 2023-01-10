@@ -217,7 +217,7 @@ class MainWindow(BaseWindow):
         if (scenario := self.GetRunningScenario()) is not None:
             containers = self.docker_client.containers.list()
             for container in containers:
-                if scenario.name in container.name:
+                if scenario.name.lower() in container.name.lower():
                     container_list.append(container)
         return container_list
     
