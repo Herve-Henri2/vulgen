@@ -117,12 +117,11 @@ class NetworksWindow(QDialog, BaseWindow):
                     logger.info(f'Container {container_id} connected to the network {network.name}')
                 except Exception as ex:
                     self.setText(str(ex))
-                    logger.info(ex)
+                    logger.error(ex)
                 self.updateTable()
         else:
-            messagebox = QMessageBox(self)
-            messagebox.setWindowTitle("Error")
-            messagebox.setText("No containers available!")
+            messagebox = QMessageBox(QMessageBox.Icon.Critical, 'Error', 'No containers available!', parent=self)
+            messagebox.setStyleSheet('background-color: white; color: black')
             messagebox.exec()
 
     def RemoveNetwork(self):

@@ -108,6 +108,7 @@ class ImagesWindow(QDialog, BaseWindow):
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         if len(self.threads) != 0:
             a0.ignore()
+            logger.error(f'Cannot close the {self.window_type} object while a thread is running.')
         else:
             super().closeEvent(a0)
 
@@ -189,7 +190,7 @@ class BuildImageThread(BaseThread):
                     image = f"{dockerfile_path.split(sep)[-1]}:custom"
                 else:
                     image = dockerfile_path.split(sep)[-1]
-                self.update_console.emit(f'Building the {image} image...')
+                self.update_console.emit(f'Building the {image} image... (May take some time)')
                 logger.info(f'Building the {image} image...')
                 self.docker_client.images.build(path=dockerfile_path, tag=image, rm=True)
                 self.update_table.emit()

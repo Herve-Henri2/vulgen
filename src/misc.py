@@ -40,10 +40,6 @@ def DisplayList(enum):
         print(element)
 
 
-def error(msg = "Error!"):
-    print(f"\nError : {msg}\n")
-
-
 def open_terminal(_os="Linux", command=None, insta_exit=True):
     '''
     Opens up a terminal (or command prompt).
@@ -59,7 +55,6 @@ def open_terminal(_os="Linux", command=None, insta_exit=True):
     insta_exit: boolean ->
     If set to True, the terminal will instantly close once the command has been completed.
     '''
-    
     if _os == "Windows":
         if command is None:
             command = "cmd.exe"
@@ -82,26 +77,6 @@ def open_terminal(_os="Linux", command=None, insta_exit=True):
             os.popen(f"gnome-terminal -- bash -c \"{command}\"")
 
 
-def StyleSheetTest():
-
-    original = "background-color: #050505; color: #CF0000; font-family: Walbaum Display; font-size: 12;  border: 1px solid '#CF0000'"
-
-    def extractBorder():
-        border_part = original.split(';')[-1].strip()
-        original_no_border = ';'.join(original.split(';')[:-1])
-        border_color = border_part[-8:].replace("'", "")
-        new_color = "#888888"
-        new_stylesheet = f"{original_no_border}; border: 1px solid '{new_color}'"
-        test = original.split(';')[-1].strip()[-8:].replace("'", "")
-        print(border_part)
-        print(border_color)
-        print(new_stylesheet)
-        print(test)
-
-
-    extractBorder()
-
-
 if __name__ =="__main__":
     #open_terminal("Windows")
-    StyleSheetTest()
+    pass

@@ -83,7 +83,7 @@ def Load() -> dict:
     scenarios_db['scenarios'] = dict[str, Scenario]()
     
     to_exclude = ['scenarios.json']
-    scenarios_list = [folder for folder in os.listdir(scenarios_folder_path) if folder not in to_exclude]
+    scenarios_list = [folder for folder in os.listdir(scenarios_folder_path) if folder not in to_exclude and os.path.isdir(os.path.join(scenarios_folder_path, folder))]
     # We then complete our variable with all the existing scenarios
     for scenario_name in scenarios_list:
         folder_path = scenarios_folder_path + f"{sep}{scenario_name}"
@@ -314,7 +314,5 @@ def LoadScenario(name : str) -> Scenario:
 
 
 if __name__ == "__main__":
-    #test_saving_scenarios()
-    #test_retrieving_scenario()
     scen = Load()
     print(json.dumps(scen, indent=3))

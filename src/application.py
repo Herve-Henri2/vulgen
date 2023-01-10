@@ -96,19 +96,44 @@ class BaseWindow(QWidget):
                 element.hide()
 
     def setText(self, text : str):
+        '''
+        Sets the text of the window's textbox to the text passed in as a parameter.
+        
+        /!\ Only use this function on a window that has a self.textbox : QPlainTextEdit attribute
+        '''
         self.textbox.setPlainText(text)
 
     def Write(self, text):
+        '''
+        Appends the text passed in as a parameter to the window's textbox.
+        
+        /!\ Only use this function on a window that has a self.textbox : QPlainTextEdit attribute
+        '''
         self.textbox.appendPlainText(text)
 
     def Clear(self):
+        '''
+        Clears the window's textbox.
+        
+        /!\ Only use this function on a window that has a self.textbox : QPlainTextEdit attribute
+        '''
         self.textbox.clear()
 
     def GetText(self):
+        '''
+        Returns the window's texbox text.
+        
+        /!\ Only use this function on a window that has a self.textbox : QPlainTextEdit attribute
+        '''
         return self.textbox.toPlainText()
 
     def BorderColorBlink(self):
+        '''
+        Changes the color of the window's texbox to eiter its original one its background color.\n
+        This function is used with the LaunchWaitingHandler() method to not give the user the impression of a freezing app.
 
+        /!\ Only use this function on a window that has a self.textbox : QPlainTextEdit attribute
+        '''
         border_color = theme['border_color']
         textbox_color = theme['main_window_textbox_color']
 
@@ -123,7 +148,12 @@ class BaseWindow(QWidget):
         textbox_stylesheet = f"{stylesheet_no_border}; border: 1px solid '{new_border_color}'"
         self.textbox.setStyleSheet(textbox_stylesheet)
 
-    def OriginalTextboxStyle(self): 
+    def OriginalTextboxStyle(self):
+        '''
+        Sets the window's texbox border back to its original color.
+
+        /!\ Only use this function on a window that has a self.textbox : QPlainTextEdit attribute
+        '''
         stylesheet_no_border = ';'.join(self.textbox.styleSheet().split(';')[:-1])
         original_stylesheet = f"{stylesheet_no_border}; border: 1px solid '{theme['border_color']}'"
         self.textbox.setStyleSheet(original_stylesheet)
@@ -177,6 +207,7 @@ class BaseWindow(QWidget):
     def LaunchWaitingHandler(self):
         '''
         Makes the window's textbox blink, to signal the user that a time consuming process is running.
+
         /!\ Only use on a window that has a self.texbox : QPlainTextEdit attribute.
         '''
         waiting_handler = WaitingHandler(window=self)
@@ -188,7 +219,7 @@ class BaseWindow(QWidget):
 
     def RemoveWaitingHandler(self):
         '''
-        Triggers the finished signal of the running WaitingHandler thread.
+        Triggers the finished signal of the running WaitingHandler thread object.
         '''
         for thread in self.threads:
             if isinstance(thread, WaitingHandler):
@@ -209,6 +240,12 @@ class BaseThread(QThread):
         self.docker_client = docker.from_env()
 
 class WaitingHandler(BaseThread):
+    '''
+    The goal of this thread object is to make the window's texbox blink while it's running a long process to not give the user
+    the impression of freezing.
+
+    /!\ This thread can only be used on a window that has a self.texbox : QPlainTextEdit attribute 
+    '''
 
     blink = pyqtSignal()
 
@@ -219,11 +256,19 @@ class WaitingHandler(BaseThread):
 
     def run(self):
         if isinstance(self.window, BaseWindow):
-            self.Waiting()
+            for attribute in self.window.__dict__:
+                if attribute != "textbox":
+                    continue
+                attribute = getattr(self.window, attribute)
+                if isinstance(attribute, QPlainTextEdit): 
+                    self.Waiting()
+                else:
+                    logger.error('Cannot run the WaitingHandler object on a window without a self.texbox : QPlainTextEdit attribute')
 
     def Waiting(self):
         while self.stop is False:
             self.blink.emit()
+            # blinking interval (in seconds)
             time.sleep(0.5)
         self.finished.emit()
         

@@ -62,19 +62,7 @@ class MainWindow(BaseWindow):
         self.textbox.resize(600,400)
         self.textbox.setReadOnly(True)
 
-        # Main entry
-        self.entry = QLineEdit(self)
-        self.entry.move(col2, 450)
-        self.entry.resize(600, 30)
-        self.entry.setPlaceholderText('Replace this text with your input then press enter')  
-
         # Buttons
-        self.enter_button = QPushButton('Enter', self)
-        self.enter_button.move(col2 + 520, 500)
-        self.enter_button.resize(80, 20)
-        self.enter_button.clicked.connect(self.GetUserInput)
-        self.enter_button.setShortcut('Return')
-
         self.options_button = QPushButton('Options', self)
         self.options_button.move(col3, 20)
         self.options_button.resize(80, 20)
@@ -171,10 +159,6 @@ class MainWindow(BaseWindow):
                 self.EnableButton(component)
         if (running_scenario:=self.GetRunningScenario()) is not None:
             self.scenario_textbox.setText(running_scenario.name)
-
-    def GetUserInput(self):
-        self.user_input = self.entry.text()
-        self.entry.setText(" ")
                              
     def OpenOptions(self):
         self.options = OptionsWindow(parent=self)
@@ -233,7 +217,7 @@ class MainWindow(BaseWindow):
         if (scenario := self.GetRunningScenario()) is not None:
             containers = self.docker_client.containers.list()
             for container in containers:
-                if scenario.name in container.name:
+                if scenario.name.lower() in container.name.lower():
                     container_list.append(container)
         return container_list
     
@@ -393,19 +377,20 @@ class ScenarioThread(BaseThread):
                         image = container.image_name.split(':')[0]
                     else:
                         image = dockerfile_path.split(sep)[-1]
-                    self.update_console.emit(f'Building the {image} image...')
+                    self.update_console.emit(f'Building the {image} image... (May take some time)')
                     logger.info(f'Building the {image} image...')
                     self.docker_client.images.build(path=dockerfile_path, tag=f"{image}:custom", rm=True)
                     logger.info(f'Done!')
             except Exception as ex:
                 self.update_console.emit(f'Error: {str(ex)}')
-                logger.info(ex)
+                logger.error(ex)
 
         # Running the container (if no image was built, downloads it from the container image name)
         try:
             self.update_console.emit(f"Setting up the \"{container.image_name}\" container...")
             logger.info(f"Setting up the \"{container.image_name}\" container...")
             if len(container.networks) == 0:
+                # The _container variable is taken from the docker_client while container is a Container object (defined in scenarios.py)
                 _container = self.docker_client.containers.run(image=container.image_name, name=name, ports=container.ports,
                 detach=True, network_disabled=True, **kwargs)
             else:
@@ -426,7 +411,7 @@ class ScenarioThread(BaseThread):
             logger.info(f"Done!")
         except Exception as ex:
             self.update_console.emit(f'Error: {str(ex)}')
-            logger.info(ex)
+            logger.error(ex)
 
 
 if __name__ == "__main__":

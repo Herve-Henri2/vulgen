@@ -85,9 +85,6 @@ class OptionsWindow(QDialog, BaseWindow):
     # endregion
 
     # region =====Graphical Methods=====
-
-    def setTheme(self, index):
-        config.Save('current_theme_index', index)
         
     # endregion
 
@@ -109,16 +106,21 @@ class OptionsWindow(QDialog, BaseWindow):
             self.auto_attach_checkbox.setChecked(True)
 
     def FileDialog(self):
+        '''
+        Opens a file dialog to search for Docker Desktop.exe
+        '''
         fname = QFileDialog.getOpenFileName(self, "Select the Docker Desktop.exe file", "", 'All Files (*Desktop.exe)')
 
         if fname:
             self.docker_desktop_entry.setText(fname[0])
 
     def Save(self):
-
+        '''
+        Writes the selected/entered parameters into the config.json file.
+        '''
         allowed_to_close = True
 
-        # We check that the docker path entered is correct
+        # We check that the entered docker path is correct
         if operating_system == "Windows" and (not os.path.exists(self.docker_desktop_entry.text()) or "Docker Desktop.exe" not in self.docker_desktop_entry.text()):
             messagebox = QMessageBox(self)
             messagebox.resize(200, 200)
