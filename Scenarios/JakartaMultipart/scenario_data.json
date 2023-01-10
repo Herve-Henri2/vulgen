@@ -1,0 +1,21 @@
+{
+   "name": "JakartaMultipart",
+   "CVE": "CVE-2017-5638",
+   "difficulty": "3",
+   "type": "N/A",
+   "sources": [
+      "jrrdev/cve-2017-5638 - Docker Image | Docker Hub"
+   ],
+   "containers": [
+      {
+         "image_name": "jrrdev/cve-2017-5638:latest",
+         "dockerfile": "N/A",
+         "is_main": true,
+         "networks": [],
+         "ports": {
+            "8080": "8080"
+         },
+         "operating_system": "Linux"
+      }
+   ]
+}

@@ -1,0 +1,25 @@
+{
+   "name": "DOS_APACHE",
+   "CVE": "CVE-2014-0050",
+   "difficulty": "3",
+   "type": "Remote command",
+   "sources": [
+      "https://hub.docker.com/r/jrrdev/cve-2014-0050"
+   ],
+   "containers": [
+      {
+         "image_name": "jrrdev/cve-2014-0050:latest",
+         "name": "N/A",
+         "dockerfile": "N/A",
+         "is_main": true,
+         "requires_it": false,
+         "networks": [
+            "bridge"
+         ],
+         "ports": {
+            "8080": "8080"
+         },
+         "operating_system": "Linux"
+      }
+   ]
+}
