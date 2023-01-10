@@ -25,6 +25,15 @@ You can also define which networks it belongs to. By default, it will belong to 
 Finally, you can type in a container name (different from the container's image name), set the ports that you want and specify which operating system the image will be running on (for documentation purposes.) It is now ready to be saved.<br>
 ![add_scenario_img7](https://i.imgur.com/VObLkpd.png)<br>
 Once done with all your containers and other scenario parameters, you can simply click on the Save button and it will now appear in your scenario list.
+
+#
 ## 2) Editing a Scenario
 
+To edit a scenario, simply select the one you wish to change and click on the Edit Scenario button. You then have the option to change its parameters from the windows shown above or directly open its json and README files, we do not recommend doing that though.<br>
+![edit_scenario_img](https://i.imgur.com/PLPmojU.png)<br>
+
+#
 ## 3) Removing a Scenario
+
+To remove a scenario, simply select it then click on "Remove Scenario" then confirm.<br>
+![remove_scenario_img](https://i.imgur.com/5AUx2jH.png)

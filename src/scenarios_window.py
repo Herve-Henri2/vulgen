@@ -92,6 +92,12 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.json_button.clicked.connect(self.OpenJson)
         self.edit_mode_ui.append(self.json_button)
 
+        self.readme_button = QPushButton('Open ReadMe', self)
+        self.readme_button.move(340, 440)
+        self.readme_button.resize(100, 20)
+        self.readme_button.clicked.connect(self.OpenReadMe)
+        self.edit_mode_ui.append(self.readme_button)
+
         self.add_container_button = QPushButton('Add', self)
         self.add_container_button.move(600, 290)
         self.add_container_button.clicked.connect(self.OpenContainerAdd)
@@ -212,7 +218,11 @@ class ScenariosWindow(QDialog, BaseWindow):
     def showDetails(self):
         scenario_name = self.list_view.currentItem().text()
         scenario = self.scenarios[scenario_name]
-        text = f"{scenario.description}\n-----------------------------\nGoal: {scenario.goal}"
+        text = ""
+        if scenario.description is not None and len(scenario.description) > 0:
+            text += f"{scenario.description}"
+        if scenario.goal is not None and len(scenario.goal) > 0:
+            text += f"\n-----------------------------\nGoal: {scenario.goal}"
         if scenario.type is not None and len(scenario.type) > 0:
             text += f"\n-----------------------------\nType: {scenario.type}"
         if scenario.CVE is not None and len(scenario.CVE) > 0:
@@ -225,11 +235,11 @@ class ScenariosWindow(QDialog, BaseWindow):
     def AllowOpening(self):
         self.EnableButtons(self.edit_container_button, self.remove_container_button)
 
-    def HideUIElements(self, ui_elements):
+    def HideUIElements(self, ui_elements : list[QWidget]):
         for element in ui_elements:
             element.hide()
 
-    def ShowUIElements(self, ui_elements):
+    def ShowUIElements(self, ui_elements : list[QWidget]):
         for element in ui_elements:
             element.show()
     
@@ -282,6 +292,21 @@ class ScenariosWindow(QDialog, BaseWindow):
             json_file_path = f'"{src_folder_path}{sep}..{sep}Scenarios{sep}{scenario_name.text()}{sep}scenario_data.json"'
             os.system(json_file_path)
 
+    def OpenReadMe(self):
+        # We first check if it's a new scenario
+        scenario_name = self.list_view.selectedItems()[0] if len(self.list_view.selectedItems()) != 0 else None
+        if not scenario_name:
+            messagebox = QMessageBox(QMessageBox.Icon.Critical,
+                                'Error',
+                                'You need to save the scenario first.',
+                                parent=self)
+            messagebox.setStyleSheet('background-color: white; color: black')
+            messagebox.exec()
+        else:
+            readme_file_path = f'"{src_folder_path}{sep}..{sep}Scenarios{sep}{scenario_name.text()}{sep}README.md"'
+            os.system(readme_file_path)
+
+
     def LaunchScenario(self):
         scenario_name = self.list_view.currentItem().text()
         self.parent.LaunchScenario(scenario_name)
@@ -300,7 +325,7 @@ class ScenariosWindow(QDialog, BaseWindow):
         if messagebox.standardButton(messagebox.clickedButton()) == QMessageBox.StandardButton.Yes:
             scenario_name = self.list_view.currentItem().text()
             # Remove scenario folder
-            Remove(scenario_name)
+            scenarios.Remove(scenario_name)
             # Update scenarios_db and self.scenarios
             scenarios_db = scenarios.Load()
             self.scenarios = scenarios_db['scenarios']
@@ -308,6 +333,8 @@ class ScenariosWindow(QDialog, BaseWindow):
             self.RefreshListView()
             # Clear the textbox
             self.Clear()
+            # Disable the selection enabled buttons
+            self.DisableButtons(self.edit_button, self.remove_button, self.launch_button)
 
     def EditScenarioMode(self):
         '''
@@ -342,6 +369,7 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.ShowUIElements(self.edit_mode_ui)
         # Resetting the default ui selections
         self.list_view.clearSelection()
+        self.DisableButtons(self.edit_button, self.remove_button, self.launch_button)
         self.textbox.clear()
 
         
@@ -353,8 +381,7 @@ class ScenariosWindow(QDialog, BaseWindow):
         #TODO add unsaved changed confirmation
         self.HideUIElements(self.edit_mode_ui)
         self.ShowUIElements(self.default_mode_ui)
-        self.DisableButtons(self.edit_button, self.launch_button, self.remove_button,
-        self.edit_container_button, self.remove_container_button)
+        self.DisableButtons(self.edit_container_button, self.remove_container_button)
         self.current_scenario_containers.clear()
         for element in self.edit_mode_ui:
             if isinstance(element, QLineEdit) or isinstance(element, QPlainTextEdit) or isinstance(element, QListWidget):
