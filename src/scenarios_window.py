@@ -13,6 +13,7 @@ class ScenariosWindow(QDialog, BaseWindow):
         self.parent = parent
         self.scenarios : dict[str, Scenario] = scenarios_db['scenarios']
         self.current_scenario_containers = dict[str, Container]()
+        self.editing = False
 
         # Defining our layout variables
         width = 700
@@ -359,6 +360,7 @@ class ScenariosWindow(QDialog, BaseWindow):
             self.current_scenario_containers[container.image_name] = container
             self.containers_list_view.addItem(f"(main) {container.image_name}") if container.is_main is True else self.containers_list_view.addItem(container.image_name)
                 
+        self.editing = True
 
     def AddScenarioMode(self):
         '''
@@ -386,6 +388,7 @@ class ScenariosWindow(QDialog, BaseWindow):
         for element in self.edit_mode_ui:
             if isinstance(element, QLineEdit) or isinstance(element, QPlainTextEdit) or isinstance(element, QListWidget):
                 element.clear()
+        self.editing = False
 
     def SaveScenario(self):
         '''
@@ -445,6 +448,15 @@ class ScenariosWindow(QDialog, BaseWindow):
                 if not main_set:
                     result['valid_scenario'] = False
                     result['message'] += 'Please specify which container is the main one!' + '\n'
+
+            # Other Scenarios
+            for scenario_name in self.scenarios:
+                # If we are editing a scenario, ignore it and check the others
+                if self.editing is True and name.lower() in scenario_name.lower():
+                    continue
+                if name.lower() in scenario_name.lower():
+                    result['valid_scenario'] = False
+                    result['message'] += 'A scenario with that name already exists!' + '\n'
      
             return result
         
@@ -736,6 +748,9 @@ class EditContainersWindow(QDialog, BaseWindow):
 
             # Other containers
             for container_img_name, container in self.parent.current_scenario_containers.items():
+                # If we're editing, ignore the selected container and only check the other ones
+                if not self.addingMode and self.container_to_edit == container:
+                    continue
                 if container_img_name == image_name or (container.dockerfile != "" and container.dockerfile == dockerfile):
                     result['is_valid'] = False
                     result['message'] += 'That container already exists!\n'  

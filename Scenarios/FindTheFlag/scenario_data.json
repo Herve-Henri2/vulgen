@@ -10,7 +10,7 @@
          "name": "N/A",
          "dockerfile": "../docker_images/scenario_images/findtheflag-format_string",
          "is_main": true,
-         "requires_it": false,
+         "requires_it": true,
          "networks": [
             "bridge"
          ],
