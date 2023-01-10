@@ -1,0 +1,25 @@
+{
+   "name": "Apache_cgi-bin",
+   "CVE": "CVE-2021-41773",
+   "difficulty": "2",
+   "type": "RCE",
+   "sources": [
+      "https://github.com/vulf/CVE-2021-41773_42013/tree/master/CVE-2021-41773"
+   ],
+   "containers": [
+      {
+         "image_name": "httpd:2.4.49",
+         "name": "apache41773",
+         "dockerfile": "../docker_images/scenario_images/apache_cgi-bin",
+         "is_main": false,
+         "requires_it": false,
+         "networks": [
+            "bridge"
+         ],
+         "ports": {
+            "80": "80"
+         },
+         "operating_system": "linux"
+      }
+   ]
+}
